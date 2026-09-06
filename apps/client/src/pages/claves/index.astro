@@ -1,0 +1,144 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getAllPosts } from '../../data/posts';
+import { getLikeCounts, rankPosts } from '../../lib/likes';
+
+const posts = await getAllPosts();
+const counts = await getLikeCounts();
+
+// Pre-rendered with the counts as they stood at build time, so the first paint
+// is already in a sensible order. The browser then refreshes and re-sorts.
+const ranked = rankPosts(
+  posts.map((post) => ({ ...post, likes: counts[post.id] ?? 0 })),
+);
+---
+
+<BaseLayout
+  lang="es"
+  title="Claves"
+  description="Proyectos de paisajismo, plantación y mantenimiento del jardín."
+>
+  <main>
+    <h1>Claves</h1>
+
+    {
+      posts.length === 0 ? (
+        <p class="empty">Todavía no hay entradas publicadas.</p>
+      ) : (
+        <>
+          <section id="featured" class="section">
+            <h2>Los que más gustan</h2>
+            <div class="grid grid-3" id="featured-grid">
+              {ranked.featured.map((post) => (
+                <PostCard {...post} featured />
+              ))}
+            </div>
+          </section>
+
+          <section id="recent" class="section" hidden={ranked.rest.length === 0}>
+            <h2>Más recientes</h2>
+            <div class="grid grid-2" id="recent-grid">
+              {ranked.rest.map((post) => (
+                <PostCard {...post} />
+              ))}
+            </div>
+          </section>
+        </>
+      )
+    }
+  </main>
+</BaseLayout>
+
+<script>
+  import { getLikeCounts, rankPosts, likesEnabled } from '../../lib/likes';
+
+  /**
+   * Counts are read on every page load rather than pushed live, so the order
+   * here can differ from the one baked in at build time. Re-sorting client-side
+   * keeps a static page honest without an SSR adapter.
+   */
+  async function refreshLikes() {
+    const featuredGrid = document.getElementById('featured-grid');
+    const recentGrid = document.getElementById('recent-grid');
+    if (!likesEnabled || !featuredGrid || !recentGrid) return;
+
+    const cards = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-post-id]'),
+    );
+    if (cards.length === 0) return;
+
+    const counts = await getLikeCounts();
+
+    const items = cards.map((node) => {
+      const id = node.dataset.postId ?? '';
+      const likes = counts[id] ?? 0;
+
+      node.dataset.likes = String(likes);
+      const label = node.querySelector('.like-count');
+      if (label) label.textContent = String(likes);
+
+      return { node, id, date: node.dataset.date ?? '', likes };
+    });
+
+    const { featured, rest } = rankPosts(items);
+
+    // append() moves an existing node rather than copying it, so this is a
+    // reorder, not a re-render: images already fetched are not re-requested.
+    for (const item of featured) featuredGrid.append(item.node);
+    for (const item of rest) recentGrid.append(item.node);
+
+    const recent = document.getElementById('recent');
+    if (recent) recent.hidden = rest.length === 0;
+  }
+
+  refreshLikes();
+</script>
+
+<style>
+  /* Wider than the 800px reading column: three cards abreast need the room.
+     The post pages keep the narrower measure. */
+  main {
+    max-width: 1100px;
+  }
+
+  .empty {
+    color: var(--muted);
+  }
+
+  .section + .section {
+    margin-top: 3.5rem;
+  }
+
+  h2 {
+    margin: 0 0 1.25rem;
+    font-size: 1.375rem;
+  }
+
+  .grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* One row of three is too tight below ~900px; two columns, then one. */
+  @media (max-width: 900px) {
+    .grid-3 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 620px) {
+    .grid-3,
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

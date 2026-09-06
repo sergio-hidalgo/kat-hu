@@ -1,0 +1,135 @@
+---
+import { formatDate, type Post } from '../data/posts';
+import { imageUrl } from '../lib/sanity';
+import HeartIcon from './HeartIcon.astro';
+
+type Props = Pick<Post, 'id' | 'slug' | 'title' | 'excerpt' | 'date' | 'mainImage'> & {
+  likes: number;
+  /** Featured cards sit three-up, so they get a wider image crop. */
+  featured?: boolean;
+};
+
+const { id, slug, title, excerpt, date, mainImage, likes, featured = false } =
+  Astro.props;
+
+const href = `/claves/${slug}/`;
+const width = featured ? 600 : 800;
+const height = featured ? 400 : 450;
+---
+
+<article class="card" data-post-id={id} data-date={date} data-likes={likes}>
+  {
+    mainImage ? (
+      <a href={href} class="thumb">
+        <img
+          src={imageUrl(mainImage).width(width).height(height).fit('crop').url()}
+          alt={mainImage.alt ?? ''}
+          loading="lazy"
+          decoding="async"
+          width={width}
+          height={height}
+        />
+        <span class="likes likes-overlay">
+          <HeartIcon filled />
+          <span class="like-count">{likes}</span>
+        </span>
+      </a>
+    ) : null
+  }
+
+  <div class="body">
+    <h3><a href={href}>{title}</a></h3>
+    <p class="meta">
+      <time datetime={date}>{formatDate(date)}</time>
+      {
+        !mainImage && (
+          <span class="likes likes-inline">
+            <HeartIcon filled />
+            <span class="like-count">{likes}</span>
+          </span>
+        )
+      }
+    </p>
+    <p class="excerpt">{excerpt}</p>
+  </div>
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .thumb {
+    position: relative;
+    display: block;
+    line-height: 0;
+  }
+
+  .thumb img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .likes {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  /* Bottom-right of the image, on a scrim so it stays legible on any photo. */
+  .likes-overlay {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .likes-inline {
+    margin-left: 0.75rem;
+    color: var(--muted);
+  }
+
+  .body {
+    padding: 1.25rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.35;
+  }
+
+  h3 a {
+    text-decoration: none;
+  }
+
+  h3 a:hover,
+  h3 a:focus-visible {
+    text-decoration: underline;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    margin: 0.35rem 0 0.75rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  .excerpt {
+    margin: 0;
+  }
+</style>
