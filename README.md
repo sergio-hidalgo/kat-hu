@@ -117,6 +117,48 @@ Webhooks) at the host's build hook so publishing triggers a deploy. For content
 to appear the instant it is published, the client would need an SSR adapter and
 `output: 'server'` — a hosting decision, not made here.
 
+## Likes (Supabase)
+
+Like counts live in Supabase, not Sanity, so reader traffic never consumes CMS
+bandwidth. The Astro app needs two more variables in `apps/client/.env`:
+
+```sh
+PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+The publishable key is meant to be exposed in the browser. What protects the
+data is the schema, not the key:
+
+| Object | Who can do what |
+| :----- | :-------------- |
+| `public.post_likes` | `select` only for `anon`. Insert/update/delete are revoked, and RLS has no policy for them |
+| `like_post(text)` | `security definer` RPC, `+1` on one row, returns the new total |
+| `unlike_post(text)` | `security definer` RPC, `-1` floored at zero, returns the new total |
+
+So the worst a visitor can do with the key is move one counter by one. Both
+RPCs reject a `post_id` that is not `^[A-Za-z0-9._-]{1,128}$`.
+
+A `localStorage` entry (`kat-hu:liked-posts`) remembers what this browser has
+already liked, so a reload does not hand out a second like and a returning
+reader sees their heart already filled. It is a courtesy guard, not
+enforcement — it is per-browser and the reader can clear it. Stopping
+determined repeat likes needs auth or rate limiting.
+
+Counts are keyed by the Sanity document `_id`, not the slug, so renaming a
+slug keeps the post's likes.
+
+### How the ordering works
+
+`/claves` shows the three most-liked posts under **Los que más gustan**, then
+the rest by date under **Más recientes**. Counts are read twice: once at build
+time, so the first paint is already sensibly ordered, and once in the browser
+on each load, which refreshes the numbers and re-sorts the cards. There is no
+realtime subscription — a reader sees new counts on refresh.
+
+If Supabase is unreachable the counts fall back to zero and the page still
+builds and renders; likes are additive, not load-bearing.
+
 ## Adding a shared package
 
 Shared code goes in `packages/*` (already matched by `pnpm-workspace.yaml`) and

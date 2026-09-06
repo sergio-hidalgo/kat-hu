@@ -1,19 +1,21 @@
 ---
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import HeartIcon from '../../components/HeartIcon.astro';
 import { getAllPosts, formatDate, type Post } from '../../data/posts';
 import { imageUrl, portableTextToHtml } from '../../lib/sanity';
+import { getLikeCounts, likesEnabled } from '../../lib/likes';
 
 export const getStaticPaths = (async () => {
-  const posts = await getAllPosts();
+  const [posts, counts] = await Promise.all([getAllPosts(), getLikeCounts()]);
 
   return posts.map((post) => ({
     params: { slug: post.slug },
-    props: { post },
+    props: { post, likes: counts[post.id] ?? 0 },
   }));
 }) satisfies GetStaticPaths;
 
-const { post } = Astro.props as { post: Post };
+const { post, likes } = Astro.props as { post: Post; likes: number };
 const bodyHtml = portableTextToHtml(post.body);
 ---
 
@@ -24,6 +26,21 @@ const bodyHtml = portableTextToHtml(post.body);
 
       <p class="meta">
         <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
+        {
+          likesEnabled && (
+            <button
+              type="button"
+              class="like-button"
+              data-post-id={post.id}
+              data-likes={likes}
+              aria-pressed="false"
+              aria-label="Me gusta"
+            >
+              <HeartIcon />
+              <span class="like-count">{likes}</span>
+            </button>
+          )
+        }
       </p>
 
       {
@@ -45,15 +62,92 @@ const bodyHtml = portableTextToHtml(post.body);
   </main>
 </BaseLayout>
 
+<script>
+  import { likePost, unlikePost } from '../../lib/likes';
+  import { hasLiked, setLiked } from '../../lib/liked-store';
+
+  const button = document.querySelector<HTMLButtonElement>('.like-button');
+
+  if (button) {
+    const postId = button.dataset.postId ?? '';
+    const icon = button.querySelector('.heart');
+    const label = button.querySelector('.like-count');
+
+    /**
+     * Restored from localStorage, so a reload does not hand out a second like.
+     * The page is static, so the button ships unfilled and is corrected here.
+     */
+    let liked = hasLiked(postId);
+
+    function paint(state: boolean) {
+      icon?.classList.toggle('filled', state);
+      button!.setAttribute('aria-pressed', String(state));
+      button!.setAttribute('aria-label', state ? 'Ya no me gusta' : 'Me gusta');
+    }
+
+    paint(liked);
+
+    button.addEventListener('click', async () => {
+      const next = !liked;
+
+      // Paint immediately, then reconcile with the total the RPC returns.
+      button.disabled = true;
+      paint(next);
+
+      try {
+        const total = next ? await likePost(postId) : await unlikePost(postId);
+        liked = next;
+        setLiked(postId, next);
+        if (label) label.textContent = String(total);
+        button.dataset.likes = String(total);
+      } catch (error) {
+        // Roll the button back so it never claims a click that did not land,
+        // and leave the stored state untouched.
+        paint(liked);
+        console.warn('[likes] could not record the click:', error);
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>
+
 <style>
   h1 {
     margin-bottom: 0.25rem;
   }
 
   .meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     margin: 0 0 2rem;
     color: var(--muted);
     font-size: 0.875rem;
+  }
+
+  .like-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--muted);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .like-button:hover:not(:disabled) {
+    border-color: #e0245e;
+    color: var(--text);
+  }
+
+  .like-button:disabled {
+    cursor: progress;
   }
 
   .hero {

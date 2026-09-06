@@ -11,6 +11,11 @@ import {
 const DOC_TYPE = 'post';
 
 export interface Post {
+  /**
+   * Sanity document `_id`. Stable across slug edits, so it is the key the
+   * Supabase like counts are stored against.
+   */
+  id: string;
   /** URL segment under /claves — from the Studio's `slug` field. */
   slug: string;
   title: string;
@@ -24,6 +29,7 @@ export interface Post {
 
 /** Fields every query selects, so list and detail stay in sync. */
 const POST_FIELDS = /* groq */ `
+  "id": _id,
   "slug": slug.current,
   title,
   excerpt,

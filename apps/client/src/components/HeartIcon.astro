@@ -1,0 +1,43 @@
+---
+interface Props {
+  filled?: boolean;
+  class?: string;
+}
+
+const { filled = false, class: className } = Astro.props;
+---
+
+<svg
+  class:list={['heart', className, { filled }]}
+  viewBox="0 0 24 24"
+  width="16"
+  height="16"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path
+    d="M12 20.7 3.8 12.5a5 5 0 0 1 7.1-7.1l1.1 1.1 1.1-1.1a5 5 0 0 1 7.1 7.1Z"
+  ></path>
+</svg>
+
+<style>
+  .heart {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    /* Only the fill animates, so a toggle never shifts surrounding text. */
+    transition: fill 120ms ease-out, transform 120ms ease-out;
+  }
+
+  .heart.filled {
+    fill: #e0245e;
+    stroke: #e0245e;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .heart {
+      transition: none;
+    }
+  }
+</style>
