@@ -9,7 +9,8 @@ server side by side.
 /
 ├── apps/
 │   ├── client/   Astro front end   (dev :4321)
-│   └── server/   NestJS API        (dev :3000)
+│   ├── server/   NestJS API        (dev :3000)
+│   └── studio/   Sanity Studio     (dev :3333)
 ├── packages/     shared libraries (none yet)
 ├── package.json      workspace root — scripts only, no app deps
 ├── pnpm-workspace.yaml
@@ -38,6 +39,7 @@ Run from the repo root:
 | `pnpm dev`                       | Start client and server in parallel     |
 | `pnpm dev:client`                | Start only the Astro dev server         |
 | `pnpm dev:server`                | Start only the Nest dev server (watch)  |
+| `pnpm dev:studio`                | Start only the Sanity Studio            |
 | `pnpm build`                     | Build every app                         |
 | `pnpm check`                     | Type-check every app                    |
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
@@ -62,6 +64,7 @@ The app only reads — it holds no write token and cannot modify content.
 
 ```sh
 cp apps/client/.env.example apps/client/.env   # then fill in the project ID
+cp apps/studio/.env.example apps/studio/.env   # the same project ID
 ```
 
 Get the project ID from https://manage.sanity.io. The dataset is normally
@@ -69,11 +72,29 @@ Get the project ID from https://manage.sanity.io. The dataset is normally
 unauthenticated read returns nothing. These values are not secrets — they
 appear in the public image CDN URLs — but `.env` stays untracked regardless.
 
+Both files must carry the **same** project ID and dataset, or the Studio edits
+content the site never reads.
+
+### The Studio
+
+`apps/studio` is the editing UI. It is a separate app from the site: it is not
+built or deployed with it, and the site never imports from it.
+
+```sh
+pnpm dev:studio                    # http://localhost:3333
+pnpm --filter studio deploy        # hosts it at https://<name>.sanity.studio
+```
+
+Deploying gives the content editor a URL with SSO login and no terminal. Invite
+them as an **Editor** from https://manage.sanity.io. Field labels are in
+Spanish, in `apps/studio/schemaTypes/post.ts`.
+
 ### Schema contract
 
 `/claves` queries document type `post` (set by `DOC_TYPE` in
-`apps/client/src/data/posts.ts`) and reads these fields. Renaming a field in
-the Studio without changing it here silently empties the section.
+`apps/client/src/data/posts.ts`) and reads the fields below, which are defined
+in `apps/studio/schemaTypes/post.ts`. Renaming a field on one side without the
+other silently empties the section — the two files are a contract.
 
 | Field         | Type               | Required | Used for                               |
 | :------------ | :----------------- | :------- | :------------------------------------- |

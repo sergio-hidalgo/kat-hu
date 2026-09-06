@@ -6,7 +6,7 @@ import {
 
 /**
  * The document type this site reads from Sanity. Change it here only —
- * it must match the `post` schema defined in the Sanity Studio.
+ * it must match `apps/studio/schemaTypes/post.ts`.
  */
 const DOC_TYPE = 'post';
 
