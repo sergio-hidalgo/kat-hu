@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getAllPosts } from '../../data/posts';
+
+const posts = await getAllPosts();
+---
+
+<BaseLayout
+  lang="es"
+  title="Claves"
+  description="Proyectos de paisajismo, plantación y mantenimiento del jardín."
+>
+  <main>
+    <h1>Claves</h1>
+
+    {
+      posts.length === 0 ? (
+        <p class="empty">Todavía no hay entradas publicadas.</p>
+      ) : (
+        <div class="feed">
+          {posts.map((post) => (
+            <PostCard {...post} />
+          ))}
+        </div>
+      )
+    }
+  </main>
+</BaseLayout>
+
+<style>
+  .empty {
+    color: var(--muted);
+  }
+
+  .feed {
+    display: grid;
+    gap: 1.5rem;
+  }
+</style>

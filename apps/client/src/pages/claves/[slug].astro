@@ -1,0 +1,85 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getAllPosts, formatDate, type Post } from '../../data/posts';
+import { imageUrl, portableTextToHtml } from '../../lib/sanity';
+
+export const getStaticPaths = (async () => {
+  const posts = await getAllPosts();
+
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}) satisfies GetStaticPaths;
+
+const { post } = Astro.props as { post: Post };
+const bodyHtml = portableTextToHtml(post.body);
+---
+
+<BaseLayout lang="es" title={post.title} description={post.excerpt}>
+  <main>
+    <article>
+      <h1>{post.title}</h1>
+
+      <p class="meta">
+        <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
+      </p>
+
+      {
+        post.mainImage && (
+          <img
+            class="hero"
+            src={imageUrl(post.mainImage).width(1600).url()}
+            alt={post.mainImage.alt ?? ''}
+            loading="eager"
+            decoding="async"
+          />
+        )
+      }
+
+      <div class="body" set:html={bodyHtml} />
+    </article>
+
+    <p class="back"><a href="/claves/">← Volver a Claves</a></p>
+  </main>
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-bottom: 0.25rem;
+  }
+
+  .meta {
+    margin: 0 0 2rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  .hero {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin-bottom: 2rem;
+  }
+
+  .body :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 2rem 0;
+  }
+
+  .body :global(blockquote) {
+    margin: 2rem 0;
+    padding-left: 1rem;
+    border-left: 3px solid var(--rule);
+    color: var(--muted);
+  }
+
+  .back {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+</style>

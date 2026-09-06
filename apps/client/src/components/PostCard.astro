@@ -1,0 +1,84 @@
+---
+import { formatDate, type Post } from '../data/posts';
+import { imageUrl } from '../lib/sanity';
+
+type Props = Pick<Post, 'slug' | 'title' | 'excerpt' | 'date' | 'mainImage'>;
+
+const { slug, title, excerpt, date, mainImage } = Astro.props;
+
+const href = `/claves/${slug}/`;
+---
+
+<article class="card">
+  {
+    mainImage && (
+      <a href={href} class="thumb">
+        <img
+          src={imageUrl(mainImage).width(800).height(450).fit('crop').url()}
+          alt={mainImage.alt ?? ''}
+          loading="lazy"
+          decoding="async"
+          width="800"
+          height="450"
+        />
+      </a>
+    )
+  }
+
+  <div class="body">
+    <h3><a href={href}>{title}</a></h3>
+    <p class="meta"><time datetime={date}>{formatDate(date)}</time></p>
+    <p class="excerpt">{excerpt}</p>
+  </div>
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .thumb {
+    display: block;
+    line-height: 0;
+  }
+
+  .thumb img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .body {
+    padding: 1.25rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.35;
+  }
+
+  h3 a {
+    text-decoration: none;
+  }
+
+  h3 a:hover,
+  h3 a:focus-visible {
+    text-decoration: underline;
+  }
+
+  .meta {
+    margin: 0.35rem 0 0.75rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  .excerpt {
+    margin: 0;
+  }
+</style>

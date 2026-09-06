@@ -10,6 +10,7 @@ out/
 .astro/
 *.tsbuildinfo
 
+
 # framework caches
 .turbo/
 .vercel/
@@ -35,3 +36,6 @@ pnpm-debug.log*
 # agent instruction files (kept local, not tracked)
 AGENTS.md
 CLAUDE.md
+
+# local-only notes; README.md is the only tracked documentation
+SANITY.md
