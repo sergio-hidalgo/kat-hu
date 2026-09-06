@@ -1,0 +1,71 @@
+---
+/**
+ * A page band: it owns the horizontal gutter, the container width and the
+ * vertical rhythm from the style guide §4.
+ *
+ * This is the ONLY component allowed to set `mx-auto` or a `max-w-*`. Anything
+ * inside it states its width as a column span on a `<Grid>`, never as a width
+ * of its own — see the Layout section of skills/ui-kathu/SKILL.md.
+ */
+
+import type { HTMLTag } from 'astro/types';
+
+type Container = 'prose' | 'content' | 'wide' | 'full';
+type Padding = 'none' | 'sm' | 'lg';
+type Surface = 'none' | 'shell' | 'cloud' | 'violet';
+
+interface Props {
+  /* Quoted: `as` unquoted trips the Astro compiler's props scanner, which then
+     silently types `Astro.props` as `any`. */
+  'as'?: HTMLTag;
+  /** `prose` is the 66ch reading measure; `full` is a full-bleed band. */
+  container?: Container;
+  padding?: Padding;
+  surface?: Surface;
+  /** Placement only — spans, margins. Never colour. */
+  class?: string;
+  /** Classes for the inner container, for the rare band that needs them. */
+  innerClass?: string;
+  [key: string]: unknown;
+}
+
+const {
+  as: Tag = 'section',
+  container = 'content',
+  padding = 'lg',
+  surface = 'none',
+  class: className,
+  innerClass,
+  ...rest
+} = Astro.props;
+
+const containers: Record<Container, string> = {
+  prose: 'mx-auto w-full max-w-prose',
+  content: 'mx-auto w-full max-w-content',
+  wide: 'mx-auto w-full max-w-wide',
+  full: 'w-full',
+};
+
+// 20px mobile · 32px ≥768px · 48px ≥1280px. A full-bleed band has no gutter:
+// its content is the image, and anything laid over it brings its own Section.
+const gutter = container === 'full' ? '' : 'px-5 md:px-8 xl:px-12';
+
+const paddings: Record<Padding, string> = {
+  none: '',
+  sm: 'py-10 md:py-12',
+  lg: 'py-[clamp(4rem,7vw,7.5rem)]',
+};
+
+const surfaces: Record<Surface, string> = {
+  none: '',
+  shell: 'bg-shell text-graphite',
+  cloud: 'bg-cloud text-graphite',
+  violet: 'bg-violet-900 text-cloud',
+};
+---
+
+<Tag class:list={[surfaces[surface], paddings[padding], className]} {...rest}>
+  <div class:list={[containers[container], gutter, innerClass]}>
+    <slot />
+  </div>
+</Tag>

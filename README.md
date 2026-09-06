@@ -39,6 +39,33 @@ tracked record of what exists. See the "Roadmap" section for the order.
 └── pnpm-lock.yaml    the single lockfile for the whole repo
 ```
 
+## Design system
+
+The visual language is fixed and lives outside the app, in the local-only
+`references/` folder: `kathu-style-guide.md` (the rules) and
+`kathu-tokens.css` (the Tailwind v4 `@theme`). The app carries a
+**byte-for-byte copy** of the tokens at
+`apps/client/src/styles/kathu-tokens.css`; the copy follows the reference,
+never the other way round.
+
+- **Tailwind v4** through `@tailwindcss/vite`. Utilities inline in the
+  `.astro` files — there are no `<style>` blocks and no hex values anywhere
+  in `apps/client/src`.
+- **Two typefaces**, self-hosted from `apps/client/public/fonts/`: Urbanist
+  for `text-display`/`h1`/`h2`, Lora for everything else.
+- **A 12-column grid is the placement contract.** Every page is built from
+  `Section` (the band: page gutter, container width, vertical rhythm) wrapping
+  `Grid` (`grid-cols-12`). Elements state their width as a span —
+  `col-span-12 md:col-span-6` — never as an ad hoc `max-width`. The grid keeps
+  12 columns at every screen size; only the spans change. Three exceptions:
+  running prose (the 66ch reading measure), full-bleed image bands, and the
+  inside of a component, which lays out its own contents.
+- In development, press `g` on any page to cycle a 12-column overlay
+  (content · wide · prose) and check alignment by eye. It ships nothing to
+  production.
+- `/estilo` renders every UI primitive in every state. It exists in `astro dev`
+  only and returns 404 in a production build.
+
 ## Requirements
 
 - Node `>=22.12.0`
@@ -65,6 +92,7 @@ Run from the repo root:
 | `pnpm build`                     | Build every app                         |
 | `pnpm check`                     | Type-check every app                    |
 | `pnpm test`                      | Run every app's tests (after spec 03)   |
+| `pnpm --filter client favicons`  | Regenerate the favicon set from the logo |
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
 | `pnpm --filter <app> add <pkg>`  | Add a dependency to one app             |
 
@@ -232,7 +260,8 @@ closes.
 | :-- | :------------------------------------------------------------------------ | :------- |
 | 01  | Client blog scaffolding: `/claves` on Sanity, Studio app, likes on        |          |
 |     | Supabase (branch `01-client-blog-scafolding`, PR #1)                      | done     |
-| 02  | Design system foundation (Tailwind v4, tokens, header/footer, primitives) | todo     |
+| 02  | Design system foundation (Tailwind v4, tokens, 12-column grid,            |          |
+|     | header/footer, UI primitives, `/estilo`)                                  | done     |
 | 03  | Test tooling (Vitest client/packages, Jest server, `pnpm test`)           | todo     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | todo     |

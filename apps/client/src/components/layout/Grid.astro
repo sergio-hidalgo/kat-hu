@@ -1,0 +1,31 @@
+---
+/**
+ * The 12-column grid every page is placed on. Twelve columns at every screen
+ * size — only the spans change, so there is one mental model rather than a
+ * 4/8/12 ladder.
+ *
+ * Every direct child states its own width:
+ *
+ *   <Grid>
+ *     <div class="col-span-12 md:col-span-7">…</div>
+ *     <div class="col-span-12 md:col-span-5">…</div>
+ *   </Grid>
+ *
+ * Gutter is the guide's §4 figure: 24px, 32px from `md` up.
+ */
+import type { HTMLTag } from 'astro/types';
+
+interface Props {
+  /* Quoted — see the note in Section.astro. */
+  'as'?: HTMLTag;
+  /** Placement and row gaps only. Never a column count — that is always 12. */
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { as: Tag = 'div', class: className, ...rest } = Astro.props;
+---
+
+<Tag class:list={['grid grid-cols-12 gap-6 md:gap-8', className]} {...rest}>
+  <slot />
+</Tag>

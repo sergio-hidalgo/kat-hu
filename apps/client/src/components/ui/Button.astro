@@ -1,0 +1,77 @@
+---
+/**
+ * Guide §7.1. Renders an `<a>` when given `href`, a `<button>` otherwise.
+ *
+ * `class` is for placement only — a column span, a margin, `w-full`. Recolouring
+ * a button inline is a defect; add a variant here instead.
+ */
+type Variant = 'primary' | 'secondary' | 'quiet';
+
+interface Props {
+  variant?: Variant;
+  href?: string;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
+  /** One Slate line under the button saying why it is unavailable. */
+  disabledReason?: string;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  variant = 'primary',
+  href,
+  type = 'button',
+  disabled = false,
+  disabledReason,
+  class: className,
+  ...rest
+} = Astro.props;
+
+// 52px on mobile is the easier thumb target; 48px from md up.
+const base =
+  'inline-flex h-13 md:h-12 items-center justify-center rounded-sm px-6 font-body text-sm font-semibold no-underline transition-colors duration-fast';
+
+// Hover lightens and active returns to the deepest tone, so a held button
+// always reads as pushed in.
+const variants: Record<Variant, string> = {
+  primary: 'bg-violet-700 text-cloud hover:bg-violet-600 active:bg-violet-700',
+  secondary:
+    'border border-violet-700 text-violet-700 hover:bg-cloud active:bg-mist',
+  quiet: 'text-violet-700 hover:bg-cloud active:bg-mist',
+};
+
+// One disabled look for every variant: Cloud fill, Mist border, Slate label —
+// readable at 4.54:1 but clearly receded. Never a white label on grey.
+const off = 'bg-cloud border border-mist text-slate cursor-not-allowed';
+
+const Tag = href && !disabled ? 'a' : 'button';
+
+// With a reason, the caller's placement classes go on the wrapper instead, so
+// the button and its explanation move as one.
+const wrapped = Boolean(disabledReason);
+
+const attrs = {
+  'class:list': [base, disabled ? off : variants[variant], !wrapped && className],
+  href: Tag === 'a' ? href : undefined,
+  type: Tag === 'button' ? type : undefined,
+  disabled: Tag === 'button' && disabled ? true : undefined,
+  'aria-disabled': disabled ? ('true' as const) : undefined,
+  ...rest,
+};
+---
+
+{
+  wrapped ? (
+    <span class:list={['flex flex-col items-start gap-2', className]}>
+      <Tag {...attrs}>
+        <slot />
+      </Tag>
+      <span class="text-xs text-slate">{disabledReason}</span>
+    </span>
+  ) : (
+    <Tag {...attrs}>
+      <slot />
+    </Tag>
+  )
+}

@@ -1,0 +1,95 @@
+---
+/**
+ * Guide §7.6. Label above the field — never a placeholder standing in for a
+ * label — help below in Slate, error below in red saying what to fix.
+ *
+ * By default it renders its own `<input>`. Pass a control in the slot instead
+ * (a `<textarea>`, a `<select>`) and it will style that one; Astro slots cannot
+ * receive props, so the slotted control asks for the classes with
+ * `class={fieldControlClass({ surface, error })}`.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import { fieldControlClass } from './field';
+
+type InputAttributes = HTMLAttributes<'input'>;
+
+interface Props {
+  /** Must match the control's `id`. */
+  for: string;
+  label: string;
+  help?: string;
+  /** Say what to fix — *Escribe un email válido*, not *Campo inválido*. */
+  error?: string;
+  required?: boolean;
+  /** Shell on a Cloud card, Cloud on a Shell section — guide §3.2. */
+  surface?: 'shell' | 'cloud';
+  /** Ignored when a control is slotted in. */
+  type?: InputAttributes['type'];
+  name?: string;
+  placeholder?: string;
+  autocomplete?: InputAttributes['autocomplete'];
+  inputmode?: InputAttributes['inputmode'];
+  class?: string;
+}
+
+const {
+  for: htmlFor,
+  label,
+  help,
+  error,
+  required = false,
+  surface = 'shell',
+  type = 'text',
+  name,
+  placeholder,
+  autocomplete,
+  inputmode,
+  class: className,
+} = Astro.props;
+
+const helpId = help && !error ? `${htmlFor}-help` : undefined;
+const errorId = error ? `${htmlFor}-error` : undefined;
+const describedBy = errorId ?? helpId;
+---
+
+<div class:list={['flex flex-col gap-2', className]}>
+  <label for={htmlFor} class="font-body text-xs text-graphite">
+    {label}
+    {required && <span class="text-slate"> (obligatorio)</span>}
+  </label>
+
+  {
+    Astro.slots.has('default') ? (
+      <slot />
+    ) : (
+      <input
+        id={htmlFor}
+        name={name ?? htmlFor}
+        type={type}
+        placeholder={placeholder}
+        autocomplete={autocomplete}
+        inputmode={inputmode}
+        required={required || undefined}
+        aria-invalid={error ? 'true' : undefined}
+        aria-describedby={describedBy}
+        class={fieldControlClass({ surface, error: Boolean(error) })}
+      />
+    )
+  }
+
+  {
+    help && !error && (
+      <p id={helpId} class="max-w-none text-xs text-slate">
+        {help}
+      </p>
+    )
+  }
+
+  {
+    error && (
+      <p id={errorId} class="max-w-none text-xs text-red" aria-live="polite">
+        {error}
+      </p>
+    )
+  }
+</div>

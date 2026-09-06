@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostCard from '../../components/PostCard.astro';
+import Section from '../../components/layout/Section.astro';
+import Grid from '../../components/layout/Grid.astro';
+import PostCard from '../../components/claves/PostCard.astro';
 import { getAllPosts } from '../../data/posts';
 import { getLikeCounts, rankPosts } from '../../lib/likes';
 
@@ -15,39 +17,55 @@ const ranked = rankPosts(
 ---
 
 <BaseLayout
-  lang="es"
   title="Claves"
-  description="Proyectos de paisajismo, plantación y mantenimiento del jardín."
+  description="Ideas y prácticas de terapia floral para familias multiespecie."
 >
-  <main>
-    <h1>Claves</h1>
+  <Section padding="sm">
+    <Grid>
+      <h1 class="col-span-12 text-h1">Claves</h1>
+    </Grid>
+  </Section>
 
-    {
-      posts.length === 0 ? (
-        <p class="empty">Todavía no hay entradas publicadas.</p>
-      ) : (
-        <>
-          <section id="featured" class="section">
-            <h2>Los que más gustan</h2>
-            <div class="grid grid-3" id="featured-grid">
+  {
+    posts.length === 0 ? (
+      <Section padding="sm">
+        <Grid>
+          <p class="col-span-12 max-w-none text-graphite">
+            Todavía no hay entradas publicadas.
+          </p>
+        </Grid>
+      </Section>
+    ) : (
+      <>
+        <Section id="featured" padding="sm">
+          <Grid class="gap-y-8">
+            <h2 class="col-span-12 text-h2">Los que más gustan</h2>
+            <div class="contents" id="featured-grid">
               {ranked.featured.map((post) => (
-                <PostCard {...post} featured />
+                <PostCard {...post} featured class="col-span-12 md:col-span-6 lg:col-span-4" />
               ))}
             </div>
-          </section>
+          </Grid>
+        </Section>
 
-          <section id="recent" class="section" hidden={ranked.rest.length === 0}>
-            <h2>Más recientes</h2>
-            <div class="grid grid-2" id="recent-grid">
+        <Section
+          id="recent"
+          container="wide"
+          padding="sm"
+          hidden={ranked.rest.length === 0}
+        >
+          <Grid class="gap-y-8">
+            <h2 class="col-span-12 text-h2">Más recientes</h2>
+            <div class="contents" id="recent-grid">
               {ranked.rest.map((post) => (
-                <PostCard {...post} />
+                <PostCard {...post} class="col-span-12 md:col-span-6" />
               ))}
             </div>
-          </section>
-        </>
-      )
-    }
-  </main>
+          </Grid>
+        </Section>
+      </>
+    )
+  }
 </BaseLayout>
 
 <script>
@@ -94,51 +112,3 @@ const ranked = rankPosts(
 
   refreshLikes();
 </script>
-
-<style>
-  /* Wider than the 800px reading column: three cards abreast need the room.
-     The post pages keep the narrower measure. */
-  main {
-    max-width: 1100px;
-  }
-
-  .empty {
-    color: var(--muted);
-  }
-
-  .section + .section {
-    margin-top: 3.5rem;
-  }
-
-  h2 {
-    margin: 0 0 1.25rem;
-    font-size: 1.375rem;
-  }
-
-  .grid {
-    display: grid;
-    gap: 1.5rem;
-  }
-
-  .grid-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .grid-2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  /* One row of three is too tight below ~900px; two columns, then one. */
-  @media (max-width: 900px) {
-    .grid-3 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 620px) {
-    .grid-3,
-    .grid-2 {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>

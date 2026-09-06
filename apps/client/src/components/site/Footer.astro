@@ -1,0 +1,81 @@
+---
+/**
+ * Guide §7.9. violet-900 is routine here and almost nowhere else. Cloud text,
+ * oak-200 on link hover, 64px top / 40px bottom, and the knockout logo.
+ */
+import Section from '../layout/Section.astro';
+import Grid from '../layout/Grid.astro';
+import Logo from './Logo.astro';
+
+const columns = [
+  {
+    heading: 'Navegación',
+    links: [
+      { href: '/reservar', label: 'Reservar' },
+      { href: '/sobre-kathu', label: 'Sobre kathu' },
+      { href: '/claves', label: 'Claves' },
+      { href: '/tienda', label: 'Tienda' },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { href: '/aviso-legal', label: 'Aviso legal' },
+      { href: '/privacidad', label: 'Privacidad' },
+      { href: '/cookies', label: 'Cookies' },
+    ],
+  },
+  {
+    heading: 'Contacto',
+    links: [{ href: 'mailto:hola@kathu.es', label: 'hola@kathu.es' }],
+  },
+];
+
+const year = new Date().getFullYear();
+---
+
+<Section as="footer" surface="violet" padding="none" class="pt-16 pb-10">
+  <Grid class="gap-y-10">
+    {/* Four columns only from lg: at 768 the brand blurb in a quarter of the
+        grid wraps to four lines, so it takes its own row first. */}
+    <div class="col-span-12 lg:col-span-3">
+      <Logo variant="dark" height={44} />
+      <p class="mt-4 max-w-none text-sm text-cloud">
+        Terapia floral holística para familias multiespecie.
+      </p>
+    </div>
+
+    {
+      columns.map(({ heading, links }) => (
+        <nav
+          class="col-span-12 sm:col-span-4 lg:col-span-3"
+          aria-labelledby={`footer-${heading.toLowerCase()}`}
+        >
+          {/* Lora, not Urbanist: the guide forbids the display face below 20px. */}
+          <h2
+            id={`footer-${heading.toLowerCase()}`}
+            class="font-body text-xs font-semibold text-mist"
+          >
+            {heading}
+          </h2>
+          <ul class="mt-3 list-none p-0">
+            {links.map(({ href, label }) => (
+              <li class="py-1">
+                <a
+                  href={href}
+                  class="font-body text-sm text-cloud no-underline transition-colors duration-fast hover:text-oak-200 hover:underline"
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))
+    }
+
+    <p class="col-span-12 max-w-none text-xs text-white">
+      © {year} kathu. Todos los derechos reservados.
+    </p>
+  </Grid>
+</Section>

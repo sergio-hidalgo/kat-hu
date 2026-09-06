@@ -1,0 +1,36 @@
+---
+/**
+ * Guide §7.10. Cloud fill with a coloured border and matching icon — never
+ * colour alone, so the icon and the wording carry the state too.
+ */
+import { CircleCheck, TriangleAlert, CircleX } from '@lucide/astro';
+
+type State = 'success' | 'warning' | 'error';
+
+interface Props {
+  state?: State;
+  class?: string;
+}
+
+const { state = 'success', class: className } = Astro.props;
+
+const states = {
+  success: { icon: CircleCheck, border: 'border-green', tint: 'text-green', text: 'text-ink' },
+  warning: { icon: TriangleAlert, border: 'border-orange', tint: 'text-orange', text: 'text-ink' },
+  error: { icon: CircleX, border: 'border-red', tint: 'text-red', text: 'text-red' },
+} satisfies Record<State, { icon: typeof CircleCheck; border: string; tint: string; text: string }>;
+
+const { icon: Icon, border, tint, text } = states[state];
+---
+
+<div
+  role={state === 'error' ? 'alert' : 'status'}
+  class:list={[
+    'flex items-start gap-3 rounded-sm border bg-cloud p-4',
+    border,
+    className,
+  ]}
+>
+  <Icon size={20} stroke-width={1.5} class:list={['shrink-0', tint]} />
+  <p class:list={['max-w-none text-sm', text]}><slot /></p>
+</div>

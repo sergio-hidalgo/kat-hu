@@ -1,17 +1,60 @@
 ---
-
+/**
+ * Placeholder landing. The real blocks — and the registry that lets the owner
+ * switch them on and off — arrive in spec 05. This page exists so the layout,
+ * the grid and the hero treatment have somewhere to be seen.
+ */
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/layout/Section.astro';
+import Grid from '../components/layout/Grid.astro';
+import Button from '../components/ui/Button.astro';
+import lavender from '../assets/brand/lavender_fields.png';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout
+  title="kathu"
+  description="Terapia floral holística para familias multiespecie. Sesiones online con una florapeuta."
+  overHero
+>
+  <Section container="full" padding="none" class="relative isolate">
+    <Image
+      src={lavender}
+      alt=""
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+      class="absolute inset-0 -z-10 h-full w-full rounded-none object-cover"
+    />
+    {/* Guide §6: the violet-900 tint, never a lightened image with dark text. */}
+    <div
+      class="absolute inset-0 -z-10 bg-linear-to-t from-violet-900/80 to-violet-900/20"
+    >
+    </div>
+
+    <Section padding="none" class="flex min-h-[80vh] items-end pt-24 pb-16">
+      <Grid class="w-full">
+        <div class="col-span-12 lg:col-span-7">
+          <h1 class="text-display text-cloud">
+            Acompañamiento floral para ti y para tu gato
+          </h1>
+          <p class="mt-6 text-lead text-cloud">
+            Sesiones online con una florapeuta, pensadas para la familia
+            multiespecie entera.
+          </p>
+          <Button href="/reservar" class="mt-8">Reservar sesión</Button>
+        </div>
+      </Grid>
+    </Section>
+  </Section>
+
+  <Section>
+    <Grid>
+      <p class="col-span-12 max-w-none text-lead text-graphite md:col-span-8">
+        Esta página es provisional: los bloques reales llegan más adelante.
+        Mientras tanto, puedes leer las <a href="/claves">claves</a>.
+      </p>
+    </Grid>
+  </Section>
+</BaseLayout>

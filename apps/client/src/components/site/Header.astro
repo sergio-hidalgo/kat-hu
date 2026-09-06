@@ -1,0 +1,137 @@
+---
+/**
+ * Guide §7.7. 64px on mobile, 72px from md up. Transparent over a hero until
+ * the page has scrolled 40px, then Shell at 92% with a blur, a Mist rule and
+ * `shadow-sm`.
+ *
+ * While it is transparent it sits on a photograph, so it wears the knockout
+ * logo and Cloud links instead of the violet mark and Slate links — the same
+ * §9 contrast floor applies there as anywhere. `data-transparent` drives that
+ * swap, and the scroll script removes the attribute rather than juggling
+ * class lists.
+ *
+ * A dozen lines of vanilla script, not an island. The mobile menu is a
+ * `<details>` disclosure, so it works with no JS at all.
+ */
+import { Menu } from '@lucide/astro';
+import Section from '../layout/Section.astro';
+import Grid from '../layout/Grid.astro';
+import Logo from './Logo.astro';
+
+interface Props {
+  /** True on pages whose hero runs under the header. */
+  overHero?: boolean;
+}
+
+const { overHero = false } = Astro.props;
+
+const links = [
+  { href: '/reservar', label: 'Reservar' },
+  { href: '/sobre-kathu', label: 'Sobre kathu' },
+  { href: '/claves', label: 'Claves' },
+  { href: '/tienda', label: 'Tienda' },
+];
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+
+const link =
+  'font-body text-sm font-medium whitespace-nowrap no-underline transition-colors duration-fast';
+---
+
+<header
+  id="site-header"
+  data-over-hero={overHero ? '' : undefined}
+  data-transparent={overHero ? '' : undefined}
+  class="group fixed inset-x-0 top-0 z-40 bg-shell transition-[background-color,box-shadow] duration-base data-transparent:bg-transparent"
+>
+  <Section as="div" padding="none">
+    <Grid class="h-16 items-center md:h-18">
+      <a
+        href="/"
+        class="col-span-6 flex items-center no-underline md:col-span-4"
+        aria-label="kathu — inicio"
+      >
+        <span class="group-data-transparent:hidden">
+          <Logo height={36} />
+        </span>
+        <span class="hidden group-data-transparent:block">
+          <Logo variant="dark" height={36} />
+        </span>
+      </a>
+
+      {/* Four links need more than half the grid at exactly 768px, where the
+          nav first appears — otherwise "Sobre kathu" wraps onto two lines. */}
+      <nav
+        class="col-span-6 hidden items-center justify-end gap-8 md:col-span-8 md:flex"
+        aria-label="Principal"
+      >
+        {
+          links.map(({ href, label }) => (
+            <a
+              href={href}
+              aria-current={isActive(href) ? 'page' : undefined}
+              class:list={[
+                link,
+                isActive(href)
+                  ? 'text-ink underline decoration-violet-700 decoration-2 underline-offset-6 group-data-transparent:text-white group-data-transparent:decoration-white'
+                  : 'text-slate hover:text-ink group-data-transparent:text-cloud group-data-transparent:hover:text-white',
+              ]}
+            >
+              {label}
+            </a>
+          ))
+        }
+      </nav>
+
+      <details class="col-span-6 justify-self-end md:hidden">
+        <summary
+          class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-sm text-slate group-data-transparent:text-cloud [&::-webkit-details-marker]:hidden"
+          aria-label="Abrir el menú"
+        >
+          <Menu size={24} stroke-width={1.5} />
+        </summary>
+        {/* The panel is opaque Shell whatever the bar behind it is doing. */}
+        <ul
+          class="absolute inset-x-0 top-16 m-0 list-none border-t border-mist bg-shell px-5 py-4"
+        >
+          {
+            links.map(({ href, label }) => (
+              <li class="py-2">
+                <a
+                  href={href}
+                  aria-current={isActive(href) ? 'page' : undefined}
+                  class:list={[link, isActive(href) ? 'text-ink' : 'text-slate']}
+                >
+                  {label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </details>
+    </Grid>
+  </Section>
+</header>
+
+<script>
+  /**
+   * Only pages that run a hero under the header start transparent; everywhere
+   * else the header is Shell from the first paint and this just adds the rule.
+   */
+  const header = document.getElementById('site-header');
+
+  if (header) {
+    const overHero = header.dataset.overHero !== undefined;
+    const scrolled = ['backdrop-blur-[8px]', 'border-b', 'border-mist', 'shadow-sm'];
+
+    const sync = () => {
+      const on = window.scrollY > 40;
+      header.toggleAttribute('data-transparent', overHero && !on);
+      for (const token of scrolled) header.classList.toggle(token, on);
+    };
+
+    sync();
+    window.addEventListener('scroll', sync, { passive: true });
+  }
+</script>
