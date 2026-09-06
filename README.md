@@ -3,6 +3,28 @@
 pnpm-workspaces monorepo — one git repo holding an Astro client and a NestJS
 server side by side.
 
+## What this is
+
+The website of **kathu**, a holistic floral therapy practice for *familias
+multiespecie* — cats and the humans who care for them — run by a
+**florapeuta**. Interface copy is Spanish; code is English.
+
+| Part                                  | Stack                                               | State             |
+| :------------------------------------ | :-------------------------------------------------- | :---------------- |
+| Landing with a booking request form   | Astro (+ React island for the form)                 | planned           |
+| About page                            | Astro + Sanity                                      | planned           |
+| Blog `/claves`                        | Astro + Sanity, likes in Supabase                   | built, gaps below |
+| Shop `/tienda`                        | Astro + Shopify Storefront API                      | planned           |
+| Accounts (users, admins)              | Supabase Auth                                       | planned           |
+| Admin area (switch blocks/pages live) | Astro + NestJS + Supabase                           | planned           |
+| API                                   | NestJS — the only holder of the Supabase secret key | health only       |
+
+Work is spec-driven: every feature is a numbered spec, implemented end to
+end and closed with this README updated. The specs, the agent skills, the
+issue log and the design references live in local-only folders (`specs/`,
+`skills/`, `issues/`, `references/`, all gitignored) — this file is the
+tracked record of what exists. See the "Roadmap" section for the order.
+
 ## Structure
 
 ```text
@@ -42,10 +64,11 @@ Run from the repo root:
 | `pnpm dev:studio`                | Start only the Sanity Studio            |
 | `pnpm build`                     | Build every app                         |
 | `pnpm check`                     | Type-check every app                    |
+| `pnpm test`                      | Run every app's tests (after spec 03)   |
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
 | `pnpm --filter <app> add <pkg>`  | Add a dependency to one app             |
 
-`<app>` is `client` or `server`.
+`<app>`: `client`, `server`, or `studio`.
 
 ## Server
 
@@ -116,6 +139,10 @@ posts appear only after a rebuild. Point a Sanity webhook (Project → API →
 Webhooks) at the host's build hook so publishing triggers a deploy. For content
 to appear the instant it is published, the client would need an SSR adapter and
 `output: 'server'` — a hosting decision, not made here.
+
+> **Planned change.** Spec 04 moves the site to on-demand rendering with the
+> Node adapter, after which content appears on publish and no webhook or
+> rebuild is needed. This section is retired when that spec closes.
 
 ## Likes (Supabase)
 
@@ -193,6 +220,46 @@ Deliberately not built yet. Listed roughly in the order they would pay off.
 - [ ] **Add topics of the post.** Add in the schema of Sanity and as badges in the
       frontend a set of possible values around the topics dealt with in the post,
       with a maximum of 3 selections, being estrés / agresividad / juego / etc.
+
+## Roadmap
+
+In dependency order. Each line is a spec; the number is the file in the
+local `specs/` folder, and the branch that delivers it carries the same
+name (`02-design-system-foundation`). Status here is updated when a spec
+closes.
+
+| #   | Spec                                                                      | Status   |
+| :-- | :------------------------------------------------------------------------ | :------- |
+| 01  | Client blog scaffolding: `/claves` on Sanity, Studio app, likes on        |          |
+|     | Supabase (branch `01-client-blog-scafolding`, PR #1)                      | done     |
+| 02  | Design system foundation (Tailwind v4, tokens, header/footer, primitives) | todo     |
+| 03  | Test tooling (Vitest client/packages, Jest server, `pnpm test`)           | todo     |
+| 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
+|     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | todo     |
+| 05  | Landing page blocks                                                       | todo     |
+| 06  | Booking request form (*reserva*)                                          | todo     |
+| 06b | Booking email notifications                                               | deferred |
+| 07  | About page                                                                | todo     |
+| 08  | Blog `/claves` completion (kind, topics, toasts)                          | todo     |
+| 09  | Auth with Supabase (profiles, roles, sessions)                            | todo     |
+| 10  | Admin visibility area (`/admin`)                                          | todo     |
+| 11  | Shop `/tienda` with Shopify                                               | todo     |
+| 12  | Likes with identity                                                       | todo     |
+| 13  | CI and deployment                                                         | todo     |
+
+### Environment variables (all apps)
+
+| App    | Variable                                                                         | Public | Since |
+| :----- | :------------------------------------------------------------------------------- | :----- | :---- |
+| client | `PUBLIC_SANITY_PROJECT_ID`, `PUBLIC_SANITY_DATASET`, `PUBLIC_SANITY_API_VERSION` | yes    | now   |
+| client | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`                         | yes    | now   |
+| client | `PUBLIC_API_URL`                                                                 | yes    | 04    |
+| client | `SHOPIFY_STORE_DOMAIN`, `PUBLIC_SHOPIFY_STOREFRONT_TOKEN`, `SHOPIFY_API_VERSION` | token  | 11    |
+| server | `PORT`, `CLIENT_ORIGIN`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`                   | never  | 04    |
+| studio | `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`                              | n/a    | now   |
+
+`PUBLIC_` variables are inlined into the browser bundle by Astro. The
+Supabase secret key lives only in `apps/server/.env`.
 
 ## Adding a shared package
 
