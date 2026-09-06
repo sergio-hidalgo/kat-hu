@@ -67,7 +67,7 @@ cp apps/client/.env.example apps/client/.env   # then fill in the project ID
 cp apps/studio/.env.example apps/studio/.env   # the same project ID
 ```
 
-Get the project ID from https://manage.sanity.io. The dataset is normally
+Get the project ID from `https://manage.sanity.io`. The dataset is normally
 `production` and must be **public** (Project → API → Datasets), or an
 unauthenticated read returns nothing. These values are not secrets — they
 appear in the public image CDN URLs — but `.env` stays untracked regardless.
@@ -86,7 +86,7 @@ pnpm --filter studio deploy        # hosts it at https://<name>.sanity.studio
 ```
 
 Deploying gives the content editor a URL with SSO login and no terminal. Invite
-them as an **Editor** from https://manage.sanity.io. Field labels are in
+them as an **Editor** from `https://manage.sanity.io`. Field labels are in
 Spanish, in `apps/studio/schemaTypes/post.ts`.
 
 ### Schema contract
@@ -96,8 +96,8 @@ Spanish, in `apps/studio/schemaTypes/post.ts`.
 in `apps/studio/schemaTypes/post.ts`. Renaming a field on one side without the
 other silently empties the section — the two files are a contract.
 
-| Field         | Type               | Required | Used for                               |
-| :------------ | :----------------- | :------- | :------------------------------------- |
+| Field         | Type               | Required | Used for                                |
+| :------------ | :----------------- | :------- | :-------------------------------------- |
 | `title`       | `string`           | yes      | Card + page heading, `<title>`          |
 | `slug`        | `slug`             | yes      | URL: `/claves/<slug>/`                  |
 | `excerpt`     | `text`             | no       | Card summary; falls back to body start  |
@@ -158,6 +158,41 @@ realtime subscription — a reader sees new counts on refresh.
 
 If Supabase is unreachable the counts fall back to zero and the page still
 builds and renders; likes are additive, not load-bearing.
+
+## Planned work — /claves
+
+Deliberately not built yet. Listed roughly in the order they would pay off.
+
+- [ ] **Live counts without a refresh.** Today counts are read at build time and
+      again on each page load; a like by someone else shows up on the next
+      refresh. A Supabase Realtime subscription on `post_likes` would push
+      changes and let the featured row re-sort in place. Deferred on purpose —
+      per-load reads are cheaper and the page has no other live behaviour.
+
+- [ ] **Know whether a reader already liked a post, across sessions.** There is
+      no auth and no session identity, so the site cannot answer this today.
+      Needs either Supabase Auth (even anonymous sign-in) or a server-issued
+      visitor id, plus a `post_likes_by_visitor` table keyed on
+      `(visitor_id, post_id)` — which also turns the count into a derived value
+      rather than a mutable counter.
+
+- [ ] **Replace the `localStorage` guard with real enforcement.** Same work as
+      the item above: `kat-hu:liked-posts` is per-browser and clearable, so it
+      only stops casual double-liking. Until identity exists, the RPCs are open
+      endpoints and a determined visitor can inflate a count. Rate limiting at
+      the edge would narrow the gap without full auth.
+
+- [ ] **Toast on like / unlike.** Confirmation that the click registered,
+      and somewhere to surface the failure path the button currently only
+      logs to the console.
+
+- [ ] **Add type of post.** Add in the schema of Sanity and as badges in the
+      frontend a set of possible values around the types of components or posts
+      being articulos / trucos / consejos / guías.
+
+- [ ] **Add topics of the post.** Add in the schema of Sanity and as badges in the
+      frontend a set of possible values around the topics dealt with in the post,
+      with a maximum of 3 selections, being estrés / agresividad / juego / etc.
 
 ## Adding a shared package
 
