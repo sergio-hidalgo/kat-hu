@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "command": "pnpm --filter client dev",
+      "name": "Client: Astro dev server",
+      "request": "launch",
+      "type": "node-terminal"
+    },
+    {
+      "command": "pnpm --filter server dev",
+      "name": "Server: Nest dev server",
+      "request": "launch",
+      "type": "node-terminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Dev: client + server",
+      "configurations": [
+        "Client: Astro dev server",
+        "Server: Nest dev server"
+      ]
+    }
+  ]
+}
