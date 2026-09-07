@@ -29,19 +29,28 @@ const dealt = Array.from({ length: COLUMNS }, (_, column) =>
 );
 
 /**
- * At `lg` the middle column is raised so its first card starts level with the
- * top of the heading, which is what makes the section read as a masonry rather
- * than three lists. It is done with row placement instead of a negative margin
- * so it tracks the fluid `text-h2` size by itself: the heading and the middle
- * column share row 1, the outer two sit on row 2, one `gap-y-8` below
- * (issue I-003). Below `lg` there is no offset — the heading keeps its own
- * full-width row.
+ * The gap between two stacked cards is the same as the gap between two
+ * columns, so the spacing reads square at any width. That gap is one grid unit
+ * — `viewport / 25` by construction (I-001) — which no CSS length inside a
+ * flex child can name, so the script publishes it as `--card-gap` on `:root`
+ * and refreshes it on resize. The `4vw` fallback is the same number to within
+ * a scrollbar, so the page is right without JS too (issue I-004).
  */
-const columnClass = 'col-span-12 flex flex-col gap-8 md:col-span-6 lg:col-span-4';
+const cardGap = 'gap-y-[var(--card-gap,4vw)]';
+
+/**
+ * The second column is raised so its first card starts level with the top of
+ * the heading, which is what makes the section read as a masonry rather than
+ * as lists. Row placement rather than a negative margin, so it tracks the
+ * fluid `text-h2` size by itself: the heading and that column share row 1, the
+ * others sit on row 2 (issue I-003). It holds at two columns as well as three
+ * (I-004); at one there is nothing to stagger against.
+ */
+const columnClass = `col-span-12 flex flex-col ${cardGap} md:col-span-6 lg:col-span-4`;
 
 const columnPlacement = [
-  'lg:col-start-1 lg:row-start-2',
-  'lg:col-start-5 lg:row-start-1 lg:row-span-2',
+  'md:col-start-1 md:row-start-2 lg:col-start-1',
+  'md:col-start-7 md:row-start-1 md:row-span-2 lg:col-start-5',
   'lg:col-start-9 lg:row-start-2',
 ];
 ---
@@ -62,7 +71,7 @@ const columnPlacement = [
     ) : (
       <>
         <Section id="featured" padding="sm">
-          <Grid class="gap-y-8">
+          <Grid class={cardGap}>
             <h2 class="col-span-12 text-h2">Los drops que más gustan</h2>
             <div class="contents" id="featured-grid">
               {ranked.featured.map((post) => (
@@ -74,7 +83,7 @@ const columnPlacement = [
 
         <Section id="recent" padding="sm" hidden={ranked.rest.length === 0}>
           <Grid class="gap-y-8">
-            <h2 class="col-span-12 text-h2 lg:col-span-4 lg:row-start-1">
+            <h2 class="col-span-12 text-h2 md:col-span-6 md:row-start-1 lg:col-span-4">
               También puedes leer...
             </h2>
             {
@@ -105,6 +114,18 @@ const columnPlacement = [
   const columns = Array.from(
     document.querySelectorAll<HTMLElement>('[data-recent-column]'),
   );
+
+  /**
+   * One grid unit, which is what separates two columns: the screen is 25 equal
+   * units by construction (I-001). `clientWidth` excludes the scrollbar, which
+   * is the same width the grid's percentages resolve against, so the vertical
+   * gap between stacked cards matches the horizontal one exactly rather than
+   * to within a scrollbar (issue I-004).
+   */
+  const syncCardGap = () => {
+    const root = document.documentElement;
+    root.style.setProperty('--card-gap', `${root.clientWidth / 25}px`);
+  };
 
   /** Matches the `md:` and `lg:` breakpoints the column classes are written to. */
   const columnCount = () => {
@@ -149,6 +170,10 @@ const columnPlacement = [
   window.addEventListener(
     'resize',
     () => {
+      // The gap tracks every pixel of width; the columns only need re-dealing
+      // when their number actually changes.
+      syncCardGap();
+
       const next = columnCount();
       if (next === current) return;
       current = next;
@@ -196,6 +221,7 @@ const columnPlacement = [
 
   // Correct the server-rendered three-column deal for narrower viewports before
   // the counts come back, so the page is not laid out wrong while it waits.
+  syncCardGap();
   if (columns.length > 0) layout(readItems());
   refreshLikes();
 </script>
