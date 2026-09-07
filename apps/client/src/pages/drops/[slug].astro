@@ -6,18 +6,18 @@ import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
 import { getAllPosts, formatDate, type Post } from '../../data/posts';
 import { imageUrl, portableTextToHtml } from '../../lib/sanity';
-import { getLikeCounts, likesEnabled } from '../../lib/likes';
+import { likesEnabled } from '../../lib/likes';
 
 export const getStaticPaths = (async () => {
-  const [posts, counts] = await Promise.all([getAllPosts(), getLikeCounts()]);
+  const posts = await getAllPosts();
 
   return posts.map((post) => ({
     params: { slug: post.slug },
-    props: { post, likes: counts[post.id] ?? 0 },
+    props: { post },
   }));
 }) satisfies GetStaticPaths;
 
-const { post, likes } = Astro.props as { post: Post; likes: number };
+const { post } = Astro.props as { post: Post };
 const bodyHtml = portableTextToHtml(post.body);
 
 /**
@@ -50,20 +50,21 @@ const proseBody = [
       <article class="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-8 lg:col-start-3">
         <h1 class="text-h1">{post.title}</h1>
 
-        <p class="mt-1 mb-8 flex max-w-none items-center gap-4 text-xs text-slate">
+        {/* A real control, not the count badge the cards wear: no border, no
+            total — the totals belong on /drops, where they are compared. 44px
+            target (guide §9), 24px icon because it stands alone (§6). */}
+        <p class="mt-1 mb-8 flex max-w-none items-center gap-2 text-xs text-slate">
           <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
           {
             likesEnabled && (
               <button
                 type="button"
-                class="like-button inline-flex items-center gap-1.5 rounded-full border border-mist bg-shell px-3 py-1.5 font-body text-xs text-slate tabular-nums transition-colors duration-fast hover:border-red hover:text-ink disabled:cursor-progress"
+                class="like-button relative -my-2 inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:bg-cloud hover:text-ink active:bg-mist disabled:cursor-progress"
                 data-post-id={post.id}
-                data-likes={likes}
                 aria-pressed="false"
-                aria-label={`Me gusta · ${likes}`}
+                aria-label="Me gusta"
               >
-                <Heart class="heart" size={16} stroke-width={1.5} />
-                <span class="like-count">{likes}</span>
+                <Heart class="heart" size={24} stroke-width={1.5} />
               </button>
             )
           }
@@ -100,7 +101,6 @@ const proseBody = [
   if (button) {
     const postId = button.dataset.postId ?? '';
     const icon = button.querySelector('.heart');
-    const label = button.querySelector('.like-count');
 
     /**
      * Restored from localStorage, so a reload does not hand out a second like.
@@ -108,19 +108,57 @@ const proseBody = [
      */
     let liked = hasLiked(postId);
 
-    /**
-     * The count is the button's only visible text, so the accessible name has
-     * to contain it — otherwise a voice user asking for "me gusta" cannot
-     * match what they see.
-     */
     function paint(state: boolean) {
       icon?.classList.toggle('fill-red', state);
       icon?.classList.toggle('text-red', state);
       button!.setAttribute('aria-pressed', String(state));
-      button!.setAttribute(
-        'aria-label',
-        `${state ? 'Ya no me gusta' : 'Me gusta'} · ${label?.textContent ?? ''}`,
+      button!.setAttribute('aria-label', state ? 'Ya no me gusta' : 'Me gusta');
+    }
+
+    /**
+     * A red heart lifts out of the button, swaying as if in the wind, and fades.
+     * Motion answers an action, which is the one kind guide §8 allows.
+     *
+     * Driven by the Web Animations API rather than CSS keyframes, so it needs
+     * no stylesheet and `global.css` stays a single import. Nothing is spawned
+     * when the reader asks for reduced motion.
+     */
+    function floatHeart() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const heart = icon?.cloneNode(true) as SVGElement | undefined;
+      if (!heart) return;
+
+      heart.classList.add(
+        'pointer-events-none',
+        'absolute',
+        'left-1/2',
+        '-ml-3',
+        'top-1/2',
+        '-mt-3',
+        'fill-red',
+        'text-red',
       );
+      heart.setAttribute('aria-hidden', 'true');
+      button!.append(heart);
+
+      // Sways twice, each a little narrower, while it rises and fades out.
+      heart
+        .animate(
+          [
+            { transform: 'translate(0, 0) scale(0.6)', opacity: 0 },
+            { transform: 'translate(-8px, -28px) scale(1)', opacity: 1, offset: 0.2 },
+            { transform: 'translate(9px, -62px) scale(1)', opacity: 1, offset: 0.45 },
+            { transform: 'translate(-6px, -98px) scale(0.95)', opacity: 0.7, offset: 0.7 },
+            { transform: 'translate(4px, -140px) scale(0.85)', opacity: 0 },
+          ],
+          {
+            duration: 1400,
+            easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+            fill: 'forwards',
+          },
+        )
+        .addEventListener('finish', () => heart.remove());
     }
 
     paint(liked);
@@ -128,18 +166,19 @@ const proseBody = [
     button.addEventListener('click', async () => {
       const next = !liked;
 
-      // Paint immediately, then reconcile with the total the RPC returns.
+      // Paint immediately, then reconcile with what the RPC actually recorded.
       button.disabled = true;
       paint(next);
+      if (next) floatHeart();
 
       try {
-        const total = next ? await likePost(postId) : await unlikePost(postId);
+        if (next) {
+          await likePost(postId);
+        } else {
+          await unlikePost(postId);
+        }
         liked = next;
         setLiked(postId, next);
-        if (label) label.textContent = String(total);
-        button.dataset.likes = String(total);
-        // Repaint so the accessible name picks up the total, not the old count.
-        paint(liked);
       } catch (error) {
         // Roll the button back so it never claims a click that did not land,
         // and leave the stored state untouched.

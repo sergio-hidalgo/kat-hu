@@ -14,13 +14,28 @@ const counts = await getLikeCounts();
 const ranked = rankPosts(
   posts.map((post) => ({ ...post, likes: counts[post.id] ?? 0 })),
 );
+
+/**
+ * The second section is a masonry: three columns, each packing its own cards,
+ * with the reading order running across the columns — newest at 1, then 2, 3,
+ * and 4 under 1. CSS has no shipping row-major masonry (`columns` fills
+ * column-major, which would read 1,2 down the first column), so posts are
+ * dealt into the columns round-robin instead, which produces exactly that
+ * order. The browser re-deals them for two or one column — see the script.
+ */
+const COLUMNS = 3;
+const dealt = Array.from({ length: COLUMNS }, (_, column) =>
+  ranked.rest.filter((_post, index) => index % COLUMNS === column),
+);
+
+const columnClass =
+  'col-span-12 flex flex-col gap-8 md:col-span-6 lg:col-span-4';
 ---
 
 <BaseLayout
   title="Drops"
   description="Ideas y prácticas de terapia floral para familias multiespecie."
 >
-
   {
     posts.length === 0 ? (
       <Section padding="sm">
@@ -45,12 +60,16 @@ const ranked = rankPosts(
 
         <Section id="recent" padding="sm" hidden={ranked.rest.length === 0}>
           <Grid class="gap-y-8">
-            <h2 class="col-span-12 text-h2">Más recientes</h2>
-            <div class="contents" id="recent-grid">
-              {ranked.rest.map((post) => (
-                <PostCard {...post} class="col-span-12 md:col-span-6" />
-              ))}
-            </div>
+            <h2 class="col-span-12 text-h2">También puedes leer...</h2>
+            {
+              dealt.map((column, index) => (
+                <div class={columnClass} data-recent-column={index}>
+                  {column.map((post) => (
+                    <PostCard {...post} />
+                  ))}
+                </div>
+              ))
+            }
           </Grid>
         </Section>
       </>
@@ -61,15 +80,71 @@ const ranked = rankPosts(
 <script>
   import { getLikeCounts, rankPosts, likesEnabled } from '../../lib/likes';
 
+  type Item = { node: HTMLElement; id: string; date: string; likes: number };
+
+  const featuredGrid = document.getElementById('featured-grid');
+  const columns = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-recent-column]'),
+  );
+
+  /** Matches the `md:` and `lg:` breakpoints the column classes are written to. */
+  const columnCount = () => {
+    if (window.matchMedia('(min-width: 1024px)').matches) return 3;
+    if (window.matchMedia('(min-width: 768px)').matches) return 2;
+    return 1;
+  };
+
+  /**
+   * Deal the cards across the visible columns so the reading order runs
+   * left-to-right: with three columns, 1 2 3 on the first row and 4 5 6 under
+   * them. Unused columns are hidden; the ones left over widen on their own,
+   * because their span classes already say what to do at each breakpoint.
+   */
+  function layout(items: Item[]) {
+    const count = columnCount();
+
+    columns.forEach((column, index) => {
+      column.hidden = index >= count;
+      if (index >= count) column.replaceChildren();
+    });
+
+    items.forEach((item, index) => {
+      columns[index % count]?.append(item.node);
+    });
+  }
+
+  /** Read straight from the DOM, so a resize does not need a second fetch. */
+  const readItems = (): Item[] =>
+    columns
+      .flatMap((column) => Array.from(column.children))
+      .filter((node): node is HTMLElement => node instanceof HTMLElement)
+      .map((node) => ({
+        node,
+        id: node.dataset.postId ?? '',
+        date: node.dataset.date ?? '',
+        likes: Number(node.dataset.likes ?? 0),
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+  let current = columnCount();
+  window.addEventListener(
+    'resize',
+    () => {
+      const next = columnCount();
+      if (next === current) return;
+      current = next;
+      layout(readItems());
+    },
+    { passive: true },
+  );
+
   /**
    * Counts are read on every page load rather than pushed live, so the order
    * here can differ from the one baked in at build time. Re-sorting client-side
    * keeps a static page honest without an SSR adapter.
    */
   async function refreshLikes() {
-    const featuredGrid = document.getElementById('featured-grid');
-    const recentGrid = document.getElementById('recent-grid');
-    if (!likesEnabled || !featuredGrid || !recentGrid) return;
+    if (!likesEnabled || !featuredGrid || columns.length === 0) return;
 
     const cards = Array.from(
       document.querySelectorAll<HTMLElement>('[data-post-id]'),
@@ -94,11 +169,14 @@ const ranked = rankPosts(
     // append() moves an existing node rather than copying it, so this is a
     // reorder, not a re-render: images already fetched are not re-requested.
     for (const item of featured) featuredGrid.append(item.node);
-    for (const item of rest) recentGrid.append(item.node);
+    layout(rest);
 
     const recent = document.getElementById('recent');
     if (recent) recent.hidden = rest.length === 0;
   }
 
+  // Correct the server-rendered three-column deal for narrower viewports before
+  // the counts come back, so the page is not laid out wrong while it waits.
+  if (columns.length > 0) layout(readItems());
   refreshLikes();
 </script>
