@@ -1,4 +1,5 @@
 ---
+import { ChevronLeft, ChevronRight } from '@lucide/astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
@@ -9,24 +10,23 @@ import { getLikeCounts, rankPosts } from '../../lib/likes';
 const posts = await getAllPosts();
 const counts = await getLikeCounts();
 
-// Pre-rendered with the counts as they stood at build time, so the first paint
-// is already in a sensible order. The browser then refreshes and re-sorts.
-const ranked = rankPosts(
-  posts.map((post) => ({ ...post, likes: counts[post.id] ?? 0 })),
-);
-
 /**
- * The second section is a masonry: three columns, each packing its own cards,
- * with the reading order running across the columns — newest at 1, then 2, 3,
- * and 4 under 1. CSS has no shipping row-major masonry (`columns` fills
- * column-major, which would read 1,2 down the first column), so posts are
- * dealt into the columns round-robin instead, which produces exactly that
- * order. The browser re-deals them for two or one column — see the script.
+ * Pre-rendered for the widest layout — three featured, the rest dealt across
+ * three columns — because that is the one the server can be sure of. How many
+ * posts are featured and how many fit on a page both depend on the column
+ * count, which only the browser knows, so the script re-ranks, re-deals and
+ * paginates on load and whenever the count changes (issue I-006).
  */
 const COLUMNS = 3;
-const dealt = Array.from({ length: COLUMNS }, (_, column) =>
-  ranked.rest.filter((_post, index) => index % COLUMNS === column),
+const ranked = rankPosts(
+  posts.map((post) => ({ ...post, likes: counts[post.id] ?? 0 })),
+  COLUMNS,
 );
+
+const deal = <T,>(items: T[]) =>
+  Array.from({ length: COLUMNS }, (_, column) =>
+    items.filter((_item, index) => index % COLUMNS === column),
+  );
 
 /**
  * The gap between two stacked cards is the same as the gap between two
@@ -39,20 +39,28 @@ const dealt = Array.from({ length: COLUMNS }, (_, column) =>
 const cardGap = 'gap-y-[var(--card-gap,4vw)]';
 
 /**
- * The second column is raised so its first card starts level with the top of
- * the heading, which is what makes the section read as a masonry rather than
- * as lists. Row placement rather than a negative margin, so it tracks the
- * fluid `text-h2` size by itself: the heading and that column share row 1, the
- * others sit on row 2 (issue I-003). It holds at two columns as well as three
- * (I-004); at one there is nothing to stagger against.
+ * Both blocks are built from the same column containers, and a card carries no
+ * placement of its own — that is what lets the script move a card between them
+ * when the column count changes (issue I-006).
  */
 const columnClass = `col-span-12 flex flex-col ${cardGap} md:col-span-6 lg:col-span-4`;
 
+/**
+ * In the second block the middle column is raised so its first card starts
+ * level with the top of the heading, which is what makes the section read as a
+ * masonry rather than as lists. Row placement rather than a negative margin,
+ * so it tracks the fluid `text-h2` size by itself: the heading and that column
+ * share row 1, the others sit on row 2 (issue I-003). It holds at two columns
+ * as well as three (I-004); at one there is nothing to stagger against.
+ */
 const columnPlacement = [
   'md:col-start-1 md:row-start-2 lg:col-start-1',
   'md:col-start-7 md:row-start-1 md:row-span-2 lg:col-start-5',
   'lg:col-start-9 lg:row-start-2',
 ];
+
+const arrowClass =
+  'inline-flex h-11 w-11 items-center justify-center rounded-full border border-mist bg-shell text-slate transition-colors duration-fast hover:bg-cloud hover:text-ink active:bg-mist disabled:cursor-not-allowed disabled:border-mist disabled:bg-cloud disabled:text-mist disabled:hover:bg-cloud';
 ---
 
 <BaseLayout
@@ -73,11 +81,15 @@ const columnPlacement = [
         <Section id="featured" padding="sm">
           <Grid class={cardGap}>
             <h2 class="col-span-12 text-h2">Los drops que más gustan</h2>
-            <div class="contents" id="featured-grid">
-              {ranked.featured.map((post) => (
-                <PostCard {...post} featured class="col-span-12 md:col-span-6 lg:col-span-4" />
-              ))}
-            </div>
+            {
+              deal(ranked.featured).map((column, index) => (
+                <div class={columnClass} data-featured-column={index}>
+                  {column.map((post) => (
+                    <PostCard {...post} />
+                  ))}
+                </div>
+              ))
+            }
           </Grid>
         </Section>
 
@@ -90,7 +102,7 @@ const columnPlacement = [
               También puedes leer...
             </h2>
             {
-              dealt.map((column, index) => (
+              deal(ranked.rest).map((column, index) => (
                 <div
                   class:list={[columnClass, columnPlacement[index]]}
                   data-recent-column={index}
@@ -101,6 +113,25 @@ const columnPlacement = [
                 </div>
               ))
             }
+
+            {/* The arrows are fixed, so they are rendered here with their
+                icons; the script fills in the numbers and works the disabled
+                state. Hidden until it does, so a reader without JS gets every
+                card and no controls rather than a nav that cannot move. */}
+            <nav
+              id="recent-pages"
+              class="col-span-12 hidden items-center justify-center gap-2 md:row-start-3"
+              aria-label="Paginación"
+            >
+              <button type="button" class={arrowClass} data-page-step="-1" aria-label="Página anterior">
+                <ChevronLeft size={20} stroke-width={1.5} />
+              </button>
+              <span id="recent-page-numbers" class="flex items-center gap-1"></span>
+              <button type="button" class={arrowClass} data-page-step="1" aria-label="Página siguiente">
+                <ChevronRight size={20} stroke-width={1.5} />
+              </button>
+              <span id="recent-page-status" class="sr-only" aria-live="polite"></span>
+            </nav>
           </Grid>
         </Section>
       </>
@@ -113,10 +144,30 @@ const columnPlacement = [
 
   type Item = { node: HTMLElement; id: string; date: string; likes: number };
 
-  const featuredGrid = document.getElementById('featured-grid');
-  const columns = Array.from(
+  const featuredColumns = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-featured-column]'),
+  );
+  const recentColumns = Array.from(
     document.querySelectorAll<HTMLElement>('[data-recent-column]'),
   );
+  const nav = document.getElementById('recent-pages');
+  const numbers = document.getElementById('recent-page-numbers');
+  const status = document.getElementById('recent-page-status');
+
+  /** Matches the `md:` and `lg:` breakpoints the column classes are written to. */
+  const columnCount = () => {
+    if (window.matchMedia('(min-width: 1024px)').matches) return 3;
+    if (window.matchMedia('(min-width: 768px)').matches) return 2;
+    return 1;
+  };
+
+  /**
+   * Three posts are promoted only when three fit across; otherwise the third
+   * drops into the second block and sorts by date with everything else. A page
+   * holds two rows of cards, so four when a row is one card wide.
+   */
+  const featuredCount = (columns: number) => (columns === 3 ? 3 : 2);
+  const pageSize = (columns: number) => (columns === 1 ? 4 : 6);
 
   /**
    * One grid unit, which is what separates two columns: the screen is 25 equal
@@ -130,12 +181,18 @@ const columnPlacement = [
     root.style.setProperty('--card-gap', `${root.clientWidth / 25}px`);
   };
 
-  /** Matches the `md:` and `lg:` breakpoints the column classes are written to. */
-  const columnCount = () => {
-    if (window.matchMedia('(min-width: 1024px)').matches) return 3;
-    if (window.matchMedia('(min-width: 768px)').matches) return 2;
-    return 1;
-  };
+  /** Every card on the page, in date order, read once from the server's markup. */
+  const items: Item[] = [...featuredColumns, ...recentColumns]
+    .flatMap((column) => Array.from(column.children))
+    .filter((node): node is HTMLElement => node instanceof HTMLElement)
+    .map((node) => ({
+      node,
+      id: node.dataset.postId ?? '',
+      date: node.dataset.date ?? '',
+      likes: Number(node.dataset.likes ?? 0),
+    }));
+
+  let page = 1;
 
   /**
    * Deal the cards across the visible columns so the reading order runs
@@ -143,88 +200,119 @@ const columnPlacement = [
    * them. Unused columns are hidden; the ones left over widen on their own,
    * because their span classes already say what to do at each breakpoint.
    */
-  function layout(items: Item[]) {
-    const count = columnCount();
-
+  function fill(columns: HTMLElement[], count: number, cards: Item[]) {
     columns.forEach((column, index) => {
       column.hidden = index >= count;
-      if (index >= count) column.replaceChildren();
+      column.replaceChildren();
     });
-
-    items.forEach((item, index) => {
-      columns[index % count]?.append(item.node);
-    });
+    cards.forEach((card, index) => columns[index % count]?.append(card.node));
   }
 
-  /** Read straight from the DOM, so a resize does not need a second fetch. */
-  const readItems = (): Item[] =>
-    columns
-      .flatMap((column) => Array.from(column.children))
-      .filter((node): node is HTMLElement => node instanceof HTMLElement)
-      .map((node) => ({
-        node,
-        id: node.dataset.postId ?? '',
-        date: node.dataset.date ?? '',
-        likes: Number(node.dataset.likes ?? 0),
-      }))
-      .sort((a, b) => b.date.localeCompare(a.date));
+  function paint() {
+    const columns = columnCount();
+    const { featured, rest } = rankPosts(items, featuredCount(columns));
+
+    const size = pageSize(columns);
+    const pages = Math.max(1, Math.ceil(rest.length / size));
+    page = Math.min(Math.max(page, 1), pages);
+
+    fill(featuredColumns, columns, featured);
+    fill(recentColumns, columns, rest.slice((page - 1) * size, page * size));
+
+    const recent = document.getElementById('recent');
+    if (recent) recent.hidden = rest.length === 0;
+
+    if (!nav || !numbers || !status) return;
+
+    // `hidden` and `flex` are both display utilities, so exactly one of them
+    // is on the element at a time rather than leaving it to source order.
+    nav.classList.toggle('hidden', pages < 2);
+    nav.classList.toggle('flex', pages > 1);
+
+    if (pages < 2) {
+      numbers.replaceChildren();
+      return;
+    }
+
+    numbers.replaceChildren(
+      ...Array.from({ length: pages }, (_, index) => {
+        const number = index + 1;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.page = String(number);
+        button.textContent = String(number);
+        button.className =
+          'inline-flex h-11 min-w-11 items-center justify-center rounded-full px-3 font-body text-xs tabular-nums transition-colors duration-fast ' +
+          (number === page
+            ? 'bg-violet-700 text-cloud'
+            : 'text-slate hover:bg-cloud hover:text-ink active:bg-mist');
+        if (number === page) button.setAttribute('aria-current', 'page');
+        button.setAttribute('aria-label', `Página ${number}`);
+        return button;
+      }),
+    );
+
+    for (const arrow of nav.querySelectorAll<HTMLButtonElement>('[data-page-step]')) {
+      const step = Number(arrow.dataset.pageStep);
+      arrow.disabled = step < 0 ? page === 1 : page === pages;
+    }
+
+    status.textContent = `Página ${page} de ${pages}`;
+  }
+
+  nav?.addEventListener('click', (event) => {
+    const target = (event.target as HTMLElement | null)?.closest('button');
+    if (!target) return;
+
+    if (target.dataset.page) page = Number(target.dataset.page);
+    else if (target.dataset.pageStep) page += Number(target.dataset.pageStep);
+    else return;
+
+    paint();
+    // Keep the section's top in view: a later page is otherwise entered
+    // half-way down, where the cards used to be.
+    document.getElementById('recent')?.scrollIntoView({ block: 'start' });
+  });
 
   let current = columnCount();
   window.addEventListener(
     'resize',
     () => {
-      // The gap tracks every pixel of width; the columns only need re-dealing
-      // when their number actually changes.
+      // The gap tracks every pixel of width; the cards only need re-dealing
+      // when the column count actually changes.
       syncCardGap();
 
       const next = columnCount();
       if (next === current) return;
       current = next;
-      layout(readItems());
+      paint();
     },
     { passive: true },
   );
 
   /**
-   * Counts are read on every page load rather than pushed live, so the order
-   * here can differ from the one baked in at build time. Re-sorting client-side
-   * keeps a static page honest without an SSR adapter.
+   * Counts are read on every page load rather than pushed live, so the ranking
+   * here can differ from the one baked in at build time. Re-reading them keeps
+   * a static page honest without an SSR adapter.
    */
   async function refreshLikes() {
-    if (!likesEnabled || !featuredGrid || columns.length === 0) return;
-
-    const cards = Array.from(
-      document.querySelectorAll<HTMLElement>('[data-post-id]'),
-    );
-    if (cards.length === 0) return;
+    if (!likesEnabled) return;
 
     const counts = await getLikeCounts();
 
-    const items = cards.map((node) => {
-      const id = node.dataset.postId ?? '';
-      const likes = counts[id] ?? 0;
+    for (const item of items) {
+      item.likes = counts[item.id] ?? 0;
+      item.node.dataset.likes = String(item.likes);
+      const label = item.node.querySelector('.like-count');
+      if (label) label.textContent = String(item.likes);
+    }
 
-      node.dataset.likes = String(likes);
-      const label = node.querySelector('.like-count');
-      if (label) label.textContent = String(likes);
-
-      return { node, id, date: node.dataset.date ?? '', likes };
-    });
-
-    const { featured, rest } = rankPosts(items);
-
-    // append() moves an existing node rather than copying it, so this is a
-    // reorder, not a re-render: images already fetched are not re-requested.
-    for (const item of featured) featuredGrid.append(item.node);
-    layout(rest);
-
-    const recent = document.getElementById('recent');
-    if (recent) recent.hidden = rest.length === 0;
+    paint();
   }
 
-  // Correct the server-rendered three-column deal for narrower viewports before
-  // the counts come back, so the page is not laid out wrong while it waits.
+  // Lay the page out for this viewport before the counts come back, so it is
+  // not sitting in the server's three-column shape while it waits.
   syncCardGap();
-  if (columns.length > 0) layout(readItems());
+  if (items.length > 0) paint();
   refreshLikes();
 </script>

@@ -6,32 +6,27 @@ import Card from '../ui/Card.astro';
 
 type Props = Pick<Post, 'id' | 'slug' | 'title' | 'excerpt' | 'date' | 'mainImage'> & {
   likes: number;
-  /** Featured cards sit three-up, so they get a wider image crop. */
-  featured?: boolean;
-  class?: string;
 };
 
-const {
-  id,
-  slug,
-  title,
-  excerpt,
-  date,
-  mainImage,
-  likes,
-  featured = false,
-  class: className,
-} = Astro.props;
+const { id, slug, title, excerpt, date, mainImage, likes } = Astro.props;
 
 const href = `/drops/${slug}/`;
-const width = featured ? 600 : 800;
-const height = featured ? 400 : 450;
+
+/**
+ * One crop for every card, featured or not: 16:9, the editorial ratio in guide
+ * §6. The script moves cards between the two blocks as the column count
+ * changes (issue I-006), so a card cannot have a shape that depends on where
+ * it is — and one ratio is also what lets a masonry of varying-height cards
+ * read as one set, the height coming from the text rather than the picture.
+ */
+const width = 800;
+const height = 450;
 ---
 
 <Card
   interactive
   padded={false}
-  class:list={['flex flex-col overflow-hidden', className]}
+  class="flex flex-col overflow-hidden"
   data-post-id={id}
   data-date={date}
   data-likes={likes}
