@@ -82,7 +82,10 @@ const columnPlacement = [
         </Section>
 
         <Section id="recent" padding="sm" hidden={ranked.rest.length === 0}>
-          <Grid class="gap-y-8">
+          {/* The same row gap as the featured section, so both headings sit
+              the same distance above their cards — and the same unit as every
+              other gap on the page (issue I-005). */}
+          <Grid class={cardGap}>
             <h2 class="col-span-12 text-h2 md:col-span-6 md:row-start-1 lg:col-span-4">
               También puedes leer...
             </h2>
