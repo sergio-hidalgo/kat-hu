@@ -13,7 +13,7 @@ multiespecie* — cats and the humans who care for them — run by a
 | :------------------------------------ | :-------------------------------------------------- | :---------------- |
 | Landing with a booking request form   | Astro (+ React island for the form)                 | planned           |
 | About page                            | Astro + Sanity                                      | planned           |
-| Blog `/claves`                        | Astro + Sanity, likes in Supabase                   | built, gaps below |
+| Blog `/drops`                         | Astro + Sanity, likes in Supabase                   | built, gaps below |
 | Shop `/tienda`                        | Astro + Shopify Storefront API                      | planned           |
 | Accounts (users, admins)              | Supabase Auth                                       | planned           |
 | Admin area (switch blocks/pages live) | Astro + NestJS + Supabase                           | planned           |
@@ -113,7 +113,7 @@ Override the port with the `PORT` environment variable.
 
 ## Content (Sanity CMS)
 
-The client's `/claves` section reads its posts from Sanity at **build time**.
+The client's `/drops` section reads its posts from Sanity at **build time**.
 The app only reads — it holds no write token and cannot modify content.
 
 ```sh
@@ -145,7 +145,7 @@ Spanish, in `apps/studio/schemaTypes/post.ts`.
 
 ### Schema contract
 
-`/claves` queries document type `post` (set by `DOC_TYPE` in
+`/drops` queries document type `post` (set by `DOC_TYPE` in
 `apps/client/src/data/posts.ts`) and reads the fields below, which are defined
 in `apps/studio/schemaTypes/post.ts`. Renaming a field on one side without the
 other silently empties the section — the two files are a contract.
@@ -153,7 +153,7 @@ other silently empties the section — the two files are a contract.
 | Field         | Type               | Required | Used for                                |
 | :------------ | :----------------- | :------- | :-------------------------------------- |
 | `title`       | `string`           | yes      | Card + page heading, `<title>`          |
-| `slug`        | `slug`             | yes      | URL: `/claves/<slug>/`                  |
+| `slug`        | `slug`             | yes      | URL: `/drops/<slug>/`                   |
 | `excerpt`     | `text`             | no       | Card summary; falls back to body start  |
 | `publishedAt` | `datetime`         | no       | Ordering + date; falls back to created  |
 | `mainImage`   | `image` (hotspot)  | no       | Card thumbnail + page hero              |
@@ -208,7 +208,7 @@ slug keeps the post's likes.
 
 ### How the ordering works
 
-`/claves` shows the three most-liked posts under **Los que más gustan**, then
+`/drops` shows the three most-liked posts under **Los que más gustan**, then
 the rest by date under **Más recientes**. Counts are read twice: once at build
 time, so the first paint is already sensibly ordered, and once in the browser
 on each load, which refreshes the numbers and re-sorts the cards. There is no
@@ -217,7 +217,7 @@ realtime subscription — a reader sees new counts on refresh.
 If Supabase is unreachable the counts fall back to zero and the page still
 builds and renders; likes are additive, not load-bearing.
 
-## Planned work — /claves
+## Planned work — /drops
 
 Deliberately not built yet. Listed roughly in the order they would pay off.
 
@@ -261,7 +261,7 @@ closes.
 
 | #   | Spec                                                                      | Status   |
 | :-- | :------------------------------------------------------------------------ | :------- |
-| 01  | Client blog scaffolding: `/claves` on Sanity, Studio app, likes on        |          |
+| 01  | Client blog scaffolding: `/drops` on Sanity, Studio app, likes on         |          |
 |     | Supabase (branch `01-client-blog-scafolding`, PR #1)                      | done     |
 | 02  | Design system foundation (Tailwind v4, tokens, 12-column grid,            |          |
 |     | header/footer, UI primitives, `/estilo`)                                  | done     |
@@ -272,7 +272,7 @@ closes.
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |
 | 07  | About page                                                                | todo     |
-| 08  | Blog `/claves` completion (kind, topics, toasts)                          | todo     |
+| 08  | Blog `/drops` completion (kind, topics, toasts)                           | todo     |
 | 09  | Auth with Supabase (profiles, roles, sessions)                            | todo     |
 | 10  | Admin visibility area (`/admin`)                                          | todo     |
 | 11  | Shop `/tienda` with Shopify                                               | todo     |
