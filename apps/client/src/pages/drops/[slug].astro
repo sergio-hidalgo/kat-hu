@@ -38,6 +38,18 @@ const proseBody = [
   '[&_blockquote]:pl-5 [&_blockquote]:text-graphite [&_blockquote]:italic',
   '[&_img]:my-8 [&_img]:h-auto [&_img]:w-full',
 ].join(' ');
+
+/**
+ * Both ways back to the list are the same real button — the pill the heart
+ * used to wear: Mist border, Shell fill, hovering to Cloud and Ink with the
+ * border kept. `h-11` is the §9 target and matches the heart button beside it
+ * in the header row (issue I-003).
+ */
+const backButton = [
+  'inline-flex h-11 shrink-0 items-center rounded-full border border-mist bg-shell px-4',
+  'font-body text-xs text-slate no-underline transition-colors duration-fast',
+  'hover:bg-cloud hover:text-ink active:bg-mist',
+].join(' ');
 ---
 
 <BaseLayout title={post.title} description={post.excerpt}>
@@ -53,13 +65,15 @@ const proseBody = [
         {/* A real control, not the count badge the cards wear: no border, no
             total — the totals belong on /drops, where they are compared. 44px
             target (guide §9), 24px icon because it stands alone (§6). */}
-        <p class="mt-1 mb-8 flex max-w-none items-center gap-2 text-xs text-slate">
-          <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
+        <div class="mt-1 mb-8 flex items-center gap-2">
+          <p class="max-w-none text-xs text-slate">
+            <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
+          </p>
           {
             likesEnabled && (
               <button
                 type="button"
-                class="like-button relative -my-2 inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:bg-cloud hover:text-ink active:bg-mist disabled:cursor-progress"
+                class="like-button relative inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:bg-cloud hover:text-ink active:bg-mist disabled:cursor-progress"
                 data-post-id={post.id}
                 aria-pressed="false"
                 aria-label="Me gusta"
@@ -68,7 +82,8 @@ const proseBody = [
               </button>
             )
           }
-        </p>
+          <a href="/drops/" class:list={[backButton, 'ml-auto']}>← Volver</a>
+        </div>
 
         {
           post.mainImage && (
@@ -84,8 +99,8 @@ const proseBody = [
 
         <div class={proseBody} set:html={bodyHtml} />
 
-        <p class="mt-12 max-w-none border-t border-mist pt-6 text-sm">
-          <a href="/drops/">← Volver a Drops</a>
+        <p class="mt-12 max-w-none">
+          <a href="/drops/" class={backButton}>← Volver</a>
         </p>
       </article>
     </Grid>

@@ -28,8 +28,22 @@ const dealt = Array.from({ length: COLUMNS }, (_, column) =>
   ranked.rest.filter((_post, index) => index % COLUMNS === column),
 );
 
-const columnClass =
-  'col-span-12 flex flex-col gap-8 md:col-span-6 lg:col-span-4';
+/**
+ * At `lg` the middle column is raised so its first card starts level with the
+ * top of the heading, which is what makes the section read as a masonry rather
+ * than three lists. It is done with row placement instead of a negative margin
+ * so it tracks the fluid `text-h2` size by itself: the heading and the middle
+ * column share row 1, the outer two sit on row 2, one `gap-y-8` below
+ * (issue I-003). Below `lg` there is no offset — the heading keeps its own
+ * full-width row.
+ */
+const columnClass = 'col-span-12 flex flex-col gap-8 md:col-span-6 lg:col-span-4';
+
+const columnPlacement = [
+  'lg:col-start-1 lg:row-start-2',
+  'lg:col-start-5 lg:row-start-1 lg:row-span-2',
+  'lg:col-start-9 lg:row-start-2',
+];
 ---
 
 <BaseLayout
@@ -60,10 +74,15 @@ const columnClass =
 
         <Section id="recent" padding="sm" hidden={ranked.rest.length === 0}>
           <Grid class="gap-y-8">
-            <h2 class="col-span-12 text-h2">También puedes leer...</h2>
+            <h2 class="col-span-12 text-h2 lg:col-span-4 lg:row-start-1">
+              También puedes leer...
+            </h2>
             {
               dealt.map((column, index) => (
-                <div class={columnClass} data-recent-column={index}>
+                <div
+                  class:list={[columnClass, columnPlacement[index]]}
+                  data-recent-column={index}
+                >
                   {column.map((post) => (
                     <PostCard {...post} />
                   ))}
