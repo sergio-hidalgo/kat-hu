@@ -1,23 +1,17 @@
 ---
 /**
- * Dev-only 12-column overlay. Press `g` to cycle it: off → content (1120) →
- * wide (1320) → prose (66ch) → off. The choice survives navigation through
- * `sessionStorage`.
+ * Dev-only overlay of the grid. Press `g` to toggle it on any page; the choice
+ * survives navigation through `sessionStorage`.
  *
- * It has to cycle because the columns only mean anything inside one container:
- * an overlay drawn at `content` width says nothing about a page laid out at
- * `wide`. Match the overlay to the `container` of the `Section` you are
- * checking.
+ * There is one grid, so there is one overlay — it draws itself with the same
+ * `Grid` the pages use, which means anything that lines up with it is on the
+ * grid, and anything that does not is a defect (issue I-001).
  *
- * It draws itself with the same `Section` + `Grid` the pages use, so if a page
- * lines up with the overlay the grid is real rather than approximated.
  * `BaseLayout` renders this behind `import.meta.env.DEV`, so it ships nothing
  * to production.
  */
-import Section from './Section.astro';
 import Grid from './Grid.astro';
 
-const containers = ['content', 'wide', 'prose'] as const;
 const columns = Array.from({ length: 12 }, (_, index) => index + 1);
 ---
 
@@ -26,50 +20,27 @@ const columns = Array.from({ length: 12 }, (_, index) => index + 1);
   class="pointer-events-none fixed inset-0 z-50 hidden"
   aria-hidden="true"
 >
-  {
-    containers.map((container) => (
-      <div class="absolute inset-0 hidden" data-container={container}>
-        <Section container={container} padding="none" class="h-full" innerClass="h-full">
-          <Grid class="h-full">
-            {columns.map((column) => (
-              <div class="col-span-1 h-full bg-violet-500/10 outline outline-violet-500/20">
-                <span class="block pt-1 text-center text-xs text-violet-700/50">
-                  {column}
-                </span>
-              </div>
-            ))}
-          </Grid>
-        </Section>
-      </div>
-    ))
-  }
-
-  <p
-    id="grid-overlay-label"
-    class="absolute right-3 bottom-3 m-0 max-w-none rounded-sm bg-violet-900 px-2 py-1 font-body text-xs text-cloud"
-  >
-  </p>
+  <Grid class="h-full">
+    {
+      columns.map((column) => (
+        <div class="col-span-1 h-full bg-violet-500/10 outline outline-violet-500/20">
+          <span class="block pt-1 text-center text-xs text-violet-700/50">
+            {column}
+          </span>
+        </div>
+      ))
+    }
+  </Grid>
 </div>
 
 <script>
   const KEY = 'kathu:grid-overlay';
   const overlay = document.getElementById('grid-overlay');
-  const label = document.getElementById('grid-overlay-label');
 
-  if (overlay && label) {
-    const steps = ['off', 'content', 'wide', 'prose'];
+  if (overlay) {
+    const paint = (on: boolean) => overlay.classList.toggle('hidden', !on);
 
-    const paint = (step: string) => {
-      overlay.classList.toggle('hidden', step === 'off');
-      for (const pane of overlay.querySelectorAll<HTMLElement>('[data-container]')) {
-        pane.classList.toggle('hidden', pane.dataset.container !== step);
-      }
-      label.textContent = `rejilla · ${step}`;
-    };
-
-    let current = sessionStorage.getItem(KEY) ?? 'off';
-    if (!steps.includes(current)) current = 'off';
-    paint(current);
+    paint(sessionStorage.getItem(KEY) === 'on');
 
     document.addEventListener('keydown', (event) => {
       // Ignore the key while the developer is typing into something.
@@ -85,9 +56,9 @@ const columns = Array.from({ length: 12 }, (_, index) => index + 1);
         return;
       }
 
-      current = steps[(steps.indexOf(current) + 1) % steps.length];
-      sessionStorage.setItem(KEY, current);
-      paint(current);
+      const on = overlay.classList.contains('hidden');
+      paint(on);
+      sessionStorage.setItem(KEY, on ? 'on' : 'off');
     });
   }
 </script>

@@ -53,16 +53,19 @@ never the other way round.
   in `apps/client/src`.
 - **Two typefaces**, self-hosted from `apps/client/public/fonts/`: Urbanist
   for `text-display`/`h1`/`h2`, Lora for everything else.
-- **A 12-column grid is the placement contract.** Every page is built from
-  `Section` (the band: page gutter, container width, vertical rhythm) wrapping
-  `Grid` (`grid-cols-12`). Elements state their width as a span —
-  `col-span-12 md:col-span-6` — never as an ad hoc `max-width`. The grid keeps
-  12 columns at every screen size; only the spans change. Three exceptions:
-  running prose (the 66ch reading measure), full-bleed image bands, and the
-  inside of a component, which lays out its own contents.
-- In development, press `g` on any page to cycle a 12-column overlay
-  (content · wide · prose) and check alignment by eye. It ships nothing to
-  production.
+- **One grid, and everything is on it.** It is the full width of the screen
+  and identical at every screen size: 12 columns, a gap between every pair,
+  and the same gap at the left and right screen edges, with **column width,
+  gap width and edge margin all equal**. The screen is therefore 25 equal
+  units and one unit is `100% / 25`. `Grid` is the grid and owns the page
+  margins; `Section` is only a band (vertical rhythm and surface) and is
+  always full width. Elements say which columns they occupy —
+  `col-span-12 md:col-span-6` — and **nothing chooses its own width**: no
+  `max-width`, no `mx-auto`, no container variants. The 66ch reading measure
+  for prose is not a container; it comes from the tokens' base layer.
+- In development, press `g` on any page to toggle the grid overlay. It draws
+  itself with the same `Grid`, so anything that does not line up is a defect.
+  It ships nothing to production.
 - `/estilo` renders every UI primitive in every state. It exists in `astro dev`
   only and returns 404 in a production build.
 

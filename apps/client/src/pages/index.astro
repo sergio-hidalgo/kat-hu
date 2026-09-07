@@ -17,7 +17,10 @@ import lavender from '../assets/brand/lavender_fields.png';
   description="Terapia floral holística para familias multiespecie. Sesiones online con una florapeuta."
   overHero
 >
-  <Section container="full" padding="none" class="relative isolate">
+  {/* The image is a direct child of the Section, outside the Grid: a
+      full-bleed band is meant to reach the screen edges. The words over it
+      are on the grid like everything else. */}
+  <Section padding="none" class="relative isolate flex min-h-[80vh] items-end">
     <Image
       src={lavender}
       alt=""
@@ -33,20 +36,18 @@ import lavender from '../assets/brand/lavender_fields.png';
     >
     </div>
 
-    <Section padding="none" class="flex min-h-[80vh] items-end pt-24 pb-16">
-      <Grid class="w-full">
-        <div class="col-span-12 lg:col-span-7">
-          <h1 class="text-display text-cloud">
-            Acompañamiento floral para ti y para tu gato
-          </h1>
-          <p class="mt-6 text-lead text-cloud">
-            Sesiones online con una florapeuta, pensadas para la familia
-            multiespecie entera.
-          </p>
-          <Button href="/reservar" class="mt-8">Reservar sesión</Button>
-        </div>
-      </Grid>
-    </Section>
+    <Grid class="pt-24 pb-16">
+      <div class="col-span-12 lg:col-span-7">
+        <h1 class="text-display text-cloud">
+          Acompañamiento floral para ti y para tu gato
+        </h1>
+        <p class="mt-6 text-lead text-cloud">
+          Sesiones online con una florapeuta, pensadas para la familia
+          multiespecie entera.
+        </p>
+        <Button href="/reservar" class="mt-8">Reservar sesión</Button>
+      </div>
+    </Grid>
   </Section>
 
   <Section>

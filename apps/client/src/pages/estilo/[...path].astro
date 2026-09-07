@@ -24,13 +24,16 @@ export const getStaticPaths = (() =>
   import.meta.env.DEV ? [{ params: { path: undefined } }] : []) satisfies GetStaticPaths;
 
 const spans = [
-  ['col-span-12', 'Ancho completo'],
+  ['col-span-12', '12 de 12'],
   ['col-span-12 md:col-span-8', '8 de 12 desde md'],
   ['col-span-12 md:col-span-4', '4 de 12 desde md'],
   ['col-span-12 md:col-span-6', '6 de 12 desde md'],
   ['col-span-12 md:col-span-3', '3 de 12 desde md'],
   ['col-span-12 md:col-span-3 md:col-start-10', '3 de 12, empezando en la 10'],
 ];
+
+// Single columns, so a column, a gap and the page margin can be compared by eye.
+const units = Array.from({ length: 12 }, (_, index) => index + 1);
 ---
 
 <BaseLayout title="Estilo" description="Referencia visual de los primitivos.">
@@ -40,9 +43,7 @@ const spans = [
         <h1 class="text-h1">Estilo</h1>
         <p class="mt-4 max-w-none text-lead text-graphite">
           Solo en desarrollo. Pulsa <kbd class="rounded-sm border border-mist bg-cloud px-1.5 py-0.5 text-xs">g</kbd>
-          en cualquier página para recorrer la rejilla de 12 columnas:
-          contenido, ancha, prosa. Elige la que use la sección que estés
-          comprobando.
+          en cualquier página para ver la rejilla.
         </p>
       </div>
     </Grid>
@@ -50,7 +51,25 @@ const spans = [
 
   <Section padding="sm" surface="cloud">
     <Grid class="gap-y-4">
-      <h2 class="col-span-12 text-h2">Rejilla</h2>
+      <div class="col-span-12">
+        <h2 class="text-h2">Rejilla</h2>
+        <p class="mt-3 max-w-none text-sm text-graphite">
+          Una sola rejilla, de borde a borde de la pantalla, igual en todos los
+          tamaños: 12 columnas, un hueco entre cada dos y el mismo hueco a la
+          izquierda de la primera y a la derecha de la última. Columna, hueco y
+          margen miden lo mismo — la pantalla son 25 unidades iguales. Ningún
+          elemento elige su propio ancho.
+        </p>
+      </div>
+
+      {
+        units.map((unit) => (
+          <div class="col-span-1 rounded-sm bg-violet-300 py-2 text-center text-xs text-ink">
+            {unit}
+          </div>
+        ))
+      }
+
       {
         spans.map(([span, label]) => (
           <div class:list={[span, 'rounded-sm bg-violet-300 p-3 text-xs text-ink']}>

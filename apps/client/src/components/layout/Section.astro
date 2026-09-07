@@ -1,16 +1,17 @@
 ---
 /**
- * A page band: it owns the horizontal gutter, the container width and the
- * vertical rhythm from the style guide §4.
+ * A band across the page: vertical rhythm and a surface colour, nothing else.
  *
- * This is the ONLY component allowed to set `mx-auto` or a `max-w-*`. Anything
- * inside it states its width as a column span on a `<Grid>`, never as a width
- * of its own — see the Layout section of skills/ui-kathu/SKILL.md.
+ * A Section is **always the full width of the screen**. It has no container
+ * and no horizontal padding — the page margins belong to `Grid`, the single
+ * grid everything is placed on (issue I-001). A Section that chose its own
+ * width would be a second grid, which is exactly what this stopped being.
+ *
+ * Put a `<Grid>` inside for content. A full-bleed image is a direct child,
+ * outside the Grid, because it is meant to reach the screen edges.
  */
-
 import type { HTMLTag } from 'astro/types';
 
-type Container = 'prose' | 'content' | 'wide' | 'full';
 type Padding = 'none' | 'sm' | 'lg';
 type Surface = 'none' | 'shell' | 'cloud' | 'violet';
 
@@ -18,37 +19,20 @@ interface Props {
   /* Quoted: `as` unquoted trips the Astro compiler's props scanner, which then
      silently types `Astro.props` as `any`. */
   'as'?: HTMLTag;
-  /** `prose` is the 66ch reading measure; `full` is a full-bleed band. */
-  container?: Container;
   padding?: Padding;
   surface?: Surface;
-  /** Placement only — spans, margins. Never colour. */
+  /** Vertical placement and surface only. Never a width. */
   class?: string;
-  /** Classes for the inner container, for the rare band that needs them. */
-  innerClass?: string;
   [key: string]: unknown;
 }
 
 const {
   as: Tag = 'section',
-  container = 'content',
   padding = 'lg',
   surface = 'none',
   class: className,
-  innerClass,
   ...rest
 } = Astro.props;
-
-const containers: Record<Container, string> = {
-  prose: 'mx-auto w-full max-w-prose',
-  content: 'mx-auto w-full max-w-content',
-  wide: 'mx-auto w-full max-w-wide',
-  full: 'w-full',
-};
-
-// 20px mobile · 32px ≥768px · 48px ≥1280px. A full-bleed band has no gutter:
-// its content is the image, and anything laid over it brings its own Section.
-const gutter = container === 'full' ? '' : 'px-5 md:px-8 xl:px-12';
 
 const paddings: Record<Padding, string> = {
   none: '',
@@ -64,8 +48,9 @@ const surfaces: Record<Surface, string> = {
 };
 ---
 
-<Tag class:list={[surfaces[surface], paddings[padding], className]} {...rest}>
-  <div class:list={[containers[container], gutter, innerClass]}>
-    <slot />
-  </div>
+<Tag
+  class:list={['w-full', surfaces[surface], paddings[padding], className]}
+  {...rest}
+>
+  <slot />
 </Tag>

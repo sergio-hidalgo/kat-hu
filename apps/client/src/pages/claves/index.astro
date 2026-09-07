@@ -48,12 +48,7 @@ const ranked = rankPosts(
           </Grid>
         </Section>
 
-        <Section
-          id="recent"
-          container="wide"
-          padding="sm"
-          hidden={ranked.rest.length === 0}
-        >
+        <Section id="recent" padding="sm" hidden={ranked.rest.length === 0}>
           <Grid class="gap-y-8">
             <h2 class="col-span-12 text-h2">Más recientes</h2>
             <div class="contents" id="recent-grid">
