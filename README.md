@@ -71,8 +71,18 @@ never the other way round.
 
 ## Requirements
 
-- Node `>=22.12.0`
+- Node `^24.15.0 || >=26.0.0` — the range the test tooling supports (`jsdom`
+  needs `24.15.0` on the Node 24 line; the odd-numbered lines are excluded on
+  purpose). `.nvmrc` pins the exact version everyone develops and builds on,
+  **24.20.0**; `nvm use` in the repo root picks it up.
 - pnpm 11 (`corepack enable`)
+
+`pnpm-workspace.yaml` sets `engineStrict: true` (and `.npmrc` sets the same
+thing under npm's name, for `npm`/`npx`), so `pnpm install` refuses to run on a
+Node outside that range instead of failing later inside a test run. A shell that
+does not load `nvm` — anything non-interactive: scripts, git hooks, editor
+tasks — may resolve a different `node` than your terminal shows; check with
+`command -v node` if an install is rejected unexpectedly.
 
 ## Getting started
 

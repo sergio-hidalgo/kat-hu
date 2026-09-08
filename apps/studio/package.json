@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^24.15.0 || >=26.0.0"
   },
   "scripts": {
     "dev": "sanity dev",
