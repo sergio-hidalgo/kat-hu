@@ -10,7 +10,8 @@
     "build": "sanity build",
     "check": "tsc --noEmit",
     "deploy": "sanity deploy",
-    "start": "sanity start"
+    "start": "sanity start",
+    "test": "echo \"studio: no tests\""
   },
   "dependencies": {
     "@sanity/vision": "^6.12.0",

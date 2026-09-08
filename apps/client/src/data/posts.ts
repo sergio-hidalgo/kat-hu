@@ -47,8 +47,11 @@ const DETAIL_QUERY = /* groq */ `
   *[_type == $type && slug.current == $slug][0] {${POST_FIELDS}}
 `;
 
-/** Plain-text opening of a Portable Text body, for a missing excerpt. */
-function deriveExcerpt(body: PortableTextNode[] = [], limit = 160): string {
+/**
+ * Plain-text opening of a Portable Text body, for a missing excerpt.
+ * Exported so the cut-at-a-word-boundary rule can be tested directly.
+ */
+export function deriveExcerpt(body: PortableTextNode[] = [], limit = 160): string {
   const text = body
     .filter((block) => block._type === 'block')
     .flatMap((block) => (Array.isArray(block.children) ? block.children : []))
