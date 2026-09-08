@@ -43,8 +43,9 @@
   --font-body: "Lora", "Iowan Old Style", Georgia, serif;
 
   /* ---------- Colour: violet (violet-900 → violet-300) ----------
-     Overrides Tailwind's default violet scale on purpose. Only these six exist. */
+     Overrides Tailwind's default violet scale on purpose. Only these seven exist. */
   --color-violet-900: #2b2350; /* exceptional dark surface only — footer, hero overlay */
+  --color-violet-800: #3a2f68; /* single use: the footer watermark — 1.22:1 on violet-900 */
   --color-violet-700: #483c7e; /* Violet Dusk — primary */
   --color-violet-600: #5a4c96;
   --color-violet-500: #7166ac;
@@ -104,6 +105,9 @@
 
   --text-xs: 0.875rem;
   --text-xs--line-height: 1.5;
+
+  /* the wordmark sets in Urbanist Black — already inside the variable file, no extra download */
+  --text-wordmark--font-weight: 900;
 
   --text-kicker: 0.8125rem;
   --text-kicker--line-height: 1.2;
@@ -214,5 +218,87 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Logo lockup — SVG mark + real text. Never an image of the words.
+   Proportions measured from the master artwork: mark height = 1.56 × font-size,
+   gap = 0.28em, wordmark optically centred on the mark.
+
+   <a class="kathu-logo" href="/" style="font-size:26px">
+     <svg aria-hidden="true" focusable="false"><use href="/logo/kathu-mark.svg#..."></use></svg>
+     <span class="kathu-logo__word">kat<span>hu</span></span>
+   </a>
+   -------------------------------------------------------------------------- */
+
+@layer components {
+  .kathu-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28em;
+    color: var(--color-violet-700);   /* the mark inherits this via currentColor */
+    text-decoration: none;
+    font-size: 26px;                  /* header default — override per placement */
+  }
+
+  .kathu-logo svg,
+  .kathu-logo img {
+    height: 1.56em;
+    width: auto;
+    flex: none;
+  }
+
+  .kathu-logo__word {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1em;
+    line-height: 0.75;                /* equals the ascender height — centres the ink */
+    letter-spacing: 0;
+    text-transform: lowercase;        /* the wordmark is never capitalised */
+    color: var(--color-violet-700);
+  }
+
+  .kathu-logo__word > span {          /* the "hu" */
+    color: var(--color-violet-300);
+  }
+
+  /* Light variant — for violet-900 surfaces such as the footer */
+  .kathu-logo--light,
+  .kathu-logo--light .kathu-logo__word {
+    color: var(--color-white);
+  }
+  .kathu-logo--light .kathu-logo__word > span {
+    color: var(--color-violet-300);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Footer — violet-900 surface with the half wordmark set behind the content.
+   The watermark is decoration: aria-hidden, pointer-events none, z-index -1.
+   isolation:isolate keeps it above the footer's own background but below
+   every in-flow child, so no sibling needs a z-index of its own.
+   -------------------------------------------------------------------------- */
+
+@layer components {
+  .kathu-footer {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background-color: var(--color-violet-900);
+    color: var(--color-cloud);
+    padding-block: 4rem 2.5rem;
+  }
+
+  .kathu-footer__watermark {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: -1;
+    width: 100%;
+    max-width: var(--container-wide);
+    height: auto;
+    color: var(--color-violet-800);   /* 1.22:1 on violet-900 — barely there, by design */
+    pointer-events: none;
   }
 }

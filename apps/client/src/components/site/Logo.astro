@@ -1,30 +1,50 @@
 ---
 /**
- * The wordmark lockup. `light` is the violet mark for Shell surfaces, `dark`
- * the knockout version for violet-900 (the footer, and the hero once it is a
- * dark band). Guide §3.4 allows white only here and in modals.
+ * The kathu lockup: the cat mark as an inline SVG plus the word as **real
+ * text** — never an image of the words (guide §2.2). It is selectable, it
+ * scales with the reader's font settings, it costs no image request, and it
+ * still reads correctly with images disabled.
+ *
+ * All of the styling is the design system's: `.kathu-logo` in
+ * `kathu-tokens.css` sizes the whole lockup off a single `font-size` (mark
+ * `1.56em`, gap `0.28em`, the "hu" in violet-300). Never re-derive those as
+ * utilities.
+ *
+ * `variant="dark"` means *for dark surfaces* — it applies
+ * `.kathu-logo--light`, the knockout version used on violet-900. The header
+ * never uses it: the band is opaque Shell in every state and the mark is
+ * always violet (owner's decision, 2026-09-08).
+ *
+ * The `font-size` is an inline style because it is the one dimension the CSS
+ * needs and there is no type token for it — the tokens ship
+ * `--text-wordmark--font-weight` with no matching size, so no `text-*`
+ * utility exists to name it.
  */
-import { Image } from 'astro:assets';
-import regular from '../../assets/brand/logo_text_regular.png';
-import dark from '../../assets/brand/logo_text_dark_bg.png';
+import mark from '../../assets/brand/kathu-mark.svg?raw';
 
 interface Props {
+  /** `dark` = knockout, for violet-900 surfaces. */
   variant?: 'light' | 'dark';
-  /** Rendered height in px; the width follows the source ratio. */
-  height?: number;
+  /** The lockup's `font-size` in px — the only dimension it has. */
+  size?: number;
+  /** Renders an `<a>` when given, a `<span>` otherwise. */
+  href?: string;
+  id?: string;
   class?: string;
 }
 
-const { variant = 'light', height = 40, class: className } = Astro.props;
+const { variant = 'light', size = 26, href, id, class: className } = Astro.props;
 
-const source = variant === 'dark' ? dark : regular;
+const Tag = href ? 'a' : 'span';
 ---
 
-<Image
-  src={source}
-  alt="kathu"
-  height={height}
-  densities={[1, 2]}
-  loading="eager"
-  class:list={['w-auto rounded-none', className]}
-/>
+<Tag
+  {id}
+  href={href}
+  aria-label={href ? 'kathu — inicio' : undefined}
+  class:list={['kathu-logo', variant === 'dark' && 'kathu-logo--light', className]}
+  style={`font-size: ${size}px`}
+>
+  <Fragment set:html={mark} />
+  <span class="kathu-logo__word">kat<span>hu</span></span>
+</Tag>

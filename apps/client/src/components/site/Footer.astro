@@ -1,15 +1,46 @@
 ---
 /**
- * Guide §7.9. violet-900 is routine here and almost nowhere else. Cloud text,
- * oak-200 on link hover, 64px top / 40px bottom, and the knockout logo.
+ * Guide §7.9. violet-900 is routine here and almost nowhere else: Cloud text,
+ * oak-200 on link hover, 64px top / 40px bottom, the knockout lockup, and the
+ * cropped wordmark set behind everything as a watermark.
+ *
+ * **The surface, the padding and the watermark's placement are the design
+ * system's**, not this file's: `.kathu-footer` and `.kathu-footer__watermark`
+ * ship in `kathu-tokens.css` with `isolation: isolate`, `overflow: hidden`,
+ * `z-index: -1`, violet-800 and `pointer-events: none` already set. Never
+ * re-derive them as utilities and never set the violet twice — `Section` is
+ * here for the band and nothing else.
+ *
+ * The watermark is inlined rather than an `<img>` because it takes its colour
+ * from CSS, and `aria-hidden` because it is decoration: 1.22:1 on violet-900
+ * is meant to register as a change in the surface, never as something to
+ * read. Content overlapping it is the intent.
  */
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import Logo from './Logo.astro';
+import watermark from '../../assets/brand/kathu-wordmark-half.svg?raw';
+
+/**
+ * The design system caps the watermark at `--container-wide` (1320px). The
+ * owner wants it to run the full width of the footer on any screen
+ * (2026-09-09), so the cap is removed here — `max-w-none` removes a width, it
+ * never chooses one, which is why it is the one width utility the grid rule
+ * allows (I-001). Everything else about the watermark still comes from
+ * `.kathu-footer__watermark`. If this should be the design system's rule
+ * rather than this footer's, the change belongs in `references/` first.
+ */
+const fullWidthWatermark = watermark.replace(
+  'class="kathu-footer__watermark"',
+  'class="kathu-footer__watermark max-w-none"',
+);
 
 const columns = [
   {
     heading: 'Navegación',
+    /* Desktop only: the shift opens a one-column gutter between the blurb and
+       the links. Below lg the three columns already share a row. */
+    start: 'lg:col-start-5',
     links: [
       { href: '/reservar', label: 'Reservar' },
       { href: '/sobre-kathu', label: 'Sobre kathu' },
@@ -19,6 +50,7 @@ const columns = [
   },
   {
     heading: 'Legal',
+    start: 'lg:col-start-8',
     links: [
       { href: '/aviso-legal', label: 'Aviso legal' },
       { href: '/privacidad', label: 'Privacidad' },
@@ -27,28 +59,43 @@ const columns = [
   },
   {
     heading: 'Contacto',
-    links: [{ href: 'mailto:hola@kathu.es', label: 'hola@kathu.es' }],
+    start: 'lg:col-start-11',
+    links: [{ href: 'mailto:hola@kathu.es', label: 'Barcelona · hola@kathu.es' }],
   },
 ];
 
 const year = new Date().getFullYear();
 ---
 
-<Section as="footer" surface="violet" padding="none" class="pt-16 pb-10">
+<Section as="footer" surface="none" padding="none" class="kathu-footer">
+  <Fragment set:html={fullWidthWatermark} />
+
   <Grid class="gap-y-10">
     {/* Four columns only from lg: at 768 the brand blurb in a quarter of the
-        grid wraps to four lines, so it takes its own row first. */}
-    <div class="col-span-12 lg:col-span-3">
-      <Logo variant="dark" height={44} />
+        grid wraps to four lines, so it takes its own row first.
+
+        **Everything is centred below `lg`** (owner, 2026-09-09). On a phone
+        the columns are stacked and centred; from `sm` the three of them sit
+        side by side and each one is centred inside its third, so the block of
+        links reads as centred under the centred lockup. At `lg` the footer
+        goes back to the desktop arrangement: brand left, columns starting at
+        grid columns 5, 8 and 11, everything ranged left. */}
+    <div class="col-span-12 text-center lg:col-span-3 lg:text-left">
+      {/* 29px: the guide's 24px plus the 20% the owner asked for on
+          2026-09-09, the same increase the band's lockup took. */}
+      <Logo variant="dark" size={29} />
       <p class="mt-4 max-w-none text-sm text-cloud">
         Terapia floral holística para familias multiespecie.
       </p>
     </div>
 
     {
-      columns.map(({ heading, links }) => (
+      columns.map(({ heading, start, links }) => (
         <nav
-          class="col-span-12 sm:col-span-4 lg:col-span-3"
+          class:list={[
+            'col-span-12 text-center sm:col-span-4 lg:col-span-2 lg:text-left',
+            start,
+          ]}
           aria-labelledby={`footer-${heading.toLowerCase()}`}
         >
           {/* Lora, not Urbanist: the guide forbids the display face below 20px. */}
@@ -74,8 +121,17 @@ const year = new Date().getFullYear();
       ))
     }
 
-    <p class="col-span-12 max-w-none text-xs text-white">
-      © {year} kathu. Todos los derechos reservados.
-    </p>
+    {/* §7.9: legal fine print below 14px goes in White rather than Cloud.
+        Centred, unlike the columns above: it closes the page rather than
+        belonging to any one of them. */}
+    <div class="col-span-12 text-center">
+      <p class="max-w-none text-xs text-white">
+        © {year} kathu. Todos los derechos reservados.
+      </p>
+      <p class="mt-2 max-w-none text-xs text-white">
+        Kathu no sustituye la atención veterinaria. Consulta siempre con tu
+        veterinaria de referencia.
+      </p>
+    </div>
   </Grid>
 </Section>

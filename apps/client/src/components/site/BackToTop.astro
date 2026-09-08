@@ -1,0 +1,69 @@
+---
+/**
+ * Back to top. It exists to undo the state the band is in, so it is shown
+ * exactly when the band is hidden — one decision, taken in
+ * `lib/chrome-scroll.ts`, painted in two places. The header's script
+ * announces it on `chrome:band`.
+ *
+ * Deliberately plainer than the reference site's: one circle, one arrow. No
+ * progress ring, no label, no tooltip, and no second floating button.
+ *
+ * `hidden` rather than transparent, so it is never a focus stop while it is
+ * invisible.
+ */
+import { ArrowUp } from '@lucide/astro';
+---
+
+<button
+  id="back-to-top"
+  type="button"
+  hidden
+  aria-label="Volver arriba"
+  class="fixed right-5 bottom-5 z-40 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-violet-700 text-cloud opacity-0 shadow-sm transition-[opacity,transform] duration-base ease-out-soft data-shown:translate-y-0 data-shown:opacity-100 hover:bg-violet-600 md:right-8 md:bottom-8"
+>
+  <ArrowUp size={20} stroke-width={1.5} />
+</button>
+
+<script>
+  import type { ChromeState } from '../../lib/chrome-scroll';
+
+  const button = document.getElementById('back-to-top');
+
+  if (button) {
+    // The rise the button arrives with. Removed on the frame after it is
+    // un-hidden, which is what makes the transition run.
+    const RISE = 'translate-y-2';
+    button.classList.add(RISE);
+
+    document.addEventListener('chrome:band', (event) => {
+      const { topButton } = (event as CustomEvent<ChromeState>).detail;
+
+      if (topButton) {
+        button.hidden = false;
+        requestAnimationFrame(() => {
+          button.classList.remove(RISE);
+          button.dataset.shown = '';
+        });
+      } else {
+        // Going up, the band comes back and takes the button's job with it;
+        // there is nothing to watch it leave, so it simply goes.
+        delete button.dataset.shown;
+        button.classList.add(RISE);
+        button.hidden = true;
+      }
+    });
+
+    button.addEventListener('click', () => {
+      /**
+       * The token file's `scroll-behavior: auto !important` covers scrolling
+       * the CSS starts; it does not reach this call, so the guard is ours.
+       */
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+
+      // A keyboard reader who used the button is now at the top of the
+      // document, not stranded at the bottom of it.
+      document.getElementById('site-home')?.focus();
+    });
+  }
+</script>

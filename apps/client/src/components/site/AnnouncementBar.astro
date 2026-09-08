@@ -1,0 +1,43 @@
+---
+/**
+ * The advisory stripe: one sentence above the header band, optionally
+ * carrying one link. Cloud on violet-700 is 7.93:1, well clear of the §9
+ * floor.
+ *
+ * It belongs to the top of the page, not to the header: it collapses to zero
+ * height the moment the reader scrolls and only comes back at `scrollY === 0`
+ * (see `lib/chrome-scroll.ts`). The collapse is a CSS transition on a
+ * `data-band` variant, so `prefers-reduced-motion` switches it off for free.
+ *
+ * Not dismissible: dismissing it would mean remembering the reader, which is
+ * a decision the owner has not asked for.
+ */
+import { STRIPE_H } from './header';
+import { announcement } from '../../data/announcement';
+
+const { text, href, linkLabel } = announcement;
+---
+
+<div
+  class:list={[
+    'flex items-center justify-center overflow-hidden bg-violet-700 text-center',
+    'transition-[height,opacity] duration-base ease-out-soft',
+    'group-data-[band=glass]:h-0 group-data-[band=glass]:opacity-0',
+    'group-data-[band=hidden]:h-0 group-data-[band=hidden]:opacity-0',
+    STRIPE_H,
+  ]}
+>
+  <p class="max-w-none px-5 font-body text-xs text-cloud">
+    {text}{' '}
+    {
+      href && linkLabel && (
+        <a
+          href={href}
+          class="text-cloud underline underline-offset-4 transition-colors duration-fast hover:text-oak-200"
+        >
+          {linkLabel}
+        </a>
+      )
+    }
+  </p>
+</div>

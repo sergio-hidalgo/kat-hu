@@ -66,8 +66,60 @@ never the other way round.
 - In development, press `g` on any page to toggle the grid overlay. It draws
   itself with the same `Grid`, so anything that does not line up is a defect.
   It ships nothing to production.
-- `/estilo` renders every UI primitive in every state. It exists in `astro dev`
-  only and returns 404 in a production build.
+- `/estilo` renders every UI primitive in every state, including the chrome's
+  stripe, the band's three states and the back-to-top button. It exists in
+  `astro dev` only and returns 404 in a production build.
+
+### The site chrome
+
+The header is an **advisory stripe** above a **band**, both inside one fixed
+wrapper, and the band has three states driven by a single `data-band`
+attribute:
+
+| State    | When                                       | What you see                                                     |
+| :------- | :----------------------------------------- | :--------------------------------------------------------------- |
+| `top`    | the first 40px of the page                 | the stripe, and the band opaque with no rule                     |
+| `glass`  | past 40px                                  | the stripe collapsed; the band translucent, blurred, Mist rule   |
+| `hidden` | past one viewport and still scrolling down | the band slides away and the back-to-top button appears          |
+
+Scrolling back up brings the band back as `glass` after 80px — a hysteresis,
+so a trackpad twitch cannot flicker it — and the stripe returns only at the
+very top of the page, because it belongs to the page rather than to the
+header. Every difference between states is a CSS transition on a `data-*`
+variant, so `prefers-reduced-motion` switches all of it off through the token
+file. The decisions themselves are a pure function,
+`src/lib/chrome-scroll.ts`, with its own tests; the back-to-top button is
+visible exactly when the band is hidden, and returns focus to the header's
+logo after it scrolls.
+
+The band is **opaque and the lockup is always the violet one** — there is no
+transparent-over-hero treatment and no knockout swap in the header. Its
+height is written down once, in `src/components/site/header.ts`, which the
+layout, the stripe and `/drops`' `scroll-margin-top` all import instead of
+repeating a number.
+
+The **logo is real text plus one inline SVG** (`.kathu-logo` from the design
+system), never an image of the words: it is selectable, it scales with the
+reader's font settings and it costs no image request. The two wordmark PNGs
+remain in `src/assets/brand/` for email and social only.
+
+On mobile the menu is a **full-screen white sheet** built on `<details>`, so
+it opens and its links work with no JavaScript; the script adds the scroll
+lock, Escape, the focus trap and the return of focus to the trigger.
+
+The **stripe's text lives in `src/data/announcement.ts`**, together with an
+`enabled` flag. Turning it off emits no stripe at all and the layout drops its
+top padding to the band alone — decided on the server, so neither state costs
+a layout shift. That flag is a placeholder for the visibility flag
+`block:announcement`, which spec 10 will register in `packages/contracts`;
+spec 08 can move the words themselves into Sanity without changing the shape.
+
+The **footer** carries the cropped wordmark as a watermark, flush to its
+bottom-left in violet-800 — 1.22:1 against the violet-900 surface, meant to
+register as a change in the surface rather than as something to read. It is
+decoration: `aria-hidden`, unselectable, cropped by the footer itself. The
+surface, the padding and the watermark's placement all come from the design
+system's `.kathu-footer` classes.
 
 ## Requirements
 
@@ -314,6 +366,10 @@ closes.
 | 02  | Design system foundation (Tailwind v4, tokens, 12-column grid,            |          |
 |     | header/footer, UI primitives, `/estilo`)                                  | done     |
 | 03  | Test tooling (Vitest everywhere, `pnpm test`)                              | done     |
+| 03b | Node runtime floor                                                        | done     |
+| 03c | Drops dynamics (card shape, scroll motion)                                | done     |
+| 03d | Header, footer and back-to-top rebuilt (stripe, band states, sheet,       |          |
+|     | watermark, real-text lockup)                                              | done     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | todo     |
 | 05  | Landing page blocks                                                       | todo     |
