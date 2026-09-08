@@ -94,12 +94,33 @@ Run from the repo root:
 | `pnpm dev:studio`                | Start only the Sanity Studio            |
 | `pnpm build`                     | Build every app                         |
 | `pnpm check`                     | Type-check every app                    |
-| `pnpm test`                      | Run every app's tests (after spec 03)   |
+| `pnpm test`                      | Run every app's tests                   |
 | `pnpm --filter client favicons`  | Regenerate the favicon set from the logo |
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
 | `pnpm --filter <app> add <pkg>`  | Add a dependency to one app             |
 
 `<app>`: `client`, `server`, or `studio`.
+
+## Tests
+
+**Vitest** in both apps, so one runner and one set of matchers across the
+repo. `apps/studio` has no tests; its `test` script is a no-op line so
+`pnpm -r test` stays uniform.
+
+```sh
+pnpm test                        # every workspace
+pnpm --filter client test        # one app
+pnpm --filter server test:watch  # watch mode while working
+```
+
+Tests sit next to the code they cover (`*.test.ts` in the client,
+`*.spec.ts` in the server) and are fast and offline — no network, no real
+Supabase, Sanity or Shopify, no wall-clock waits. Scripted test doubles
+belong in `apps/client/src/test/mocks/` and `apps/server/test/mocks/`.
+
+The server uses Vitest rather than Jest because NestJS 12 ships as ESM only,
+and Jest can load ESM just on Node >= 24.9 — above this repo's Node floor.
+Nest's own ESM scaffold makes the same choice.
 
 ## Server
 
@@ -265,7 +286,7 @@ closes.
 |     | Supabase (branch `01-client-blog-scafolding`, PR #1)                      | done     |
 | 02  | Design system foundation (Tailwind v4, tokens, 12-column grid,            |          |
 |     | header/footer, UI primitives, `/estilo`)                                  | done     |
-| 03  | Test tooling (Vitest client/packages, Jest server, `pnpm test`)           | todo     |
+| 03  | Test tooling (Vitest everywhere, `pnpm test`)                              | done     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | todo     |
 | 05  | Landing page blocks                                                       | todo     |
