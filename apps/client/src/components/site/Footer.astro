@@ -72,9 +72,18 @@ const year = new Date().getFullYear();
 
   <Grid class="gap-y-10">
     {/* Four columns only from lg: at 768 the brand blurb in a quarter of the
-        grid wraps to four lines, so it takes its own row first. */}
-    <div class="col-span-12 lg:col-span-3">
-      <Logo variant="dark" size={24} />
+        grid wraps to four lines, so it takes its own row first.
+
+        **Everything is centred below `lg`** (owner, 2026-09-09). On a phone
+        the columns are stacked and centred; from `sm` the three of them sit
+        side by side and each one is centred inside its third, so the block of
+        links reads as centred under the centred lockup. At `lg` the footer
+        goes back to the desktop arrangement: brand left, columns starting at
+        grid columns 5, 8 and 11, everything ranged left. */}
+    <div class="col-span-12 text-center lg:col-span-3 lg:text-left">
+      {/* 29px: the guide's 24px plus the 20% the owner asked for on
+          2026-09-09, the same increase the band's lockup took. */}
+      <Logo variant="dark" size={29} />
       <p class="mt-4 max-w-none text-sm text-cloud">
         Terapia floral holística para familias multiespecie.
       </p>
@@ -83,7 +92,10 @@ const year = new Date().getFullYear();
     {
       columns.map(({ heading, start, links }) => (
         <nav
-          class:list={['col-span-12 sm:col-span-4 lg:col-span-2', start]}
+          class:list={[
+            'col-span-12 text-center sm:col-span-4 lg:col-span-2 lg:text-left',
+            start,
+          ]}
           aria-labelledby={`footer-${heading.toLowerCase()}`}
         >
           {/* Lora, not Urbanist: the guide forbids the display face below 20px. */}

@@ -64,7 +64,10 @@ describe('Header', () => {
   });
 
   it('renders the lockup as real text plus one inline SVG, not an image', async () => {
+    const { LOGO_SIZE } = await import('./header');
     const html = await renderHeader();
+
+    expect(html).toContain(`font-size: ${LOGO_SIZE}px`);
 
     expect(html).toContain('class="kathu-logo__word">kat<span>hu</span>');
     expect(html).toContain('viewBox="0 0 174 255"');

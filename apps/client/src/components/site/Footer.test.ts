@@ -83,10 +83,20 @@ describe('Footer', () => {
     );
   });
 
-  it('wears the knockout lockup at the guide’s 24px', async () => {
+  it('wears the knockout lockup, 20% up on the guide’s 24px', async () => {
     const html = await render();
 
     expect(html).toContain('kathu-logo kathu-logo--light');
-    expect(html).toContain('font-size: 24px');
+    expect(html).toContain('font-size: 29px');
+  });
+
+  it('centres everything below lg and ranges it left from lg', async () => {
+    const html = await render();
+
+    // The brand block and all three columns.
+    expect((html.match(/text-center/g) ?? []).length).toBe(5);
+    expect((html.match(/lg:text-left/g) ?? []).length).toBe(4);
+    // From sm the three columns still sit side by side.
+    expect((html.match(/sm:col-span-4/g) ?? []).length).toBe(3);
   });
 });

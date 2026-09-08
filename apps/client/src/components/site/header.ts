@@ -39,5 +39,9 @@ export const BAND_PT = 'pt-20 md:pt-22';
  */
 export const SCROLL_MT = 'scroll-mt-20 md:scroll-mt-22';
 
-/** The lockup's `font-size` in the band. 30px ⇒ a 47px mark at `1.56em`. */
-export const LOGO_SIZE = 30;
+/**
+ * The lockup's `font-size` in the band. 36px ⇒ a 56px mark at `1.56em` —
+ * 20% up on the 30px this spec first shipped, by the owner's decision of
+ * 2026-09-09, and still clear of the 80px band.
+ */
+export const LOGO_SIZE = 36;
