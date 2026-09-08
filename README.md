@@ -248,6 +248,23 @@ realtime subscription — a reader sees new counts on refresh.
 If Supabase is unreachable the counts fall back to zero and the page still
 builds and renders; likes are additive, not load-bearing.
 
+### How the cards look and arrive
+
+A card is capped at **two lines of title and five lines of summary** (plus its
+16:9 image), clamped visually with `line-clamp` — the whole text stays in the
+markup, so search engines and screen readers get the full sentence and only
+the box is capped. Cards with less text stay shorter, which is what keeps the
+second block reading as a masonry.
+
+The second block's heading and cards **arrive as you scroll**: a 10px rise and
+a fade, once per card, over twice the design system's `--duration-slow` (640ms)
+with its `--ease-out-soft` easing — an entrance is not a state change, so it
+runs slower than the token scale's top step. The featured block fades in without moving. Changing page,
+resizing, and the repaint that follows the like counts all show cards outright
+— a reveal never replays, and nothing animates under a scroll that did not
+happen. The policy is `src/lib/reveal.ts`; with `prefers-reduced-motion:
+reduce`, or with JavaScript off, the whole page is simply visible.
+
 ## Planned work — /drops
 
 Deliberately not built yet. Listed roughly in the order they would pay off.

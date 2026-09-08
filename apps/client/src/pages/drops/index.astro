@@ -150,6 +150,7 @@ const arrowClass =
 
 <script>
   import { getLikeCounts, rankPosts, likesEnabled } from '../../lib/likes';
+  import { createReveal, type Reveal } from '../../lib/reveal';
 
   type Item = { node: HTMLElement; id: string; date: string; likes: number };
 
@@ -201,6 +202,9 @@ const arrowClass =
       likes: Number(node.dataset.likes ?? 0),
     }));
 
+  /** Created after the first paint; null under reduced motion (spec 03c). */
+  let reveal: Reveal | null = null;
+
   let page = 1;
   /** Which way the reader is moving; decides which side the ellipsis sits on. */
   let direction = 1;
@@ -214,15 +218,26 @@ const arrowClass =
    * them. Unused columns are hidden; the ones left over widen on their own,
    * because their span classes already say what to do at each breakpoint.
    */
-  function fill(columns: HTMLElement[], count: number, cards: Item[]) {
+  function fill(
+    columns: HTMLElement[],
+    count: number,
+    cards: Item[],
+    settle = false,
+  ) {
     columns.forEach((column, index) => {
       column.hidden = index >= count;
       column.replaceChildren();
     });
-    cards.forEach((card, index) => columns[index % count]?.append(card.node));
+    cards.forEach((card, index) => {
+      columns[index % count]?.append(card.node);
+      // A page change puts cards on screen without a scroll, so they are shown
+      // outright rather than revealed. Every other re-deal leaves a card as it
+      // was: still waiting for its own scroll, or already arrived (spec 03c).
+      if (settle) reveal?.settle(card.node);
+    });
   }
 
-  function paint() {
+  function paint({ settle = false } = {}) {
     const columns = columnCount();
     const { featured, rest } = rankPosts(items, featuredCount(columns));
 
@@ -231,7 +246,7 @@ const arrowClass =
     page = Math.min(Math.max(page, 1), pages);
 
     fill(featuredColumns, columns, featured);
-    fill(recentColumns, columns, rest.slice((page - 1) * size, page * size));
+    fill(recentColumns, columns, rest.slice((page - 1) * size, page * size), settle);
 
     const recent = document.getElementById('recent');
     if (recent) recent.hidden = rest.length === 0;
@@ -325,7 +340,7 @@ const arrowClass =
       page += direction;
     } else return;
 
-    paint();
+    paint({ settle: true });
     // Keep the section's top in view: a later page is otherwise entered
     // half-way down, where the cards used to be.
     document.getElementById('recent')?.scrollIntoView({ block: 'start' });
@@ -367,9 +382,33 @@ const arrowClass =
     paint();
   }
 
+  /**
+   * Wired once, over the cards this viewport actually placed. Everything that
+   * arrives later is handled by `paint`'s `settle` flag, so a reveal can never
+   * replay and a re-render can never animate — including the repaint that
+   * follows the like counts, which is the easiest one to break (spec 03c).
+   */
+  function startReveal() {
+    reveal = createReveal();
+
+    const dealt = (columns: HTMLElement[]) =>
+      columns.flatMap((column) => Array.from(column.children));
+    const heading = (section: string) =>
+      document.querySelector(`#${section} h2`);
+    const present = (node: Element | null): node is Element => node !== null;
+
+    // The featured block is above the fold and already carries the ranking: it
+    // arrives, it does not travel.
+    reveal.fade([heading('featured'), ...dealt(featuredColumns)].filter(present));
+    reveal.observe([heading('recent'), ...dealt(recentColumns)].filter(present));
+  }
+
   // Lay the page out for this viewport before the counts come back, so it is
   // not sitting in the server's three-column shape while it waits.
   syncCardGap();
-  if (items.length > 0) paint();
+  if (items.length > 0) {
+    paint();
+    startReveal();
+  }
   refreshLikes();
 </script>

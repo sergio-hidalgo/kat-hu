@@ -53,7 +53,11 @@ const height = 450;
   }
 
   <div class="p-6 md:p-8">
-    <h3 class="text-h4 text-ink">
+    {/* Two lines of title, five of summary: the card's height is capped in
+        lines rather than in pixels, so it tracks the fluid type scale and the
+        16:9 crop by itself. The browser's own ellipsis; the whole title and
+        excerpt stay in the DOM for search and screen readers. */}
+    <h3 class="line-clamp-2 text-h4 text-ink">
       <a href={href} class="no-underline hover:underline">{title}</a>
     </h3>
 
@@ -69,6 +73,6 @@ const height = 450;
       }
     </p>
 
-    <p class="max-w-none text-sm text-graphite">{excerpt}</p>
+    <p class="line-clamp-5 max-w-none text-sm text-graphite">{excerpt}</p>
   </div>
 </Card>
