@@ -1,29 +1,33 @@
 ---
 /**
- * Guide §7.7. 64px on mobile, 72px from md up. Transparent over a hero until
- * the page has scrolled 40px, then Shell at 92% with a blur, a Mist rule and
- * `shadow-sm`.
+ * The site chrome: the advisory stripe and the band, in one `fixed` wrapper.
  *
- * While it is transparent it sits on a photograph, so it wears the knockout
- * logo and Cloud links instead of the violet mark and Slate links — the same
- * §9 contrast floor applies there as anywhere. `data-transparent` drives that
- * swap, and the scroll script removes the attribute rather than juggling
- * class lists.
+ * **One attribute drives everything.** The script's only job is to write
+ * `data-band="top | glass | hidden"` onto the wrapper; every visual
+ * difference is a Tailwind `data-*` variant on a CSS transition. That keeps
+ * the policy in `lib/chrome-scroll.ts` where it can be tested, and it means
+ * the token file's blanket `prefers-reduced-motion` rule switches the whole
+ * chrome's motion off for free — which is exactly what it cannot do for a
+ * scripted animation.
  *
- * A dozen lines of vanilla script, not an island. The mobile menu is a
- * `<details>` disclosure, so it works with no JS at all.
+ * **The band is opaque Shell in every state and the lockup is always the
+ * violet one** (owner's decision, 2026-09-08). There is no transparent
+ * treatment over a hero and no knockout swap: one logo, one background, so
+ * nothing about the header changes with the page behind it.
+ *
+ * Sizes supersede guide §7.7 — see `header.ts`.
+ *
+ * The mobile menu stays a `<details>` disclosure, so it opens and its links
+ * work with no JavaScript at all. The script only adds what a `<details>`
+ * cannot: the scroll lock, Escape, and focus.
  */
-import { Menu } from '@lucide/astro';
+import { Menu, X } from '@lucide/astro';
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import Logo from './Logo.astro';
-
-interface Props {
-  /** True on pages whose hero runs under the header. */
-  overHero?: boolean;
-}
-
-const { overHero = false } = Astro.props;
+import AnnouncementBar from './AnnouncementBar.astro';
+import { BAND_H, LOGO_SIZE } from './header';
+import { announcement } from '../../data/announcement';
 
 const links = [
   { href: '/reservar', label: 'Reservar' },
@@ -37,101 +41,241 @@ const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
 
 const link =
   'font-body text-sm font-medium whitespace-nowrap no-underline transition-colors duration-fast';
+
+const active = 'text-ink underline decoration-violet-700 decoration-2 underline-offset-6';
 ---
 
-<header
-  id="site-header"
-  data-over-hero={overHero ? '' : undefined}
-  data-transparent={overHero ? '' : undefined}
-  class="group fixed inset-x-0 top-0 z-40 bg-shell transition-[background-color,box-shadow] duration-base data-transparent:bg-transparent"
+<div
+  id="site-chrome"
+  data-band="top"
+  class="group fixed inset-x-0 top-0 z-40 transition-transform duration-base ease-out-soft data-[band=hidden]:-translate-y-full"
 >
-  <Section as="div" padding="none">
-    <Grid class="h-16 items-center md:h-18">
-      <a
-        href="/"
-        class="col-span-6 flex items-center no-underline md:col-span-4"
-        aria-label="kathu — inicio"
-      >
-        <span class="group-data-transparent:hidden">
-          <Logo height={36} />
-        </span>
-        <span class="hidden group-data-transparent:block">
-          <Logo variant="dark" height={36} />
-        </span>
-      </a>
+  {announcement.enabled && <AnnouncementBar />}
 
-      {/* Four links need more than half the grid at exactly 768px, where the
-          nav first appears — otherwise "Sobre kathu" wraps onto two lines. */}
-      <nav
-        class="col-span-6 hidden items-center justify-end gap-8 md:col-span-8 md:flex"
-        aria-label="Principal"
-      >
-        {
-          links.map(({ href, label }) => (
-            <a
-              href={href}
-              aria-current={isActive(href) ? 'page' : undefined}
-              class:list={[
-                link,
-                isActive(href)
-                  ? 'text-ink underline decoration-violet-700 decoration-2 underline-offset-6 group-data-transparent:text-white group-data-transparent:decoration-white'
-                  : 'text-slate hover:text-ink group-data-transparent:text-cloud group-data-transparent:hover:text-white',
-              ]}
-            >
-              {label}
-            </a>
-          ))
-        }
-      </nav>
+  {/* Shell at rest; translucent Shell with a blur once the page has moved.
+      Never below /70 — Slate links over a photograph stop clearing §9. */}
+  <header
+    class="bg-shell transition-[background-color,box-shadow] duration-base ease-out-soft group-data-[band=glass]:border-b group-data-[band=glass]:border-mist group-data-[band=glass]:bg-shell/80 group-data-[band=glass]:shadow-sm group-data-[band=glass]:backdrop-blur-[12px]"
+  >
+    <Section as="div" padding="none">
+      <Grid class:list={[BAND_H, 'items-center']}>
+        <div class="col-span-6 flex items-center md:col-span-4">
+          <Logo id="site-home" href="/" size={LOGO_SIZE} />
+        </div>
 
-      <details class="col-span-6 justify-self-end md:hidden">
-        <summary
-          class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-sm text-slate group-data-transparent:text-cloud [&::-webkit-details-marker]:hidden"
-          aria-label="Abrir el menú"
-        >
-          <Menu size={24} stroke-width={1.5} />
-        </summary>
-        {/* The panel is opaque Shell whatever the bar behind it is doing. */}
-        <ul
-          class="absolute inset-x-0 top-16 m-0 list-none border-t border-mist bg-shell px-5 py-4"
+        {/* Four links need more than half the grid at exactly 768px, where the
+            nav first appears — otherwise "Sobre kathu" wraps onto two lines. */}
+        <nav
+          class="col-span-6 hidden items-center justify-end gap-8 md:col-span-8 md:flex"
+          aria-label="Principal"
         >
           {
             links.map(({ href, label }) => (
-              <li class="py-2">
-                <a
-                  href={href}
-                  aria-current={isActive(href) ? 'page' : undefined}
-                  class:list={[link, isActive(href) ? 'text-ink' : 'text-slate']}
-                >
-                  {label}
-                </a>
-              </li>
+              <a
+                href={href}
+                aria-current={isActive(href) ? 'page' : undefined}
+                class:list={[link, isActive(href) ? active : 'text-slate hover:text-ink']}
+              >
+                {label}
+              </a>
             ))
           }
-        </ul>
-      </details>
-    </Grid>
-  </Section>
-</header>
+        </nav>
+
+        <details id="site-menu" class="col-span-6 justify-self-end md:hidden">
+          <summary
+            class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-sm text-slate [&::-webkit-details-marker]:hidden"
+            aria-label="Abrir el menú"
+            aria-expanded="false"
+          >
+            <Menu size={24} stroke-width={1.5} />
+          </summary>
+
+          {/* A sheet, not a band under the bar: the whole screen, in white —
+              the one surface guide §3.4 sanctions for a sheet. */}
+          <div id="site-sheet" class="fixed inset-0 z-50 bg-white">
+            <Grid class:list={[BAND_H, 'items-center']}>
+              <div class="col-span-6 flex items-center">
+                <Logo size={LOGO_SIZE} />
+              </div>
+              <button
+                id="site-menu-close"
+                type="button"
+                class="col-span-6 flex h-11 w-11 cursor-pointer items-center justify-center justify-self-end rounded-sm text-slate transition-colors duration-fast hover:text-ink"
+                aria-label="Cerrar el menú"
+              >
+                <X size={24} stroke-width={1.5} />
+              </button>
+            </Grid>
+
+            <Grid>
+              <nav class="col-span-12" aria-label="Principal">
+                <ul class="m-0 list-none p-0">
+                  {
+                    links.map(({ href, label }) => (
+                      <li class="border-b border-mist">
+                        <a
+                          href={href}
+                          data-sheet-link
+                          aria-current={isActive(href) ? 'page' : undefined}
+                          class:list={[
+                            'flex min-h-11 items-center py-4 font-body text-lead no-underline',
+                            isActive(href) ? active : 'text-graphite',
+                          ]}
+                        >
+                          {label}
+                        </a>
+                      </li>
+                    ))
+                  }
+                </ul>
+              </nav>
+            </Grid>
+          </div>
+        </details>
+      </Grid>
+    </Section>
+  </header>
+</div>
 
 <script>
-  /**
-   * Only pages that run a hero under the header start transparent; everywhere
-   * else the header is Shell from the first paint and this just adds the rule.
-   */
-  const header = document.getElementById('site-header');
+  import {
+    AT_TOP,
+    nextAnchor,
+    nextChromeState,
+    type ChromeState,
+  } from '../../lib/chrome-scroll';
 
-  if (header) {
-    const overHero = header.dataset.overHero !== undefined;
-    const scrolled = ['backdrop-blur-[8px]', 'border-b', 'border-mist', 'shadow-sm'];
+  const chrome = document.getElementById('site-chrome');
+  const menu = document.getElementById('site-menu') as HTMLDetailsElement | null;
 
-    const sync = () => {
-      const on = window.scrollY > 40;
-      header.toggleAttribute('data-transparent', overHero && !on);
-      for (const token of scrolled) header.classList.toggle(token, on);
+  /* ---------------------------------------------------------------- band */
+
+  if (chrome) {
+    let current: ChromeState = AT_TOP;
+    let anchor = 0;
+    let queued = false;
+
+    const paint = () => {
+      queued = false;
+
+      // The band never moves out from under an open sheet.
+      if (menu?.open) return;
+
+      const next = nextChromeState({
+        scrollY: window.scrollY,
+        viewportHeight: window.innerHeight,
+        previous: current,
+        lastY: anchor,
+      });
+      anchor = nextAnchor({ scrollY: window.scrollY, band: next.band, lastY: anchor });
+
+      if (next.band !== current.band) {
+        chrome.dataset.band = next.band;
+        // The back-to-top button lives outside this wrapper, so it is told
+        // rather than styled: one decision, two places to paint it.
+        document.dispatchEvent(
+          new CustomEvent('chrome:band', { detail: next }),
+        );
+      }
+
+      current = next;
     };
 
-    sync();
-    window.addEventListener('scroll', sync, { passive: true });
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(paint);
+    };
+
+    paint();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+  }
+
+  /* --------------------------------------------------------------- sheet */
+
+  if (menu) {
+    const summary = menu.querySelector('summary');
+    const sheet = document.getElementById('site-sheet');
+    const close = document.getElementById('site-menu-close');
+    const root = document.documentElement;
+
+    /* Everything in the sheet is visible while the sheet is open, so this is
+       the whole list — no visibility filtering to get wrong. */
+    const focusable = () =>
+      Array.from(sheet?.querySelectorAll<HTMLElement>('a[href], button') ?? []);
+
+    /**
+     * The entrance is a one-shot, so it is the Web Animations API and it
+     * reads its numbers off the tokens rather than repeating them.
+     */
+    const play = () => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const styles = getComputedStyle(root);
+      const duration = Number.parseFloat(styles.getPropertyValue('--duration-base')) || 200;
+      const easing = styles.getPropertyValue('--ease-out-soft').trim() || 'ease-out';
+
+      sheet?.animate([{ opacity: 0 }, { opacity: 1 }], { duration, easing });
+
+      sheet?.querySelectorAll<HTMLElement>('[data-sheet-link]').forEach((item, index) => {
+        item.animate(
+          [
+            { opacity: 0, transform: 'translateY(6px)' },
+            { opacity: 1, transform: 'none' },
+          ],
+          { duration, delay: index * 40, easing, fill: 'backwards' },
+        );
+      });
+    };
+
+    menu.addEventListener('toggle', () => {
+      summary?.setAttribute('aria-expanded', String(menu.open));
+      root.classList.toggle('overflow-hidden', menu.open);
+
+      if (menu.open) {
+        play();
+        close?.focus();
+      } else {
+        summary?.focus();
+      }
+    });
+
+    close?.addEventListener('click', () => menu.removeAttribute('open'));
+
+    sheet?.addEventListener('click', (event) => {
+      if ((event.target as HTMLElement).closest('a[href]')) {
+        menu.removeAttribute('open');
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (!menu.open) return;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        menu.removeAttribute('open');
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      // Trap: the sheet covers the page, so nothing behind it may be reached.
+      const items = focusable();
+      if (items.length === 0) return;
+
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || !sheet?.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
   }
 </script>

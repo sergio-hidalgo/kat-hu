@@ -2,18 +2,30 @@
 import '../styles/global.css';
 import Header from '../components/site/Header.astro';
 import Footer from '../components/site/Footer.astro';
+import BackToTop from '../components/site/BackToTop.astro';
 import GridOverlay from '../components/layout/GridOverlay.astro';
+import { BAND_PT, CHROME_PT } from '../components/site/header';
+import { announcement } from '../data/announcement';
 import ogImage from '../assets/brand/half_logo.png';
 
 interface Props {
   title: string;
   description?: string;
   lang?: string;
-  /** True when the page's hero runs under the transparent header. */
+  /**
+   * True when the page's hero runs under the chrome instead of starting
+   * below it. The band itself is opaque Shell either way — this only says
+   * whether `<main>` reserves the chrome's height.
+   */
   overHero?: boolean;
 }
 
 const { title, description, lang = 'es', overHero = false } = Astro.props;
+
+/* The chrome's height is a fact about the chrome: `header.ts` owns both
+   numbers and the stripe decides which one applies, on the server, so there
+   is no layout shift either way. */
+const topPadding = announcement.enabled ? CHROME_PT : BAND_PT;
 
 const fullTitle = title === 'kathu' ? title : `${title} · kathu`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
@@ -70,14 +82,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
       Saltar al contenido
     </a>
 
-    <Header overHero={overHero} />
+    <Header />
 
-    {/* The header is fixed, so a page that does not run under it starts below. */}
-    <main id="main" class:list={[!overHero && 'pt-16 md:pt-18']}>
+    {/* The chrome is fixed, so a page that does not run under it starts below. */}
+    <main id="main" class:list={[!overHero && topPadding]}>
       <slot />
     </main>
 
     <Footer />
+
+    <BackToTop />
 
     {import.meta.env.DEV && <GridOverlay />}
   </body>

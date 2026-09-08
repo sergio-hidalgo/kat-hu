@@ -19,6 +19,9 @@ import Field from '../../components/ui/Field.astro';
 import { fieldControlClass } from '../../components/ui/field';
 import Testimonial from '../../components/ui/Testimonial.astro';
 import Toast from '../../components/ui/Toast.astro';
+import Logo from '../../components/site/Logo.astro';
+import { ArrowUp } from '@lucide/astro';
+import { BAND_H, LOGO_SIZE, STRIPE_H } from '../../components/site/header';
 
 export const getStaticPaths = (() =>
   import.meta.env.DEV ? [{ params: { path: undefined } }] : []) satisfies GetStaticPaths;
@@ -34,6 +37,14 @@ const spans = [
 
 // Single columns, so a column, a gap and the page margin can be compared by eye.
 const units = Array.from({ length: 12 }, (_, index) => index + 1);
+
+/* The band's three states, as swatches. A live header would be the one in the
+   page, which is already showing exactly one of these at a time. */
+const bands = [
+  ['bg-shell', 'top — en lo alto de la página, opaco y sin regla'],
+  ['bg-shell/80 border-b border-mist shadow-sm backdrop-blur-[12px]', 'glass — a partir de 40px de scroll'],
+  ['bg-shell opacity-40', 'hidden — pasada una pantalla, la barra se retira'],
+] as const;
 ---
 
 <BaseLayout title="Estilo" description="Referencia visual de los primitivos.">
@@ -192,6 +203,45 @@ const units = Array.from({ length: 12 }, (_, index) => index + 1);
   </Section>
 
   <Section padding="sm">
+    <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Cabecera</h2>
+
+      <div class="col-span-12 flex flex-col gap-4">
+        <div class:list={[STRIPE_H, 'flex items-center justify-center bg-violet-700']}>
+          <p class="max-w-none font-body text-xs text-cloud">
+            Sesiones online para toda España.{' '}
+            <a href="/reservar" class="text-cloud underline underline-offset-4">
+              Reserva tu primera consulta
+            </a>
+          </p>
+        </div>
+
+        {
+          bands.map(([surface, label]) => (
+            <div>
+              <div class:list={[BAND_H, surface, 'flex items-center rounded-sm px-4']}>
+                <Logo size={LOGO_SIZE} />
+              </div>
+              <p class="mt-2 max-w-none text-xs text-slate">{label}</p>
+            </div>
+          ))
+        }
+
+        <div class="flex items-center gap-4">
+          <span
+            class="flex h-12 w-12 items-center justify-center rounded-full bg-violet-700 text-cloud shadow-sm"
+          >
+            <ArrowUp size={20} stroke-width={1.5} />
+          </span>
+          <p class="max-w-none text-xs text-slate">
+            Volver arriba — aparece abajo a la derecha cuando la barra se retira.
+          </p>
+        </div>
+      </div>
+    </Grid>
+  </Section>
+
+  <Section padding="sm" surface="cloud">
     <Grid class="gap-y-8">
       <h2 class="col-span-12 text-h2">Estados y testimonios</h2>
 

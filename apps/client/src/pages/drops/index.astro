@@ -4,6 +4,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
 import PostCard from '../../components/drops/PostCard.astro';
+import { SCROLL_MT } from '../../components/site/header';
 import { getAllPosts } from '../../data/posts';
 import { getLikeCounts, rankPosts } from '../../lib/likes';
 
@@ -93,14 +94,14 @@ const arrowClass =
           </Grid>
         </Section>
 
-        {/* `scroll-mt-*` matches the header's own `h-16 md:h-18`, so paging
-            aligns this section below the fixed header instead of behind it;
-            the section's `py-10 md:py-12` then gives the space above the
-            heading (issue I-007). */}
+        {/* `SCROLL_MT` is the header's own height, imported rather than
+            retyped, so paging aligns this section below the fixed band
+            instead of behind it; the section's `py-10 md:py-12` then gives
+            the space above the heading (issues I-007, spec 03d). */}
         <Section
           id="recent"
           padding="sm"
-          class="scroll-mt-16 md:scroll-mt-18"
+          class={SCROLL_MT}
           hidden={ranked.rest.length === 0}
         >
           {/* The same row gap as the featured section, so both headings sit
