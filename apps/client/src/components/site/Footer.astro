@@ -21,6 +21,20 @@ import Grid from '../layout/Grid.astro';
 import Logo from './Logo.astro';
 import watermark from '../../assets/brand/kathu-wordmark-half.svg?raw';
 
+/**
+ * The design system caps the watermark at `--container-wide` (1320px). The
+ * owner wants it to run the full width of the footer on any screen
+ * (2026-09-09), so the cap is removed here — `max-w-none` removes a width, it
+ * never chooses one, which is why it is the one width utility the grid rule
+ * allows (I-001). Everything else about the watermark still comes from
+ * `.kathu-footer__watermark`. If this should be the design system's rule
+ * rather than this footer's, the change belongs in `references/` first.
+ */
+const fullWidthWatermark = watermark.replace(
+  'class="kathu-footer__watermark"',
+  'class="kathu-footer__watermark max-w-none"',
+);
+
 const columns = [
   {
     heading: 'Navegación',
@@ -54,7 +68,7 @@ const year = new Date().getFullYear();
 ---
 
 <Section as="footer" surface="none" padding="none" class="kathu-footer">
-  <Fragment set:html={watermark} />
+  <Fragment set:html={fullWidthWatermark} />
 
   <Grid class="gap-y-10">
     {/* Four columns only from lg: at 768 the brand blurb in a quarter of the
@@ -95,8 +109,10 @@ const year = new Date().getFullYear();
       ))
     }
 
-    {/* §7.9: legal fine print below 14px goes in White rather than Cloud. */}
-    <div class="col-span-12">
+    {/* §7.9: legal fine print below 14px goes in White rather than Cloud.
+        Centred, unlike the columns above: it closes the page rather than
+        belonging to any one of them. */}
+    <div class="col-span-12 text-center">
       <p class="max-w-none text-xs text-white">
         © {year} kathu. Todos los derechos reservados.
       </p>

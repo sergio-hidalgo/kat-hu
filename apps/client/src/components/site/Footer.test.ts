@@ -31,13 +31,29 @@ describe('Footer', () => {
   it('inlines the watermark as decoration, out of the accessibility tree', async () => {
     const html = await render();
 
-    expect(html).toMatch(/<svg class="kathu-footer__watermark" aria-hidden="true"/);
+    expect(html).toMatch(/<svg class="kathu-footer__watermark[^"]*" aria-hidden="true"/);
     expect(html).toContain('focusable="false"');
     expect(html).toContain('viewBox="0 0 852 189"');
     expect(html).toContain('preserveAspectRatio="xMinYMax slice"');
     // It takes its colour from CSS, so it must be currentColor and not a hex.
     expect(html).toContain('fill="currentColor"');
     expect(html).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+  });
+
+  it('runs the watermark the full width of the footer', async () => {
+    const html = await render();
+
+    // `max-w-none` removes the design system's 1320px cap; it is the only
+    // `max-w-*` the grid rule allows, because it never chooses a width.
+    expect(html).toContain('class="kathu-footer__watermark max-w-none"');
+  });
+
+  it('centres the copyright and the disclaimer, and nothing else', async () => {
+    const html = await render();
+
+    expect(html).toContain('col-span-12 text-center');
+    // The columns above keep their own alignment.
+    expect(html).not.toContain('lg:col-start-5 text-center');
   });
 
   it('starts its three columns at grid columns 5, 8 and 11 from lg', async () => {
