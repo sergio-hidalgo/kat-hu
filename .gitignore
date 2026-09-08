@@ -41,3 +41,10 @@ CLAUDE.md
 
 # local-only notes; README.md is the only tracked documentation
 SANITY.md
+
+# AI support components (just kept local)
+/specs/
+/issues/
+/skills/
+/references/
+/.claude/

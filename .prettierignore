@@ -1,0 +1,4 @@
+# The app copy of the design tokens must stay byte-for-byte identical to
+# references/kathu-tokens.css. A reformat here is a spec-02 acceptance failure.
+apps/client/src/styles/kathu-tokens.css
+references/

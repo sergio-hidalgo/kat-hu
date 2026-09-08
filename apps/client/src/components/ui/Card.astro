@@ -1,0 +1,45 @@
+---
+/**
+ * Guide §7.2. Cloud on Shell, 1px Mist border, 8px radius, no shadow at rest —
+ * the Shell-to-Cloud step is deliberately subtle, so the border carries the edge.
+ *
+ * A card lays out its own contents. It never nests a `<Grid>`: the 12-column
+ * grid places the card, and stops there.
+ */
+import type { HTMLTag } from 'astro/types';
+
+interface Props {
+  /* Quoted — see the note in Section.astro. */
+  'as'?: HTMLTag;
+  /** Interactive cards lift their border to violet-400 on hover. */
+  interactive?: boolean;
+  /** Modals, sheets and the sticky booking summary only — guide §3.4. */
+  elevated?: boolean;
+  padded?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  as: Tag = 'article',
+  interactive = false,
+  elevated = false,
+  padded = true,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<Tag
+  class:list={[
+    'rounded-sm border',
+    elevated ? 'border-mist bg-white shadow-lg' : 'border-mist bg-cloud',
+    padded && 'p-6 md:p-8',
+    interactive &&
+      'transition-[border-color,box-shadow] duration-base hover:border-violet-400 hover:shadow-sm',
+    className,
+  ]}
+  {...rest}
+>
+  <slot />
+</Tag>

@@ -1,0 +1,210 @@
+---
+/**
+ * The visual regression surface: every `ui/*` primitive in every state, plus a
+ * grid demo. Later specs check their work against this page.
+ *
+ * Dev only. The site is statically built until spec 04, so there is no runtime
+ * to return a 404 from — instead `getStaticPaths` yields no route at build
+ * time, and the page simply does not exist in production. Spec 04 can replace
+ * this with a plain `import.meta.env.DEV` guard once the Node adapter lands.
+ */
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Section from '../../components/layout/Section.astro';
+import Grid from '../../components/layout/Grid.astro';
+import Button from '../../components/ui/Button.astro';
+import Card from '../../components/ui/Card.astro';
+import Chip from '../../components/ui/Chip.astro';
+import Field from '../../components/ui/Field.astro';
+import { fieldControlClass } from '../../components/ui/field';
+import Testimonial from '../../components/ui/Testimonial.astro';
+import Toast from '../../components/ui/Toast.astro';
+
+export const getStaticPaths = (() =>
+  import.meta.env.DEV ? [{ params: { path: undefined } }] : []) satisfies GetStaticPaths;
+
+const spans = [
+  ['col-span-12', '12 de 12'],
+  ['col-span-12 md:col-span-8', '8 de 12 desde md'],
+  ['col-span-12 md:col-span-4', '4 de 12 desde md'],
+  ['col-span-12 md:col-span-6', '6 de 12 desde md'],
+  ['col-span-12 md:col-span-3', '3 de 12 desde md'],
+  ['col-span-12 md:col-span-3 md:col-start-10', '3 de 12, empezando en la 10'],
+];
+
+// Single columns, so a column, a gap and the page margin can be compared by eye.
+const units = Array.from({ length: 12 }, (_, index) => index + 1);
+---
+
+<BaseLayout title="Estilo" description="Referencia visual de los primitivos.">
+  <Section padding="sm">
+    <Grid>
+      <div class="col-span-12">
+        <h1 class="text-h1">Estilo</h1>
+        <p class="mt-4 max-w-none text-lead text-graphite">
+          Solo en desarrollo. Pulsa <kbd class="rounded-sm border border-mist bg-cloud px-1.5 py-0.5 text-xs">g</kbd>
+          en cualquier página para ver la rejilla.
+        </p>
+      </div>
+    </Grid>
+  </Section>
+
+  <Section padding="sm" surface="cloud">
+    <Grid class="gap-y-4">
+      <div class="col-span-12">
+        <h2 class="text-h2">Rejilla</h2>
+        <p class="mt-3 max-w-none text-sm text-graphite">
+          Una sola rejilla, de borde a borde de la pantalla, igual en todos los
+          tamaños: 12 columnas, un hueco entre cada dos y el mismo hueco a la
+          izquierda de la primera y a la derecha de la última. Columna, hueco y
+          margen miden lo mismo — la pantalla son 25 unidades iguales. Ningún
+          elemento elige su propio ancho.
+        </p>
+      </div>
+
+      {
+        units.map((unit) => (
+          <div class="col-span-1 rounded-sm bg-violet-300 py-2 text-center text-xs text-ink">
+            {unit}
+          </div>
+        ))
+      }
+
+      {
+        spans.map(([span, label]) => (
+          <div class:list={[span, 'rounded-sm bg-violet-300 p-3 text-xs text-ink']}>
+            {label}
+          </div>
+        ))
+      }
+    </Grid>
+  </Section>
+
+  <Section padding="sm">
+    <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Tipografía</h2>
+      {/* The base layer gives Urbanist to real h1/h2 only, so the specimen has
+          to name the family itself or it would show the wrong one. */}
+      <div class="col-span-12 md:col-span-8">
+        <p class="text-display font-display text-ink">Display</p>
+        <p class="text-h1 font-display text-ink">Encabezado 1</p>
+        <p class="text-h2 font-display text-ink">Encabezado 2</p>
+        <p class="text-h3 font-body text-ink">Encabezado 3</p>
+        <p class="text-h4 font-body text-ink">Encabezado 4</p>
+        <p class="mt-4 text-lead">Entradilla — text-lead.</p>
+        <p class="text-body">Cuerpo — text-body.</p>
+        <p class="text-sm">Pequeño — text-sm.</p>
+        <p class="text-xs text-slate">Meta — text-xs.</p>
+        <p class="text-kicker font-display uppercase text-violet-700">Kicker</p>
+      </div>
+    </Grid>
+  </Section>
+
+  <Section padding="sm" surface="cloud">
+    <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Botones</h2>
+
+      <div class="col-span-12 flex flex-wrap items-start gap-4 md:col-span-6">
+        <Button>Reservar sesión</Button>
+        <Button variant="secondary">Ver detalles</Button>
+        <Button variant="quiet">Cancelar</Button>
+      </div>
+
+      <div class="col-span-12 flex flex-wrap items-start gap-4 md:col-span-6">
+        <Button disabled>Reservar sesión</Button>
+        <Button disabled disabledReason="Elige antes una franja">
+          Reservar sesión
+        </Button>
+        <Button href="/drops" variant="secondary">Como enlace</Button>
+      </div>
+    </Grid>
+  </Section>
+
+  <Section padding="sm">
+    <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Tarjetas y chips</h2>
+
+      <Card class="col-span-12 md:col-span-4">
+        <h3 class="text-h4">Tarjeta en reposo</h3>
+        <p class="mt-2 max-w-none text-sm text-graphite">
+          Cloud sobre Shell, borde Mist, radio de 8px.
+        </p>
+        <p class="mt-3 max-w-none text-xs text-slate">Meta en Slate</p>
+      </Card>
+
+      <Card interactive class="col-span-12 md:col-span-4">
+        <h3 class="text-h4">Tarjeta interactiva</h3>
+        <p class="mt-2 max-w-none text-sm text-graphite">
+          El borde pasa a violet-400 al pasar por encima.
+        </p>
+      </Card>
+
+      <Card elevated class="col-span-12 md:col-span-4">
+        <h3 class="text-h4">Tarjeta elevada</h3>
+        <p class="mt-2 max-w-none text-sm text-graphite">
+          Blanco y shadow-lg: solo modales, hojas y el resumen de reserva.
+        </p>
+        <div class="mt-4 flex gap-2">
+          <Chip>55 €</Chip>
+          <Chip tone="status">Agotado</Chip>
+        </div>
+      </Card>
+    </Grid>
+  </Section>
+
+  <Section padding="sm" surface="cloud">
+    <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Campos</h2>
+
+      <Field
+        for="nombre"
+        label="Nombre"
+        placeholder="Ana"
+        required
+        class="col-span-12 md:col-span-4"
+      />
+
+      <Field
+        for="email"
+        label="Email"
+        type="email"
+        autocomplete="email"
+        help="Te escribimos solo para la reserva."
+        class="col-span-12 md:col-span-4"
+      />
+
+      <Field
+        for="telefono"
+        label="Teléfono"
+        type="tel"
+        inputmode="tel"
+        error="Escribe un número de nueve cifras"
+        class="col-span-12 md:col-span-4"
+      />
+
+      <Field for="mensaje" label="Mensaje" class="col-span-12 md:col-span-8">
+        <textarea
+          id="mensaje"
+          name="mensaje"
+          class={fieldControlClass({ textarea: true })}></textarea>
+      </Field>
+    </Grid>
+  </Section>
+
+  <Section padding="sm">
+    <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Estados y testimonios</h2>
+
+      <div class="col-span-12 flex flex-col gap-4 md:col-span-6">
+        <Toast>Hemos recibido tu reserva. Te escribimos en menos de 48 horas.</Toast>
+        <Toast state="warning">Esta franja se llena a menudo.</Toast>
+        <Toast state="error">No hemos podido enviar el formulario.</Toast>
+      </div>
+
+      <Testimonial name="Ana" cat="Miso" class="col-span-12 md:col-span-6">
+        Salimos de la sesión más tranquilas las dos. Nunca pensé que fuera a
+        notarse tanto en casa.
+      </Testimonial>
+    </Grid>
+  </Section>
+</BaseLayout>

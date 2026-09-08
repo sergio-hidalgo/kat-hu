@@ -1,0 +1,207 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { Heart } from '@lucide/astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Section from '../../components/layout/Section.astro';
+import Grid from '../../components/layout/Grid.astro';
+import { getAllPosts, formatDate, type Post } from '../../data/posts';
+import { imageUrl, portableTextToHtml } from '../../lib/sanity';
+import { likesEnabled } from '../../lib/likes';
+
+export const getStaticPaths = (async () => {
+  const posts = await getAllPosts();
+
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}) satisfies GetStaticPaths;
+
+const { post } = Astro.props as { post: Post };
+const bodyHtml = portableTextToHtml(post.body);
+
+/**
+ * Portable Text arrives as an HTML string, so its elements cannot carry
+ * classes of their own. Tailwind's reset flattens them — every heading would
+ * read as body text and every paragraph would run into the next — so the
+ * article's rhythm is restored here, from guide §2.2 and §4:
+ * heading → paragraph 16px, paragraph → heading 48px.
+ */
+const proseBody = [
+  '[&_p]:mb-4',
+  '[&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:text-h2 [&_h2]:font-display [&_h2]:text-ink',
+  '[&_h3]:mt-10 [&_h3]:mb-4 [&_h3]:text-h3 [&_h3]:font-body [&_h3]:font-semibold [&_h3]:text-ink',
+  '[&_h4]:mt-8 [&_h4]:mb-4 [&_h4]:text-h4 [&_h4]:font-body [&_h4]:font-semibold [&_h4]:text-ink',
+  '[&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6',
+  '[&_li]:mb-1 [&_strong]:font-semibold',
+  '[&_blockquote]:my-8 [&_blockquote]:border-l-2 [&_blockquote]:border-oak-400',
+  '[&_blockquote]:pl-5 [&_blockquote]:text-graphite [&_blockquote]:italic',
+  '[&_img]:my-8 [&_img]:h-auto [&_img]:w-full',
+].join(' ');
+
+/**
+ * Both ways back to the list are the same real button — the pill the heart
+ * used to wear: Mist border, Shell fill, hovering to Cloud and Ink with the
+ * border kept. `h-11` is the §9 target and matches the heart button beside it
+ * in the header row (issue I-003).
+ */
+const backButton = [
+  'inline-flex h-11 shrink-0 items-center rounded-full border border-mist bg-shell px-4',
+  'font-body text-xs text-slate no-underline transition-colors duration-fast',
+  'hover:bg-cloud hover:text-ink active:bg-mist',
+].join(' ');
+---
+
+<BaseLayout title={post.title} description={post.excerpt}>
+  {/* An article is on the grid like everything else. The 66ch reading measure
+      is not a second grid: the token file's base layer already caps every `p`
+      at `max-width: 66ch`, so article paragraphs must never carry
+      `max-w-none` (issue I-001). */}
+  <Section padding="sm">
+    <Grid>
+      <article class="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-8 lg:col-start-3">
+        <h1 class="text-h1">{post.title}</h1>
+
+        {/* A real control, not the count badge the cards wear: no border, no
+            total — the totals belong on /drops, where they are compared. 44px
+            target (guide §9), 24px icon because it stands alone (§6). */}
+        <div class="mt-1 mb-8 flex items-center gap-2">
+          <p class="max-w-none text-xs text-slate">
+            <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
+          </p>
+          {
+            likesEnabled && (
+              <button
+                type="button"
+                class="like-button relative inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:bg-cloud hover:text-ink active:bg-mist disabled:cursor-progress"
+                data-post-id={post.id}
+                aria-pressed="false"
+                aria-label="Me gusta"
+              >
+                <Heart class="heart" size={24} stroke-width={1.5} />
+              </button>
+            )
+          }
+          <a href="/drops/" class:list={[backButton, 'ml-auto']}>← Volver</a>
+        </div>
+
+        {
+          post.mainImage && (
+            <img
+              src={imageUrl(post.mainImage).width(1600).url()}
+              alt={post.mainImage.alt ?? ''}
+              loading="eager"
+              decoding="async"
+              class="mb-8 h-auto w-full"
+            />
+          )
+        }
+
+        <div class={proseBody} set:html={bodyHtml} />
+
+        <p class="mt-12 max-w-none">
+          <a href="/drops/" class={backButton}>← Volver</a>
+        </p>
+      </article>
+    </Grid>
+  </Section>
+</BaseLayout>
+
+<script>
+  import { likePost, unlikePost } from '../../lib/likes';
+  import { hasLiked, setLiked } from '../../lib/liked-store';
+
+  const button = document.querySelector<HTMLButtonElement>('.like-button');
+
+  if (button) {
+    const postId = button.dataset.postId ?? '';
+    const icon = button.querySelector('.heart');
+
+    /**
+     * Restored from localStorage, so a reload does not hand out a second like.
+     * The page is static, so the button ships unfilled and is corrected here.
+     */
+    let liked = hasLiked(postId);
+
+    function paint(state: boolean) {
+      icon?.classList.toggle('fill-red', state);
+      icon?.classList.toggle('text-red', state);
+      button!.setAttribute('aria-pressed', String(state));
+      button!.setAttribute('aria-label', state ? 'Ya no me gusta' : 'Me gusta');
+    }
+
+    /**
+     * A red heart lifts out of the button, swaying as if in the wind, and fades.
+     * Motion answers an action, which is the one kind guide §8 allows.
+     *
+     * Driven by the Web Animations API rather than CSS keyframes, so it needs
+     * no stylesheet and `global.css` stays a single import. Nothing is spawned
+     * when the reader asks for reduced motion.
+     */
+    function floatHeart() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const heart = icon?.cloneNode(true) as SVGElement | undefined;
+      if (!heart) return;
+
+      heart.classList.add(
+        'pointer-events-none',
+        'absolute',
+        'left-1/2',
+        '-ml-3',
+        'top-1/2',
+        '-mt-3',
+        'fill-red',
+        'text-red',
+      );
+      heart.setAttribute('aria-hidden', 'true');
+      button!.append(heart);
+
+      // Sways twice, each a little narrower, while it rises and fades out.
+      heart
+        .animate(
+          [
+            { transform: 'translate(0, 0) scale(0.6)', opacity: 0 },
+            { transform: 'translate(-8px, -28px) scale(1)', opacity: 1, offset: 0.2 },
+            { transform: 'translate(9px, -62px) scale(1)', opacity: 1, offset: 0.45 },
+            { transform: 'translate(-6px, -98px) scale(0.95)', opacity: 0.7, offset: 0.7 },
+            { transform: 'translate(4px, -140px) scale(0.85)', opacity: 0 },
+          ],
+          {
+            duration: 1400,
+            easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+            fill: 'forwards',
+          },
+        )
+        .addEventListener('finish', () => heart.remove());
+    }
+
+    paint(liked);
+
+    button.addEventListener('click', async () => {
+      const next = !liked;
+
+      // Paint immediately, then reconcile with what the RPC actually recorded.
+      button.disabled = true;
+      paint(next);
+      if (next) floatHeart();
+
+      try {
+        if (next) {
+          await likePost(postId);
+        } else {
+          await unlikePost(postId);
+        }
+        liked = next;
+        setLiked(postId, next);
+      } catch (error) {
+        // Roll the button back so it never claims a click that did not land,
+        // and leave the stored state untouched.
+        paint(liked);
+        console.warn('[likes] could not record the click:', error);
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>

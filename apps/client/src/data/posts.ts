@@ -16,7 +16,7 @@ export interface Post {
    * Supabase like counts are stored against.
    */
   id: string;
-  /** URL segment under /claves — from the Studio's `slug` field. */
+  /** URL segment under /drops — from the Studio's `slug` field. */
   slug: string;
   title: string;
   /** Editor-written summary; falls back to the opening of `body`. */

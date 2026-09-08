@@ -1,0 +1,375 @@
+---
+import { ChevronLeft, ChevronRight } from '@lucide/astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Section from '../../components/layout/Section.astro';
+import Grid from '../../components/layout/Grid.astro';
+import PostCard from '../../components/drops/PostCard.astro';
+import { getAllPosts } from '../../data/posts';
+import { getLikeCounts, rankPosts } from '../../lib/likes';
+
+const posts = await getAllPosts();
+const counts = await getLikeCounts();
+
+/**
+ * Pre-rendered for the widest layout — three featured, the rest dealt across
+ * three columns — because that is the one the server can be sure of. How many
+ * posts are featured and how many fit on a page both depend on the column
+ * count, which only the browser knows, so the script re-ranks, re-deals and
+ * paginates on load and whenever the count changes (issue I-006).
+ */
+const COLUMNS = 3;
+const ranked = rankPosts(
+  posts.map((post) => ({ ...post, likes: counts[post.id] ?? 0 })),
+  COLUMNS,
+);
+
+const deal = <T,>(items: T[]) =>
+  Array.from({ length: COLUMNS }, (_, column) =>
+    items.filter((_item, index) => index % COLUMNS === column),
+  );
+
+/**
+ * The gap between two stacked cards is the same as the gap between two
+ * columns, so the spacing reads square at any width. That gap is one grid unit
+ * — `viewport / 25` by construction (I-001) — which no CSS length inside a
+ * flex child can name, so the script publishes it as `--card-gap` on `:root`
+ * and refreshes it on resize. The `4vw` fallback is the same number to within
+ * a scrollbar, so the page is right without JS too (issue I-004).
+ */
+const cardGap = 'gap-y-[var(--card-gap,4vw)]';
+
+/**
+ * Both blocks are built from the same column containers, and a card carries no
+ * placement of its own — that is what lets the script move a card between them
+ * when the column count changes (issue I-006).
+ */
+const columnClass = `col-span-12 flex flex-col ${cardGap} md:col-span-6 lg:col-span-4`;
+
+/**
+ * In the second block the middle column is raised so its first card starts
+ * level with the top of the heading, which is what makes the section read as a
+ * masonry rather than as lists. Row placement rather than a negative margin,
+ * so it tracks the fluid `text-h2` size by itself: the heading and that column
+ * share row 1, the others sit on row 2 (issue I-003). It holds at two columns
+ * as well as three (I-004); at one there is nothing to stagger against.
+ */
+const columnPlacement = [
+  'md:col-start-1 md:row-start-2 lg:col-start-1',
+  'md:col-start-7 md:row-start-1 md:row-span-2 lg:col-start-5',
+  'lg:col-start-9 lg:row-start-2',
+];
+
+const arrowClass =
+  'inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:text-ink disabled:cursor-not-allowed disabled:text-mist disabled:hover:text-mist';
+---
+
+<BaseLayout
+  title="Drops"
+  description="Ideas y prácticas de terapia floral para familias multiespecie."
+>
+  {
+    posts.length === 0 ? (
+      <Section padding="sm">
+        <Grid>
+          <p class="col-span-12 max-w-none text-graphite">
+            Todavía no hay entradas publicadas.
+          </p>
+        </Grid>
+      </Section>
+    ) : (
+      <>
+        <Section id="featured" padding="sm">
+          <Grid class={cardGap}>
+            <h2 class="col-span-12 text-h2">Los drops que más gustan</h2>
+            {
+              deal(ranked.featured).map((column, index) => (
+                <div class={columnClass} data-featured-column={index}>
+                  {column.map((post) => (
+                    <PostCard {...post} />
+                  ))}
+                </div>
+              ))
+            }
+          </Grid>
+        </Section>
+
+        {/* `scroll-mt-*` matches the header's own `h-16 md:h-18`, so paging
+            aligns this section below the fixed header instead of behind it;
+            the section's `py-10 md:py-12` then gives the space above the
+            heading (issue I-007). */}
+        <Section
+          id="recent"
+          padding="sm"
+          class="scroll-mt-16 md:scroll-mt-18"
+          hidden={ranked.rest.length === 0}
+        >
+          {/* The same row gap as the featured section, so both headings sit
+              the same distance above their cards — and the same unit as every
+              other gap on the page (issue I-005). */}
+          <Grid class={cardGap}>
+            <h2 class="col-span-12 text-h2 md:col-span-6 md:row-start-1 lg:col-span-4">
+              También puedes leer...
+            </h2>
+            {
+              deal(ranked.rest).map((column, index) => (
+                <div
+                  class:list={[columnClass, columnPlacement[index]]}
+                  data-recent-column={index}
+                >
+                  {column.map((post) => (
+                    <PostCard {...post} />
+                  ))}
+                </div>
+              ))
+            }
+
+            {/* The arrows are fixed, so they are rendered here with their
+                icons; the script fills in the numbers and works the disabled
+                state. Hidden until it does, so a reader without JS gets every
+                card and no controls rather than a nav that cannot move. */}
+            <nav
+              id="recent-pages"
+              class="col-span-12 hidden items-center justify-center gap-2 md:row-start-3"
+              aria-label="Paginación"
+            >
+              <button type="button" class={arrowClass} data-page-step="-1" aria-label="Página anterior">
+                <ChevronLeft size={20} stroke-width={1.5} />
+              </button>
+              <span id="recent-page-numbers" class="flex items-center gap-1"></span>
+              <button type="button" class={arrowClass} data-page-step="1" aria-label="Página siguiente">
+                <ChevronRight size={20} stroke-width={1.5} />
+              </button>
+              <span id="recent-page-status" class="sr-only" aria-live="polite"></span>
+            </nav>
+          </Grid>
+        </Section>
+      </>
+    )
+  }
+</BaseLayout>
+
+<script>
+  import { getLikeCounts, rankPosts, likesEnabled } from '../../lib/likes';
+
+  type Item = { node: HTMLElement; id: string; date: string; likes: number };
+
+  const featuredColumns = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-featured-column]'),
+  );
+  const recentColumns = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-recent-column]'),
+  );
+  const nav = document.getElementById('recent-pages');
+  const numbers = document.getElementById('recent-page-numbers');
+  const status = document.getElementById('recent-page-status');
+
+  /** Matches the `md:` and `lg:` breakpoints the column classes are written to. */
+  const columnCount = () => {
+    if (window.matchMedia('(min-width: 1024px)').matches) return 3;
+    if (window.matchMedia('(min-width: 768px)').matches) return 2;
+    return 1;
+  };
+
+  /**
+   * Three posts are promoted only when three fit across; otherwise the third
+   * drops into the second block and sorts by date with everything else. A page
+   * holds two rows of cards, so four when a row is one card wide.
+   */
+  const featuredCount = (columns: number) => (columns === 3 ? 3 : 2);
+  const pageSize = (columns: number) => (columns === 1 ? 4 : 6);
+
+  /**
+   * One grid unit, which is what separates two columns: the screen is 25 equal
+   * units by construction (I-001). `clientWidth` excludes the scrollbar, which
+   * is the same width the grid's percentages resolve against, so the vertical
+   * gap between stacked cards matches the horizontal one exactly rather than
+   * to within a scrollbar (issue I-004).
+   */
+  const syncCardGap = () => {
+    const root = document.documentElement;
+    root.style.setProperty('--card-gap', `${root.clientWidth / 25}px`);
+  };
+
+  /** Every card on the page, in date order, read once from the server's markup. */
+  const items: Item[] = [...featuredColumns, ...recentColumns]
+    .flatMap((column) => Array.from(column.children))
+    .filter((node): node is HTMLElement => node instanceof HTMLElement)
+    .map((node) => ({
+      node,
+      id: node.dataset.postId ?? '',
+      date: node.dataset.date ?? '',
+      likes: Number(node.dataset.likes ?? 0),
+    }));
+
+  let page = 1;
+  /** Which way the reader is moving; decides which side the ellipsis sits on. */
+  let direction = 1;
+
+  /** At most three numbers between the arrows. */
+  const WINDOW = 3;
+
+  /**
+   * Deal the cards across the visible columns so the reading order runs
+   * left-to-right: with three columns, 1 2 3 on the first row and 4 5 6 under
+   * them. Unused columns are hidden; the ones left over widen on their own,
+   * because their span classes already say what to do at each breakpoint.
+   */
+  function fill(columns: HTMLElement[], count: number, cards: Item[]) {
+    columns.forEach((column, index) => {
+      column.hidden = index >= count;
+      column.replaceChildren();
+    });
+    cards.forEach((card, index) => columns[index % count]?.append(card.node));
+  }
+
+  function paint() {
+    const columns = columnCount();
+    const { featured, rest } = rankPosts(items, featuredCount(columns));
+
+    const size = pageSize(columns);
+    const pages = Math.max(1, Math.ceil(rest.length / size));
+    page = Math.min(Math.max(page, 1), pages);
+
+    fill(featuredColumns, columns, featured);
+    fill(recentColumns, columns, rest.slice((page - 1) * size, page * size));
+
+    const recent = document.getElementById('recent');
+    if (recent) recent.hidden = rest.length === 0;
+
+    if (!nav || !numbers || !status) return;
+
+    // `hidden` and `flex` are both display utilities, so exactly one of them
+    // is on the element at a time rather than leaving it to source order.
+    nav.classList.toggle('hidden', pages < 2);
+    nav.classList.toggle('flex', pages > 1);
+
+    if (pages < 2) {
+      numbers.replaceChildren();
+      return;
+    }
+
+    /**
+     * The window of three slides with the reader: going forward it ends on the
+     * current page, so what is hidden lies behind it; going back it starts on
+     * the current page, so what is hidden lies ahead.
+     */
+    const last = Math.max(1, pages - WINDOW + 1);
+    const start =
+      pages <= WINDOW
+        ? 1
+        : Math.max(1, Math.min(direction >= 0 ? page - WINDOW + 1 : page, last));
+    const shown = Array.from(
+      { length: Math.min(WINDOW, pages) },
+      (_, index) => start + index,
+    );
+
+    const dots = () => {
+      const span = document.createElement('span');
+      span.textContent = '…';
+      span.setAttribute('aria-hidden', 'true');
+      span.className =
+        'inline-flex h-11 w-6 items-center justify-center font-body text-xs text-slate';
+      return span;
+    };
+
+    const number = (value: number) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.page = String(value);
+      button.textContent = String(value);
+      // The circle and the weight carry the current page as well as the
+      // colour, so it is never signalled by colour alone (guide §9).
+      button.className =
+        'inline-flex h-11 w-11 items-center justify-center rounded-full font-body text-xs tabular-nums transition-colors duration-fast ' +
+        (value === page
+          ? 'border border-mist bg-shell font-semibold text-ink'
+          : 'text-slate hover:bg-cloud hover:text-ink active:bg-mist');
+      if (value === page) button.setAttribute('aria-current', 'page');
+      button.setAttribute('aria-label', `Página ${value}`);
+      return button;
+    };
+
+    // One ellipsis, on the side the reader came from — unless only one side
+    // has anything hidden, in which case that side wins.
+    const hiddenBefore = shown[0] > 1;
+    const hiddenAfter = shown[shown.length - 1] < pages;
+    const side =
+      direction >= 0
+        ? (hiddenBefore && 'left') || (hiddenAfter && 'right') || null
+        : (hiddenAfter && 'right') || (hiddenBefore && 'left') || null;
+
+    numbers.replaceChildren(
+      ...(side === 'left' ? [dots()] : []),
+      ...shown.map(number),
+      ...(side === 'right' ? [dots()] : []),
+    );
+
+    for (const arrow of nav.querySelectorAll<HTMLButtonElement>('[data-page-step]')) {
+      const step = Number(arrow.dataset.pageStep);
+      arrow.disabled = step < 0 ? page === 1 : page === pages;
+    }
+
+    status.textContent = `Página ${page} de ${pages}`;
+  }
+
+  nav?.addEventListener('click', (event) => {
+    const target = (event.target as HTMLElement | null)?.closest('button');
+    if (!target) return;
+
+    if (target.dataset.page) {
+      const next = Number(target.dataset.page);
+      direction = next >= page ? 1 : -1;
+      page = next;
+    } else if (target.dataset.pageStep) {
+      direction = Number(target.dataset.pageStep);
+      page += direction;
+    } else return;
+
+    paint();
+    // Keep the section's top in view: a later page is otherwise entered
+    // half-way down, where the cards used to be.
+    document.getElementById('recent')?.scrollIntoView({ block: 'start' });
+  });
+
+  let current = columnCount();
+  window.addEventListener(
+    'resize',
+    () => {
+      // The gap tracks every pixel of width; the cards only need re-dealing
+      // when the column count actually changes.
+      syncCardGap();
+
+      const next = columnCount();
+      if (next === current) return;
+      current = next;
+      paint();
+    },
+    { passive: true },
+  );
+
+  /**
+   * Counts are read on every page load rather than pushed live, so the ranking
+   * here can differ from the one baked in at build time. Re-reading them keeps
+   * a static page honest without an SSR adapter.
+   */
+  async function refreshLikes() {
+    if (!likesEnabled) return;
+
+    const counts = await getLikeCounts();
+
+    for (const item of items) {
+      item.likes = counts[item.id] ?? 0;
+      item.node.dataset.likes = String(item.likes);
+      const label = item.node.querySelector('.like-count');
+      if (label) label.textContent = String(item.likes);
+    }
+
+    paint();
+  }
+
+  // Lay the page out for this viewport before the counts come back, so it is
+  // not sitting in the server's three-column shape while it waits.
+  syncCardGap();
+  if (items.length > 0) paint();
+  refreshLikes();
+</script>

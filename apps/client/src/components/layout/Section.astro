@@ -1,0 +1,56 @@
+---
+/**
+ * A band across the page: vertical rhythm and a surface colour, nothing else.
+ *
+ * A Section is **always the full width of the screen**. It has no container
+ * and no horizontal padding — the page margins belong to `Grid`, the single
+ * grid everything is placed on (issue I-001). A Section that chose its own
+ * width would be a second grid, which is exactly what this stopped being.
+ *
+ * Put a `<Grid>` inside for content. A full-bleed image is a direct child,
+ * outside the Grid, because it is meant to reach the screen edges.
+ */
+import type { HTMLTag } from 'astro/types';
+
+type Padding = 'none' | 'sm' | 'lg';
+type Surface = 'none' | 'shell' | 'cloud' | 'violet';
+
+interface Props {
+  /* Quoted: `as` unquoted trips the Astro compiler's props scanner, which then
+     silently types `Astro.props` as `any`. */
+  'as'?: HTMLTag;
+  padding?: Padding;
+  surface?: Surface;
+  /** Vertical placement and surface only. Never a width. */
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  as: Tag = 'section',
+  padding = 'lg',
+  surface = 'none',
+  class: className,
+  ...rest
+} = Astro.props;
+
+const paddings: Record<Padding, string> = {
+  none: '',
+  sm: 'py-10 md:py-12',
+  lg: 'py-[clamp(4rem,7vw,7.5rem)]',
+};
+
+const surfaces: Record<Surface, string> = {
+  none: '',
+  shell: 'bg-shell text-graphite',
+  cloud: 'bg-cloud text-graphite',
+  violet: 'bg-violet-900 text-cloud',
+};
+---
+
+<Tag
+  class:list={['w-full', surfaces[surface], paddings[padding], className]}
+  {...rest}
+>
+  <slot />
+</Tag>

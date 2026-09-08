@@ -1,0 +1,52 @@
+---
+/**
+ * The grid. There is exactly one, it is the full width of the screen, and it
+ * is the same at every screen size — that invariance is the point, and what
+ * keeps the design consistent (issue I-001).
+ *
+ * 12 columns, a gap between every pair, and the same gap to the left of
+ * column 1 and to the right of column 12. **Column width, gap width and edge
+ * margin are all equal.** So the screen is 25 equal units:
+ *
+ *   margin · col · gap · col · … · col · margin     12 cols + 11 gaps + 2 edges
+ *
+ * One unit is `100% / 25` of the screen. The arithmetic below says that in
+ * percentages rather than `vw`, so a vertical scrollbar cannot make the
+ * columns and the gaps disagree:
+ *
+ *   padding-inline: 100%/25    → W/25 a side, leaving a 23W/25 content box
+ *   column-gap:     100%/23    → (23W/25)/23 = W/25
+ *   12 × 1fr                   → (23W/25 − 11·W/25) / 12 = W/25
+ *
+ * Nothing chooses its own width. Every direct child says which columns it
+ * occupies and nothing else:
+ *
+ *   <Grid>
+ *     <div class="col-span-12 md:col-span-7">…</div>
+ *     <div class="col-span-12 md:col-span-5">…</div>
+ *   </Grid>
+ *
+ * Row gaps are a separate decision — pass `gap-y-*` through `class`.
+ */
+import type { HTMLTag } from 'astro/types';
+
+interface Props {
+  /* Quoted — see the note in Section.astro. */
+  'as'?: HTMLTag;
+  /** Row gaps and vertical placement only. Never a width, never a column count. */
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { as: Tag = 'div', class: className, ...rest } = Astro.props;
+---
+
+<Tag
+  class:list={[
+    'grid w-full grid-cols-12 gap-x-[calc(100%/23)] px-[calc(100%/25)]',
+    className,
+  ]}
+  {...rest}
+>
+  <slot />
+</Tag>

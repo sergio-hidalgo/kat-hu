@@ -1,0 +1,30 @@
+---
+/**
+ * The wordmark lockup. `light` is the violet mark for Shell surfaces, `dark`
+ * the knockout version for violet-900 (the footer, and the hero once it is a
+ * dark band). Guide §3.4 allows white only here and in modals.
+ */
+import { Image } from 'astro:assets';
+import regular from '../../assets/brand/logo_text_regular.png';
+import dark from '../../assets/brand/logo_text_dark_bg.png';
+
+interface Props {
+  variant?: 'light' | 'dark';
+  /** Rendered height in px; the width follows the source ratio. */
+  height?: number;
+  class?: string;
+}
+
+const { variant = 'light', height = 40, class: className } = Astro.props;
+
+const source = variant === 'dark' ? dark : regular;
+---
+
+<Image
+  src={source}
+  alt="kathu"
+  height={height}
+  densities={[1, 2]}
+  loading="eager"
+  class:list={['w-auto rounded-none', className]}
+/>

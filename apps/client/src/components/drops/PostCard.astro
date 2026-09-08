@@ -1,0 +1,74 @@
+---
+import { Heart } from '@lucide/astro';
+import { formatDate, type Post } from '../../data/posts';
+import { imageUrl } from '../../lib/sanity';
+import Card from '../ui/Card.astro';
+
+type Props = Pick<Post, 'id' | 'slug' | 'title' | 'excerpt' | 'date' | 'mainImage'> & {
+  likes: number;
+};
+
+const { id, slug, title, excerpt, date, mainImage, likes } = Astro.props;
+
+const href = `/drops/${slug}/`;
+
+/**
+ * One crop for every card, featured or not: 16:9, the editorial ratio in guide
+ * §6. The script moves cards between the two blocks as the column count
+ * changes (issue I-006), so a card cannot have a shape that depends on where
+ * it is — and one ratio is also what lets a masonry of varying-height cards
+ * read as one set, the height coming from the text rather than the picture.
+ */
+const width = 800;
+const height = 450;
+---
+
+<Card
+  interactive
+  padded={false}
+  class="flex flex-col overflow-hidden"
+  data-post-id={id}
+  data-date={date}
+  data-likes={likes}
+>
+  {
+    mainImage ? (
+      <a href={href} class="relative block leading-none">
+        <img
+          src={imageUrl(mainImage).width(width).height(height).fit('crop').url()}
+          alt={mainImage.alt ?? ''}
+          loading="lazy"
+          decoding="async"
+          width={width}
+          height={height}
+          class="block h-auto w-full rounded-none"
+        />
+        {/* Bottom-right on a Shell scrim, so it stays legible on any photo. */}
+        <span class="absolute right-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-shell/92 px-2 py-1 text-xs text-ink tabular-nums">
+          <Heart size={16} stroke-width={1.5} class="fill-red text-red" />
+          <span class="like-count">{likes}</span>
+        </span>
+      </a>
+    ) : null
+  }
+
+  <div class="p-6 md:p-8">
+    <h3 class="text-h4 text-ink">
+      <a href={href} class="no-underline hover:underline">{title}</a>
+    </h3>
+
+    <p class="mt-1.5 mb-3 flex max-w-none items-center gap-3 text-xs text-slate">
+      <time datetime={date}>{formatDate(date, 'es-ES')}</time>
+      {
+        !mainImage && (
+          <span class="inline-flex items-center gap-1 tabular-nums">
+            <Heart size={16} stroke-width={1.5} class="fill-red text-red" />
+            <span class="like-count">{likes}</span>
+          </span>
+        )
+      }
+    </p>
+
+    <p class="max-w-none text-sm text-graphite">{excerpt}</p>
+  </div>
+</Card>

@@ -1,7 +1,7 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
 
 /**
- * Read by the Astro client at /claves. The field *names* are a contract with
+ * Read by the Astro client at /drops. The field *names* are a contract with
  * `apps/client/src/data/posts.ts` — renaming one here empties that section.
  * The titles are what the editor sees, so they are in Spanish.
  */
@@ -21,7 +21,7 @@ export const post = defineType({
       title: 'Dirección web',
       type: 'slug',
       description:
-        'Se genera desde el título. Aparece en la URL: /claves/mi-entrada/',
+        'Se genera desde el título. Aparece en la URL: /drops/mi-entrada/',
       options: { source: 'title', maxLength: 96 },
       validation: (rule) =>
         rule.required().error('Pulsa «Generate» para crear la dirección web.'),

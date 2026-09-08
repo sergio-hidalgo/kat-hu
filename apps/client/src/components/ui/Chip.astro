@@ -1,0 +1,29 @@
+---
+/**
+ * Guide §7.3. Two chips only: the oak price chip — the one place oak carries
+ * type, at 16:1 — and the mist status chip used for *Agotado* and friends.
+ */
+type Tone = 'price' | 'status';
+
+interface Props {
+  tone?: Tone;
+  class?: string;
+}
+
+const { tone = 'price', class: className } = Astro.props;
+
+const tones: Record<Tone, string> = {
+  price: 'bg-oak-200 text-ink font-semibold',
+  status: 'bg-mist text-slate',
+};
+---
+
+<span
+  class:list={[
+    'inline-flex items-center rounded-sm px-2 py-0.5 font-body text-sm',
+    tones[tone],
+    className,
+  ]}
+>
+  <slot />
+</span>

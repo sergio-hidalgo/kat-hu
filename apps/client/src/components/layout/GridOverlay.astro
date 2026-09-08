@@ -1,0 +1,64 @@
+---
+/**
+ * Dev-only overlay of the grid. Press `g` to toggle it on any page; the choice
+ * survives navigation through `sessionStorage`.
+ *
+ * There is one grid, so there is one overlay — it draws itself with the same
+ * `Grid` the pages use, which means anything that lines up with it is on the
+ * grid, and anything that does not is a defect (issue I-001).
+ *
+ * `BaseLayout` renders this behind `import.meta.env.DEV`, so it ships nothing
+ * to production.
+ */
+import Grid from './Grid.astro';
+
+const columns = Array.from({ length: 12 }, (_, index) => index + 1);
+---
+
+<div
+  id="grid-overlay"
+  class="pointer-events-none fixed inset-0 z-50 hidden"
+  aria-hidden="true"
+>
+  <Grid class="h-full">
+    {
+      columns.map((column) => (
+        <div class="col-span-1 h-full bg-violet-500/10 outline outline-violet-500/20">
+          <span class="block pt-1 text-center text-xs text-violet-700/50">
+            {column}
+          </span>
+        </div>
+      ))
+    }
+  </Grid>
+</div>
+
+<script>
+  const KEY = 'kathu:grid-overlay';
+  const overlay = document.getElementById('grid-overlay');
+
+  if (overlay) {
+    const paint = (on: boolean) => overlay.classList.toggle('hidden', !on);
+
+    paint(sessionStorage.getItem(KEY) === 'on');
+
+    document.addEventListener('keydown', (event) => {
+      // Ignore the key while the developer is typing into something.
+      const target = event.target as HTMLElement | null;
+      if (
+        event.key !== 'g' ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        target?.isContentEditable ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName ?? '')
+      ) {
+        return;
+      }
+
+      const on = overlay.classList.contains('hidden');
+      paint(on);
+      sessionStorage.setItem(KEY, on ? 'on' : 'off');
+    });
+  }
+</script>
