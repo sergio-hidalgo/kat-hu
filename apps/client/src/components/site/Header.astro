@@ -26,7 +26,7 @@ import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import Logo from './Logo.astro';
 import AnnouncementBar from './AnnouncementBar.astro';
-import { BAND_H, LOGO_SIZE } from './header';
+import { BAND_H, LOGO_SIZE, STRIPE_TOP } from './header';
 import { announcement } from '../../data/announcement';
 
 const links = [
@@ -43,6 +43,10 @@ const link =
   'font-body text-sm font-medium whitespace-nowrap no-underline transition-colors duration-fast';
 
 const active = 'text-ink underline decoration-violet-700 decoration-2 underline-offset-6';
+
+/* The sheet covers the page but never the stripe: opening the menu must not
+   move anything that was already on screen. */
+const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
 ---
 
 <div
@@ -91,10 +95,21 @@ const active = 'text-ink underline decoration-violet-700 decoration-2 underline-
             <Menu size={24} stroke-width={1.5} />
           </summary>
 
-          {/* A sheet, not a band under the bar: the whole screen, in white —
-              the one surface guide §3.4 sanctions for a sheet. */}
-          <div id="site-sheet" class="fixed inset-0 z-50 bg-white">
-            <Grid class:list={[BAND_H, 'items-center']}>
+          {/* A sheet, not a band under the bar: the rest of the screen, in
+              white — the one surface guide §3.4 sanctions for a sheet. Its
+              first row sits exactly where the band's was, so the lockup and
+              the control in the corner do not move as it opens. */}
+          <div
+            id="site-sheet"
+            class:list={[
+              sheetTop,
+              'fixed inset-x-0 bottom-0 z-50 flex flex-col bg-white',
+              /* Past the top of the page the stripe is collapsed, so there is
+                 nothing to sit below and the sheet takes the whole screen. */
+              'group-data-[band=glass]:top-0 group-data-[band=hidden]:top-0',
+            ]}
+          >
+            <Grid class:list={[BAND_H, 'shrink-0 items-center']}>
               <div class="col-span-6 flex items-center">
                 <Logo size={LOGO_SIZE} />
               </div>
@@ -108,18 +123,21 @@ const active = 'text-ink underline decoration-violet-700 decoration-2 underline-
               </button>
             </Grid>
 
-            <Grid>
+            {/* The links are the sheet's only content, so they take the space
+                that is left and sit in the middle of it — `content-center`
+                centres the grid's rows, the flex column centres each link. */}
+            <Grid class="flex-1 content-center">
               <nav class="col-span-12" aria-label="Principal">
-                <ul class="m-0 list-none p-0">
+                <ul class="m-0 flex list-none flex-col items-center gap-4 p-0">
                   {
                     links.map(({ href, label }) => (
-                      <li class="border-b border-mist">
+                      <li>
                         <a
                           href={href}
                           data-sheet-link
                           aria-current={isActive(href) ? 'page' : undefined}
                           class:list={[
-                            'flex min-h-11 items-center py-4 font-body text-lead no-underline',
+                            'flex min-h-11 items-center justify-center px-4 text-center font-body text-lead no-underline',
                             isActive(href) ? active : 'text-graphite',
                           ]}
                         >

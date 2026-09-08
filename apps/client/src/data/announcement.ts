@@ -28,7 +28,7 @@ export type Announcement = {
 
 export const announcement: Announcement = {
   enabled: true,
-  text: 'Sesiones online para toda España.',
+  text: 'Sesiones online.',
   href: '/reservar',
   linkLabel: 'Reserva tu primera consulta',
 };

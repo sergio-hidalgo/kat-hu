@@ -20,6 +20,13 @@ export const BAND_H = 'h-20 md:h-22';
 /** The advisory stripe above it: 36px, 40px from `md`. */
 export const STRIPE_H = 'h-9 md:h-10';
 
+/**
+ * The stripe's height as an offset. The mobile sheet starts *below* the
+ * stripe, so the stripe stays put while the menu opens and the sheet's own
+ * top row lands exactly where the band's was — nothing moves.
+ */
+export const STRIPE_TOP = 'top-9 md:top-10';
+
 /** Stripe + band — what `<main>` clears when the announcement is on. */
 export const CHROME_PT = 'pt-29 md:pt-32';
 

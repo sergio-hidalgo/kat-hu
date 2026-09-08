@@ -71,19 +71,39 @@ describe('Header', () => {
     expect(html).not.toContain('logo_text');
   });
 
-  it('renders the mobile menu as a details disclosure with a full-screen sheet', async () => {
+  it('renders the mobile menu as a details disclosure with a white sheet', async () => {
     const html = await renderHeader();
 
     expect(html).toContain('<details');
     expect(html).toContain('<summary');
-    expect(html).toContain('fixed inset-0 z-50 bg-white');
+    expect(html).toContain('fixed inset-x-0 bottom-0 z-50 flex flex-col bg-white');
+  });
+
+  it('starts the sheet below the stripe, so opening the menu moves nothing', async () => {
+    const { STRIPE_TOP } = await import('./header');
+    const html = await renderHeader();
+
+    expect(html).toContain(STRIPE_TOP);
+    // …and takes the whole screen once the stripe has collapsed.
+    expect(html).toContain('group-data-[band=glass]:top-0');
+  });
+
+  it('centres the sheet’s links and gives them no rules between', async () => {
+    const html = await renderHeader();
+
+    expect(html).toContain('flex-1 content-center');
+    expect(html).toContain('flex list-none flex-col items-center');
+    expect(html).not.toContain('<li class="border-b border-mist">');
   });
 
   it('renders the stripe when the announcement is enabled', async () => {
+    // Read from the module, not retyped: the copy is the owner's to change.
+    const { announcement } = await import('../../data/announcement');
     const html = await renderHeader();
 
-    expect(html).toContain('Sesiones online para toda España.');
-    expect(html).toContain('Reserva tu primera consulta');
+    expect(announcement.enabled).toBe(true);
+    expect(html).toContain(announcement.text);
+    expect(html).toContain(announcement.linkLabel);
   });
 
   it('emits no stripe at all when the announcement is disabled', async () => {
