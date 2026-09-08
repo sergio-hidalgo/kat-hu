@@ -60,7 +60,7 @@ const columnPlacement = [
 ];
 
 const arrowClass =
-  'inline-flex h-11 w-11 items-center justify-center rounded-full border border-mist bg-shell text-slate transition-colors duration-fast hover:bg-cloud hover:text-ink active:bg-mist disabled:cursor-not-allowed disabled:border-mist disabled:bg-cloud disabled:text-mist disabled:hover:bg-cloud';
+  'inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:text-ink disabled:cursor-not-allowed disabled:text-mist disabled:hover:text-mist';
 ---
 
 <BaseLayout
@@ -93,7 +93,16 @@ const arrowClass =
           </Grid>
         </Section>
 
-        <Section id="recent" padding="sm" hidden={ranked.rest.length === 0}>
+        {/* `scroll-mt-*` matches the header's own `h-16 md:h-18`, so paging
+            aligns this section below the fixed header instead of behind it;
+            the section's `py-10 md:py-12` then gives the space above the
+            heading (issue I-007). */}
+        <Section
+          id="recent"
+          padding="sm"
+          class="scroll-mt-16 md:scroll-mt-18"
+          hidden={ranked.rest.length === 0}
+        >
           {/* The same row gap as the featured section, so both headings sit
               the same distance above their cards — and the same unit as every
               other gap on the page (issue I-005). */}
@@ -193,6 +202,11 @@ const arrowClass =
     }));
 
   let page = 1;
+  /** Which way the reader is moving; decides which side the ellipsis sits on. */
+  let direction = 1;
+
+  /** At most three numbers between the arrows. */
+  const WINDOW = 3;
 
   /**
    * Deal the cards across the visible columns so the reading order runs
@@ -234,22 +248,60 @@ const arrowClass =
       return;
     }
 
+    /**
+     * The window of three slides with the reader: going forward it ends on the
+     * current page, so what is hidden lies behind it; going back it starts on
+     * the current page, so what is hidden lies ahead.
+     */
+    const last = Math.max(1, pages - WINDOW + 1);
+    const start =
+      pages <= WINDOW
+        ? 1
+        : Math.max(1, Math.min(direction >= 0 ? page - WINDOW + 1 : page, last));
+    const shown = Array.from(
+      { length: Math.min(WINDOW, pages) },
+      (_, index) => start + index,
+    );
+
+    const dots = () => {
+      const span = document.createElement('span');
+      span.textContent = '…';
+      span.setAttribute('aria-hidden', 'true');
+      span.className =
+        'inline-flex h-11 w-6 items-center justify-center font-body text-xs text-slate';
+      return span;
+    };
+
+    const number = (value: number) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.page = String(value);
+      button.textContent = String(value);
+      // The circle and the weight carry the current page as well as the
+      // colour, so it is never signalled by colour alone (guide §9).
+      button.className =
+        'inline-flex h-11 w-11 items-center justify-center rounded-full font-body text-xs tabular-nums transition-colors duration-fast ' +
+        (value === page
+          ? 'border border-mist bg-shell font-semibold text-ink'
+          : 'text-slate hover:bg-cloud hover:text-ink active:bg-mist');
+      if (value === page) button.setAttribute('aria-current', 'page');
+      button.setAttribute('aria-label', `Página ${value}`);
+      return button;
+    };
+
+    // One ellipsis, on the side the reader came from — unless only one side
+    // has anything hidden, in which case that side wins.
+    const hiddenBefore = shown[0] > 1;
+    const hiddenAfter = shown[shown.length - 1] < pages;
+    const side =
+      direction >= 0
+        ? (hiddenBefore && 'left') || (hiddenAfter && 'right') || null
+        : (hiddenAfter && 'right') || (hiddenBefore && 'left') || null;
+
     numbers.replaceChildren(
-      ...Array.from({ length: pages }, (_, index) => {
-        const number = index + 1;
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.page = String(number);
-        button.textContent = String(number);
-        button.className =
-          'inline-flex h-11 min-w-11 items-center justify-center rounded-full px-3 font-body text-xs tabular-nums transition-colors duration-fast ' +
-          (number === page
-            ? 'bg-violet-700 text-cloud'
-            : 'text-slate hover:bg-cloud hover:text-ink active:bg-mist');
-        if (number === page) button.setAttribute('aria-current', 'page');
-        button.setAttribute('aria-label', `Página ${number}`);
-        return button;
-      }),
+      ...(side === 'left' ? [dots()] : []),
+      ...shown.map(number),
+      ...(side === 'right' ? [dots()] : []),
     );
 
     for (const arrow of nav.querySelectorAll<HTMLButtonElement>('[data-page-step]')) {
@@ -264,9 +316,14 @@ const arrowClass =
     const target = (event.target as HTMLElement | null)?.closest('button');
     if (!target) return;
 
-    if (target.dataset.page) page = Number(target.dataset.page);
-    else if (target.dataset.pageStep) page += Number(target.dataset.pageStep);
-    else return;
+    if (target.dataset.page) {
+      const next = Number(target.dataset.page);
+      direction = next >= page ? 1 : -1;
+      page = next;
+    } else if (target.dataset.pageStep) {
+      direction = Number(target.dataset.pageStep);
+      page += direction;
+    } else return;
 
     paint();
     // Keep the section's top in view: a later page is otherwise entered
