@@ -11,14 +11,18 @@
  * rather than 403 — and it has the runtime to do it. This page is only the
  * copy and the way back, so the gap is not open for five more specs.
  *
- * The site is statically built until spec 04, so Astro emits this as
- * `404.html` and the host serves it; `astro dev` serves it for any unmatched
- * route already.
+ * Since spec 04 the site renders on demand, so this page answers two ways:
+ * Astro serves it for any unmatched route, and a page that resolved to
+ * nothing — a `/drops/<slug>` nobody published — reaches it by
+ * `Astro.rewrite('/404')`. The status is set here so both paths answer 404
+ * rather than a 200 that merely looks like an error.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Section from '../components/layout/Section.astro';
 import Grid from '../components/layout/Grid.astro';
 import Button from '../components/ui/Button.astro';
+
+Astro.response.status = 404;
 ---
 
 <BaseLayout

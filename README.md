@@ -33,7 +33,10 @@ tracked record of what exists. See the "Roadmap" section for the order.
 │   ├── client/   Astro front end   (dev :4321)
 │   ├── server/   NestJS API        (dev :3000)
 │   └── studio/   Sanity Studio     (dev :3333)
-├── packages/     shared libraries (none yet)
+├── packages/
+│   └── contracts/  shapes both apps share — Zod schemas, the API error
+│                   shape, the visibility registries, generated DB types
+├── supabase/     database as files: config.toml + migrations/
 ├── package.json      workspace root — scripts only, no app deps
 ├── pnpm-workspace.yaml
 └── pnpm-lock.yaml    the single lockfile for the whole repo
@@ -171,9 +174,20 @@ tasks — may resolve a different `node` than your terminal shows; check with
 ## Getting started
 
 ```sh
-pnpm install   # from the repo root
-pnpm dev       # runs client and server together
+pnpm install                                   # from the repo root
+cp apps/client/.env.example apps/client/.env   # Sanity + Supabase, public keys
+cp apps/server/.env.example apps/server/.env   # Supabase secret key — server only
+pnpm dev                                       # client :4321, server :3000
 ```
+
+Both `.env` files are required: the client refuses to build without a Sanity
+project id, and the server refuses to start without its four variables. The
+Studio has its own (`apps/studio/.env`) and starts separately with
+`pnpm dev:studio`.
+
+Schema work additionally wants the [Supabase
+CLI](https://supabase.com/docs/guides/local-development) and Docker — see
+[Database](#database). Nothing else in the loop needs them.
 
 ## Commands
 
@@ -193,7 +207,10 @@ Run from the repo root:
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
 | `pnpm --filter <app> add <pkg>`  | Add a dependency to one app             |
 
-`<app>`: `client`, `server`, or `studio`.
+`<app>`: `client`, `server`, `studio`, or `@kat-hu/contracts`.
+
+`pnpm dev` also starts `@kat-hu/contracts` in watch mode, so editing a
+shared schema rebuilds it and both apps pick it up without a restart.
 
 ## Tests
 
@@ -218,18 +235,59 @@ Nest's own ESM scaffold makes the same choice.
 
 ## Server
 
-The API answers on `http://localhost:3000`, with a health probe:
+The API answers on `http://localhost:3000`. It is the only process holding the
+Supabase **secret** key, and its job is narrow: validate, authorize, write.
+Rendering and public reads belong to the Astro client.
 
 ```sh
-curl http://localhost:3000/health   # {"status":"ok"}
+cp apps/server/.env.example apps/server/.env   # then fill in the secret key
+pnpm dev:server
 ```
 
-Override the port with the `PORT` environment variable.
+All four variables are required and are validated at boot, so a missing one is
+a startup error naming the variable rather than a failure on the first request
+that needed it:
+
+```sh
+$ SUPABASE_SECRET_KEY= pnpm dev:server
+apps/server cannot start: the environment is incomplete.
+  SUPABASE_SECRET_KEY — Invalid input: expected string, received undefined
+```
+
+Two routes exist today:
+
+```sh
+curl http://localhost:3000/health   # {"status":"ok"} — public
+curl -i http://localhost:3000/me    # 401, because every route is guarded by default
+```
+
+Every route is protected unless it is marked `@Public()`. Authentication is a
+bearer token the Astro server forwards from the visitor's session, verified
+against Supabase rather than merely decoded — spec 09 makes real sessions
+possible, so `/me` answers 401 for everyone for now.
+
+**Errors always have one shape**, so the client never has to guess:
+
+```json
+{ "code": "auth.unauthorized",
+  "message": "Necesitas iniciar sesión para hacer esto.",
+  "details": {} }
+```
+
+`code` is stable and English so code can branch on it, `message` is Spanish and
+safe to show a visitor, and `details` carries per-field messages for a form.
+A stack trace, a Postgres message or an echo of the submitted payload never
+crosses that line.
+
+**CORS** allows only the origins listed in `CLIENT_ORIGIN` — there is no
+wildcard, and an unlisted origin gets no `Access-Control-Allow-Origin` header
+at all.
 
 ## Content (Sanity CMS)
 
-The client's `/drops` section reads its posts from Sanity at **build time**.
-The app only reads — it holds no write token and cannot modify content.
+The client's `/drops` section reads its posts from Sanity **while it renders
+each request**. The app only reads — it holds no write token and cannot modify
+content.
 
 ```sh
 cp apps/client/.env.example apps/client/.env   # then fill in the project ID
@@ -278,17 +336,18 @@ Only `title`, `slug` and `body` are required; every other field degrades
 gracefully, so an editor cannot break the build by leaving one blank. Drafts
 are never published — the client reads with `perspective: 'published'`.
 
-### Publishing requires a rebuild
+### Content appears on publish
 
-The site is statically generated, so content is baked in at build time and new
-posts appear only after a rebuild. Point a Sanity webhook (Project → API →
-Webhooks) at the host's build hook so publishing triggers a deploy. For content
-to appear the instant it is published, the client would need an SSR adapter and
-`output: 'server'` — a hosting decision, not made here.
+The site renders on demand — `output: 'server'` with the standalone Node
+adapter — so publishing in the Studio is all it takes. A new post is live on
+the next page load, within the Sanity CDN's short cache and always under a
+minute. There is no build hook, no webhook and no deploy in that loop.
 
-> **Planned change.** Spec 04 moves the site to on-demand rendering with the
-> Node adapter, after which content appears on publish and no webhook or
-> rebuild is needed. This section is retired when that spec closes.
+The cost is that every page is rendered per request, which is the trade this
+site wants: visibility flags (spec 10) and sessions (spec 09) have to be
+evaluated for the visitor asking, and a page fixed at build time could be
+neither hidden nor personalised. Nothing sets `prerender = true` today; a page
+that opts out of the request needs a reason.
 
 ## Likes (Supabase)
 
@@ -324,9 +383,10 @@ slug keeps the post's likes.
 ### How the ordering works
 
 `/drops` shows the three most-liked posts under **Los que más gustan**, then
-the rest by date under **Más recientes**. Counts are read twice: once at build
-time, so the first paint is already sensibly ordered, and once in the browser
-on each load, which refreshes the numbers and re-sorts the cards. There is no
+the rest by date under **Más recientes**. Counts are read twice: once on the server
+while the page renders, so the first paint is already sensibly ordered, and
+once in the browser on each load, which refreshes the numbers and re-sorts the
+cards. There is no
 realtime subscription — a reader sees new counts on refresh.
 
 If Supabase is unreachable the counts fall back to zero and the page still
@@ -382,8 +442,8 @@ reduce`, or with JavaScript off, the whole page is simply visible.
 
 Deliberately not built yet. Listed roughly in the order they would pay off.
 
-- [ ] **Live counts without a refresh.** Today counts are read at build time and
-      again on each page load; a like by someone else shows up on the next
+- [ ] **Live counts without a refresh.** Today counts are read as the page
+      renders and again in the browser on load; a like by someone else shows up on the next
       refresh. A Supabase Realtime subscription on `post_likes` would push
       changes and let the featured row re-sort in place. Deferred on purpose —
       per-load reads are cheaper and the page has no other live behaviour.
@@ -435,7 +495,7 @@ closes.
 |     | the gate existed; 44px targets, the site's own 404)                       | done     |
 | 03f | Drops banner hero (`banner_drops.jpg`, restored `<h1>`)                    | done     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
-|     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | todo     |
+|     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | done     |
 | 05  | Landing page blocks                                                       | todo     |
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |
@@ -453,16 +513,79 @@ closes.
 | :----- | :------------------------------------------------------------------------------- | :----- | :---- |
 | client | `PUBLIC_SANITY_PROJECT_ID`, `PUBLIC_SANITY_DATASET`, `PUBLIC_SANITY_API_VERSION` | yes    | now   |
 | client | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`                         | yes    | now   |
-| client | `PUBLIC_API_URL`                                                                 | yes    | 04    |
+| client | `PUBLIC_API_URL`                                                                 | yes    | now   |
 | client | `SHOPIFY_STORE_DOMAIN`, `PUBLIC_SHOPIFY_STOREFRONT_TOKEN`, `SHOPIFY_API_VERSION` | token  | 11    |
-| server | `PORT`, `CLIENT_ORIGIN`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`                   | never  | 04    |
+| server | `PORT`, `CLIENT_ORIGIN`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`                   | never  | now   |
 | studio | `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`                              | n/a    | now   |
 
 `PUBLIC_` variables are inlined into the browser bundle by Astro. The
 Supabase secret key lives only in `apps/server/.env`.
+
+## Database
+
+The Supabase project is `kat-hu` (`laokeslruyqbcezjstij`, eu-west-1,
+Postgres 17). **The schema lives in this repo as files**, not in the
+dashboard: `supabase/migrations/` is the record of what the database is, and
+`supabase/config.toml` describes the local stack.
+
+```text
+supabase/
+├── config.toml                                  local stack (supabase start)
+└── migrations/
+    └── 20260906160845_create_post_likes.sql     post_likes + the two like RPCs
+```
+
+### Three doors into one database
+
+| Door | Key | Who uses it | May write? |
+| :--- | :-- | :---------- | :--------- |
+| Browser (`anon`) | `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the page, in the browser and on the server | only `like_post` / `unlike_post` |
+| Signed-in browser (`authenticated`) | the same key plus the user's JWT | Astro middleware, per request (spec 09) | only what RLS grants that user |
+| Server (`service_role`) | `SUPABASE_SECRET_KEY` | `apps/server` alone | everything — so every guard is in Nest |
+
+The publishable key is public by design. What protects the data is the schema:
+RLS on every table, grants named rather than inherited, and no write policy
+where a write should not happen. **New writes go through Nest** — the browser
+writing straight to a table is limited to the two like RPCs that already exist.
+
+### Working on the schema
+
+```sh
+supabase link --project-ref laokeslruyqbcezjstij   # once per checkout
+supabase start          # local stack (needs Docker)
+supabase db reset       # replay every migration from scratch
+supabase db push        # apply new migrations to the remote project
+```
+
+Rules, in full in the `db-schema` skill:
+
+- A migration is a plain SQL file named `YYYYMMDDHHMMSS_short_slug.sql`.
+  Never edit one that has been applied — add another.
+- A migration that adds a table adds its RLS, its grants and its policies in
+  the same file.
+- Regenerate `packages/contracts/src/supabase.types.ts` in the same change:
+  `supabase gen types typescript --project-id laokeslruyqbcezjstij >
+  packages/contracts/src/supabase.types.ts`.
+- Never apply ad hoc SQL in the dashboard. `post_likes` was created that way
+  once, before this folder existed; spec 04 exported it back into the repo.
 
 ## Adding a shared package
 
 Shared code goes in `packages/*` (already matched by `pnpm-workspace.yaml`) and
 is consumed with `"workspace:*"`. Apps must never import each other by relative
 path.
+
+There is one today, **`@kat-hu/contracts`** — the single definition of every
+shape that crosses the boundary between the client and the API:
+
+| Export | What it is |
+| :----- | :--------- |
+| `bookingRequestSchema` | the *reserva* payload (a placeholder until spec 06) |
+| `apiErrorSchema`, `API_ERROR_CODES` | the one error shape the API returns |
+| `BLOCKS`, `PAGES`, `visibilityKey()` | what `/admin` can switch off, and the key `site_visibility` stores it under |
+| `Database` | types generated from the live schema |
+
+It is plain TypeScript compiled to `dist/`, so it builds before the apps that
+import it (`pnpm -r build` walks the dependency graph) and watches alongside
+them under `pnpm dev`. Nest DTOs wrap these schemas rather than redeclaring
+fields, so the client and the server cannot drift.

@@ -1,7 +1,7 @@
 /**
  * Like counts, stored in Supabase rather than Sanity so that reader traffic
- * never touches the CMS. Isomorphic: the build uses it to pre-render counts,
- * the browser uses it to refresh them and to record a click.
+ * never touches the CMS. Isomorphic: the server reads counts while rendering
+ * the page, the browser uses it to refresh them and to record a click.
  *
  * Writes go through the `like_post` / `unlike_post` RPCs. The table itself is
  * read-only to the anon role, so the only possible mutation is +1/-1 on one row.
@@ -9,7 +9,7 @@
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-/** False when Supabase is unconfigured — the site still builds and renders. */
+/** False when Supabase is unconfigured — the site still renders. */
 export const likesEnabled = Boolean(supabaseUrl && supabaseKey);
 
 export type LikeCounts = Record<string, number>;
@@ -27,7 +27,7 @@ function headers(): Record<string, string> {
  * so callers treat a missing key as zero.
  *
  * Never throws: a Supabase outage degrades to "counts unavailable", it does not
- * fail the build or blank the page.
+ * fail the render or blank the page.
  */
 export async function getLikeCounts(): Promise<LikeCounts> {
   if (!likesEnabled) return {};
