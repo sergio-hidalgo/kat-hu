@@ -112,20 +112,6 @@ system), never an image of the words: it is selectable, it scales with the
 reader's font settings and it costs no image request. The two wordmark PNGs
 remain in `src/assets/brand/` for email and social only.
 
-The **browser icons are the same mark**, generated from that same
-`src/assets/brand/kathu-mark.svg` by `pnpm --filter client favicons`, so the
-tab and the lockup on the page cannot drift apart. The script writes a square
-`favicon.svg` — violet-700 on Shell, the mark filling 88% of the height — and
-rasterises it to `favicon.ico` (16 and 32), `icon-192`, `icon-512` and a
-`apple-touch-icon` with more padding, since iOS rounds the corners in. The
-backing is opaque on purpose: the flowers are holes in the path, so on a
-transparent icon a dark tab strip would swallow them. `BaseLayout` offers the
-SVG first and the `.ico` only as a fallback (`sizes="any"`, or Chrome prefers
-the bitmap). The **Studio wears the same three files** from
-`apps/studio/static/`, written by the same script — until `packages/*` exists,
-that is one app's script writing into another's folder, deliberately, so the
-two sets cannot drift.
-
 On mobile the menu is a **full-screen white sheet** built on `<details>`, so
 it opens and its links work with no JavaScript; the script adds the scroll
 lock, Escape, the focus trap and the return of focus to the trigger.
@@ -193,7 +179,7 @@ Run from the repo root:
 | `pnpm build`                     | Build every app                         |
 | `pnpm check`                     | Type-check every app                    |
 | `pnpm test`                      | Run every app's tests                   |
-| `pnpm --filter client favicons`  | Regenerate both apps' icons from the mark |
+| `pnpm --filter client favicons`  | Regenerate the favicon set from the logo |
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
 | `pnpm --filter <app> add <pkg>`  | Add a dependency to one app             |
 
