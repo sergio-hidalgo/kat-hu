@@ -71,7 +71,7 @@ describe('Footer', () => {
     expect(html).toContain('Navegación');
     expect(html).toContain('Legal');
     expect(html).toContain('Contacto');
-    expect(html).toContain('Barcelona · hola@kathu.es');
+    expect(html).toContain('hola@kat-hu.com');
   });
 
   it('puts the veterinary disclaimer in White under the copyright', async () => {
@@ -79,7 +79,7 @@ describe('Footer', () => {
 
     expect(html).toContain('Todos los derechos reservados');
     expect(html).toMatch(
-      /text-white">\s*Kathu no sustituye la atención veterinaria\. Consulta siempre con tu\s+veterinaria de referencia\./,
+      /text-white">\s*kathu no sustituye la atención veterinaria\. Consulta siempre con tu\s+veterinaria de referencia\./,
     );
   });
 
