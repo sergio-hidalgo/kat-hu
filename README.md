@@ -112,6 +112,14 @@ system), never an image of the words: it is selectable, it scales with the
 reader's font settings and it costs no image request. The two wordmark PNGs
 remain in `src/assets/brand/` for email and social only.
 
+The **tab icon** is the mark as `references/kathu_favicon.png` draws it —
+purple, white flowers — with a thick white outline and a transparent
+background, so it holds up on a dark browser tab strip as well as a light one.
+`BaseLayout` offers `favicon.svg` first and `favicon.ico` only as a fallback.
+The home-screen icons (`icon-192`, `icon-512`, `apple-touch-icon`) are a
+different job and keep their Shell backing. All of it comes from
+`pnpm --filter client favicons`.
+
 On mobile the menu is a **full-screen white sheet** built on `<details>`, so
 it opens and its links work with no JavaScript; the script adds the scroll
 lock, Escape, the focus trap and the return of focus to the trigger.
@@ -179,7 +187,7 @@ Run from the repo root:
 | `pnpm build`                     | Build every app                         |
 | `pnpm check`                     | Type-check every app                    |
 | `pnpm test`                      | Run every app's tests                   |
-| `pnpm --filter client favicons`  | Regenerate the favicon set from the logo |
+| `pnpm --filter client favicons`  | Regenerate the tab and app icons        |
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
 | `pnpm --filter <app> add <pkg>`  | Add a dependency to one app             |
 
