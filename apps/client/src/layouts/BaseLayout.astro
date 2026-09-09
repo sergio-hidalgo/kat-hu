@@ -39,7 +39,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
 
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    {/* The vector first: it is the outlined mark on transparency, so it reads
+        on a dark tab strip as well as a light one, at any size. `sizes="any"`
+        on the `.ico` is what stops Chrome preferring the bitmap. */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     {/* The manifest carries `theme_color`, so the colour lives there rather

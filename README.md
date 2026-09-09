@@ -69,6 +69,15 @@ never the other way round.
 - `/estilo` renders every UI primitive in every state, including the chrome's
   stripe, the band's three states and the back-to-top button. It exists in
   `astro dev` only and returns 404 in a production build.
+- **Every interactive target is at least 44px**, and the height is on the
+  control itself — padding on a wrapper is dead space around a link's own line
+  box, which is 25.6px at `text-sm`. That is why the header's nav links and the
+  footer's column links carry `min-h-11` rather than padding on their `li`.
+- `/404` is the site's own not-found page: the chrome, a heading, one line
+  saying what to do, and two ways back — *Ir al inicio* and *Leer los drops*.
+  It is **transitional**. Spec 10 replaces it with the one that also answers a
+  page the owner has switched off in `/admin`, which returns 404 rather than
+  403.
 
 ### The site chrome
 
@@ -103,6 +112,16 @@ system), never an image of the words: it is selectable, it scales with the
 reader's font settings and it costs no image request. The two wordmark PNGs
 remain in `src/assets/brand/` for email and social only.
 
+The **browser and home-screen icons are one drawing**: the mark as
+`references/kathu_favicon.png` has it — purple, white flowers — with a thick
+white outline around the silhouette, so it holds up against a dark surface as
+well as a light one. Only the backing differs: `favicon.svg`, `favicon.ico`,
+`icon-192` and `icon-512` are transparent, and `apple-touch-icon` sits on
+violet-900, because iOS composites transparency onto **black** and so the icon
+has to bring its own surface — violet-900 being the `theme_color` the manifest
+already declares. `BaseLayout` offers the SVG first and the `.ico` only as a
+fallback. All of it comes from `pnpm --filter client favicons`.
+
 On mobile the menu is a **full-screen white sheet** built on `<details>`, so
 it opens and its links work with no JavaScript; the script adds the scroll
 lock, Escape, the focus trap and the return of focus to the trigger.
@@ -120,6 +139,19 @@ register as a change in the surface rather than as something to read. It is
 decoration: `aria-hidden`, unselectable, cropped by the footer itself. The
 surface, the padding and the watermark's placement all come from the design
 system's `.kathu-footer` classes.
+
+Its column links each stand 44px tall so they can be tapped — they were 25.6px
+targets until spec 03e, which is below the floor for a finger. On a phone
+**Navegación and Legal share one row**, as two four-column blocks starting at
+grid columns 3 and 7: symmetric about the centre line, so the pair reads as one
+centred block. Contacto keeps its own row, its single link being the longest
+label in the footer. From `sm` (480px) the three columns share a row as before,
+and `lg` is unchanged.
+
+Measured at 390px: the footer was 858px before spec 03e, 908px with the bigger
+targets alone, and **703px** once the two lists were paired — so the phone
+footer ends up 155px shorter than it started, with targets that can be hit.
+From `sm` up the targets cost 23px and nothing else moved.
 
 ## Requirements
 
@@ -157,7 +189,7 @@ Run from the repo root:
 | `pnpm build`                     | Build every app                         |
 | `pnpm check`                     | Type-check every app                    |
 | `pnpm test`                      | Run every app's tests                   |
-| `pnpm --filter client favicons`  | Regenerate the favicon set from the logo |
+| `pnpm --filter client favicons`  | Regenerate the tab and app icons        |
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
 | `pnpm --filter <app> add <pkg>`  | Add a dependency to one app             |
 
@@ -399,6 +431,8 @@ closes.
 | 03c | Drops dynamics (card shape, scroll motion)                                | done     |
 | 03d | Header, footer and back-to-top rebuilt (stripe, band states, sheet,       |          |
 |     | watermark, real-text lockup)                                              | done     |
+| 03e | UI playbook retrofit (`ui-review.md` run over everything built before    |          |
+|     | the gate existed; 44px targets, the site's own 404)                       | done     |
 | 03f | Drops banner hero (`banner_drops.jpg`, restored `<h1>`)                    | done     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | todo     |

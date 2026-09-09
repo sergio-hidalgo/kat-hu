@@ -1,0 +1,51 @@
+---
+/**
+ * Transitional 404. PAT-08 asks every error page for a route back, in Spanish,
+ * saying what to do rather than what failed — and today there is nothing: the
+ * header and the footer both link to `/reservar`, `/sobre-kathu` and
+ * `/tienda`, none of which exists until specs 06, 07 and 11, so an ordinary
+ * visitor already lands on Astro's default 404 in English.
+ *
+ * **Spec 10 owns the real one** (issue I-010). It has to answer a *hidden*
+ * page as well as a missing one — a page switched off in `/admin` returns 404
+ * rather than 403 — and it has the runtime to do it. This page is only the
+ * copy and the way back, so the gap is not open for five more specs.
+ *
+ * The site is statically built until spec 04, so Astro emits this as
+ * `404.html` and the host serves it; `astro dev` serves it for any unmatched
+ * route already.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/layout/Section.astro';
+import Grid from '../components/layout/Grid.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<BaseLayout
+  title="Página no encontrada"
+  description="No encontramos esta página. Vuelve al inicio o pásate por los drops."
+>
+  <Section>
+    <Grid>
+      <div class="col-span-12 md:col-span-8 lg:col-span-7">
+        {/* `text-h1`, not `text-display`: display type is hero-only and once
+            per page (guide §2.4), and this page has no hero. */}
+        <h1 class="text-h1">No encontramos esta página</h1>
+
+        <p class="mt-4 text-lead text-graphite">
+          Puede que el enlace esté mal escrito, o que todavía no hayamos
+          publicado esta parte del sitio. Desde el inicio llegas a todo lo que
+          ya está en pie.
+        </p>
+
+        {/* HIE-01: one filled primary. The way home is the primary action;
+            the drops are the secondary, because they are the one place with
+            something to read today. */}
+        <div class="mt-8 flex flex-wrap items-start gap-4">
+          <Button href="/">Ir al inicio</Button>
+          <Button href="/drops/" variant="secondary">Leer los drops</Button>
+        </div>
+      </div>
+    </Grid>
+  </Section>
+</BaseLayout>

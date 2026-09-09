@@ -35,6 +35,22 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# vscode: the two files below are project configuration and are meant to be
+# shared — `extensions.json` is how a new checkout gets told to install the
+# Astro extension, and `launch.json` only names pnpm scripts. Anything else
+# vscode drops in here (`settings.json` above all) is personal and stays out.
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# macOS resource forks — they appear when a folder travels through a zip or a
+# non-APFS volume, and they are easy to commit by accident
+._*
+
+# test coverage output. Nothing writes it yet; spec 13 turns it on in CI
+coverage/
+*.lcov
+
 # agent instruction files (kept local, not tracked)
 AGENTS.md
 CLAUDE.md
