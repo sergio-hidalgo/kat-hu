@@ -47,6 +47,14 @@ pnpm-debug.log*
 # non-APFS volume, and they are easy to commit by accident
 ._*
 
+# supabase CLI + Studio local state. The tracked schema is exactly
+# supabase/config.toml and supabase/migrations/ — nothing else in that folder.
+# `.branches` and `.temp` are CLI runtime state; `snippets/` is the Studio SQL
+# editor's scratchpad. Real SQL tests get a home in supabase/tests/ (spec 13).
+supabase/.branches/
+supabase/.temp/
+supabase/snippets/
+
 # test coverage output. Nothing writes it yet; spec 13 turns it on in CI
 coverage/
 *.lcov

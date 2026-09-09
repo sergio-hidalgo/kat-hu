@@ -15,8 +15,8 @@ const posts = await getAllPosts();
 const counts = await getLikeCounts();
 
 /**
- * Pre-rendered for the widest layout — three featured, the rest dealt across
- * three columns — because that is the one the server can be sure of. How many
+ * Rendered for the widest layout — three featured, the rest dealt across three
+ * columns — because that is the one the server can be sure of. How many
  * posts are featured and how many fit on a page both depend on the column
  * count, which only the browser knows, so the script re-ranks, re-deals and
  * paginates on load and whenever the count changes (issue I-006).

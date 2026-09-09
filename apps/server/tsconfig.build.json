@@ -1,4 +1,11 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
+  /* The emitted app only: `dist/main.js` must sit at the root of `dist`, so
+     `rootDir` lives here rather than in the base config, which also has to
+     cover the specs and the shared mocks under `test/`. */
+  "compilerOptions": {
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "test"]
 }

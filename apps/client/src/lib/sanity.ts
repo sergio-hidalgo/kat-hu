@@ -50,7 +50,11 @@ export const sanityClient: SanityClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  // Content is fetched at build time from the public, cached API.
+  /*
+   * The public, cached API. Since spec 04 this is read while rendering each
+   * request rather than at build time, so the CDN's short cache is what stands
+   * between publishing a post and seeing it — under a minute, and no rebuild.
+   */
   useCdn: true,
   // Never serve unpublished drafts to the site.
   perspective: 'published',

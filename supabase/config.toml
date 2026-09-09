@@ -1,0 +1,54 @@
+# Supabase CLI configuration for the kat-hu project.
+#
+# The remote project is `kat-hu` (ref laokeslruyqbcezjstij, eu-west-1). Link a
+# checkout to it once with `supabase link --project-ref laokeslruyqbcezjstij`;
+# everything below describes the LOCAL stack that `supabase start` brings up so
+# migrations can be tested before they are pushed (`skills/db-schema`).
+
+project_id = "kat-hu"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+# Matches the remote project, so a migration that applies locally applies there.
+major_version = 17
+
+[db.pooler]
+enabled = false
+
+[studio]
+enabled = true
+port = 54323
+
+# Catches outbound mail locally instead of sending it (spec 06b).
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = false
+
+[auth]
+enabled = true
+# The Astro client. Spec 09 adds the deployed origin alongside it.
+site_url = "http://localhost:4321"
+additional_redirect_urls = ["http://localhost:4321"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[analytics]
+enabled = false
