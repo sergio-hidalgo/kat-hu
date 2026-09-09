@@ -300,6 +300,35 @@ realtime subscription — a reader sees new counts on refresh.
 If Supabase is unreachable the counts fall back to zero and the page still
 builds and renders; likes are additive, not load-bearing.
 
+### The banner
+
+`/drops` opens on a full-bleed band — `src/assets/brand/banner_drops.jpg`
+under the same violet-900 gradient the landing hero wears — carrying the
+page's `<h1>`, *Mis drops*, and one lead line. It is built exactly like the
+landing's hero: the image is a direct child of the `Section`, outside the
+`Grid`, and `overHero` on the layout lets the band start at the top of the
+document, so it runs under the fixed chrome and scrolls away beneath it
+rather than pushing it down. The words inside clear the chrome by importing
+`CHROME_PT` / `BAND_PT` from `src/components/site/header.ts` — the same one
+place the layout and the `scroll-margin-top` read (issue I-007).
+
+The band is shorter than the landing's `80vh` — `clamp(20rem, 30vw, 28rem)` —
+because the source is 1584 × 419 (3.8:1). A viewport-tall crop of it would be
+a sliver, and the file is not wide enough to serve past 1584px without the
+browser upscaling it.
+
+The photograph — lavender and dried oak under a pipette releasing a violet
+drop — is chosen to sit in the palette rather than to be corrected into it:
+under the overlay the band maps 90% onto the violet ramp, and Cloud clears
+9.8:1 behind the `<h1>`.
+
+Below `md` the crop is **anchored at 65% rather than centred**, so the pipette
+— the reason the photograph belongs to this route — stays in frame on a phone
+and the trim comes off the left instead of off both sides. `sizes` describes
+the image rather than the viewport (`(max-width: 1066px) 1210px, 114vw`),
+because an `object-cover` band lays the photograph out up to 3.2× wider than
+the screen; `100vw` would hand a phone a 750px file to fill 1210px.
+
 ### How the cards look and arrive
 
 A card is capped at **two lines of title and five lines of summary** (plus its
@@ -370,6 +399,7 @@ closes.
 | 03c | Drops dynamics (card shape, scroll motion)                                | done     |
 | 03d | Header, footer and back-to-top rebuilt (stripe, band states, sheet,       |          |
 |     | watermark, real-text lockup)                                              | done     |
+| 03f | Drops banner hero (`banner_drops.jpg`, restored `<h1>`)                    | done     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | todo     |
 | 05  | Landing page blocks                                                       | todo     |

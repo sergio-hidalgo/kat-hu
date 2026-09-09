@@ -1,12 +1,15 @@
 ---
+import { Image } from 'astro:assets';
 import { ChevronLeft, ChevronRight } from '@lucide/astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
 import PostCard from '../../components/drops/PostCard.astro';
-import { SCROLL_MT } from '../../components/site/header';
+import { BAND_PT, CHROME_PT, SCROLL_MT } from '../../components/site/header';
+import { announcement } from '../../data/announcement';
 import { getAllPosts } from '../../data/posts';
 import { getLikeCounts, rankPosts } from '../../lib/likes';
+import banner from '../../assets/brand/banner_drops.jpg';
 
 const posts = await getAllPosts();
 const counts = await getLikeCounts();
@@ -60,6 +63,13 @@ const columnPlacement = [
   'lg:col-start-9 lg:row-start-2',
 ];
 
+/**
+ * The hero runs under the fixed chrome, so its own words have to clear it.
+ * The height is a fact about the chrome, and `header.ts` is where it is
+ * written down — read, never retyped (issue I-007).
+ */
+const heroTop = announcement.enabled ? CHROME_PT : BAND_PT;
+
 const arrowClass =
   'inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:text-ink disabled:cursor-not-allowed disabled:text-mist disabled:hover:text-mist';
 ---
@@ -67,7 +77,57 @@ const arrowClass =
 <BaseLayout
   title="Drops"
   description="Ideas y prácticas de terapia floral para familias multiespecie."
+  overHero
 >
+  {/* The same treatment as the landing's hero: the image is a direct child of
+      the Section, outside the Grid, because a full-bleed band is meant to
+      reach the screen edges, and `overHero` above lets the band start at the
+      top of the document so it scrolls away under the chrome rather than
+      pushing it. Shorter than the landing's 80vh on purpose — the source is
+      1584x419, and a viewport-tall crop of a 3.8:1 band is a sliver. */}
+  <Section
+    padding="none"
+    class="relative isolate flex min-h-[clamp(20rem,30vw,28rem)] items-end"
+  >
+    {/* `sizes` describes the image, not the viewport. The band crops with
+        `object-cover`, so below 1066px — where the height is pinned at 20rem —
+        the photograph is laid out 1210px wide however narrow the screen is,
+        and above it at 3.78 × 30vw. `100vw` would understate that by up to
+        3.2× and hand a phone a 750px file to fill 1210px of layout. */}
+    {/* Below `md` the band shows only about a third of a 3.8:1 photograph, and
+        centring it cuts the pipette — the one element that ties the picture to
+        the route. The violet glass and its drop sit at 57-74% across (mass
+        centre 62.6%), so anchoring the crop at 65% puts the drop just right of
+        centre at every width under `md` and takes the trim off the left. From
+        `md` the crop is wide enough to hold it centred. */}
+    <Image
+      src={banner}
+      alt=""
+      widths={[750, 1188, 1584]}
+      sizes="(max-width: 1066px) 1210px, 114vw"
+      loading="eager"
+      fetchpriority="high"
+      class="absolute inset-0 -z-10 h-full w-full rounded-none object-cover object-[65%_50%] md:object-center"
+    />
+    {/* Guide §6: the violet-900 tint, never a lightened image with dark text. */}
+    <div
+      class="absolute inset-0 -z-10 bg-linear-to-t from-violet-900/80 to-violet-900/20"
+    >
+    </div>
+
+    {/* Display type is hero-only and once per page (guide §2.4); this is that
+        one. No action in the band — the primary action on a reading page is a
+        card (HIE-01). */}
+    <Grid class:list={[heroTop, 'pb-10 md:pb-12']}>
+      <div class="col-span-12 lg:col-span-8">
+        <h1 class="text-display text-cloud">Mis drops</h1>
+        <p class="mt-4 text-lead text-cloud">
+          Artículos, trucos, recomendaciones, y más...
+        </p>
+      </div>
+    </Grid>
+  </Section>
+
   {
     posts.length === 0 ? (
       <Section padding="sm">
