@@ -69,6 +69,15 @@ never the other way round.
 - `/estilo` renders every UI primitive in every state, including the chrome's
   stripe, the band's three states and the back-to-top button. It exists in
   `astro dev` only and returns 404 in a production build.
+- **Every interactive target is at least 44px**, and the height is on the
+  control itself — padding on a wrapper is dead space around a link's own line
+  box, which is 25.6px at `text-sm`. That is why the header's nav links and the
+  footer's column links carry `min-h-11` rather than padding on their `li`.
+- `/404` is the site's own not-found page: the chrome, a heading, one line
+  saying what to do, and two ways back — *Ir al inicio* and *Leer los drops*.
+  It is **transitional**. Spec 10 replaces it with the one that also answers a
+  page the owner has switched off in `/admin`, which returns 404 rather than
+  403.
 
 ### The site chrome
 
@@ -120,6 +129,11 @@ register as a change in the surface rather than as something to read. It is
 decoration: `aria-hidden`, unselectable, cropped by the footer itself. The
 surface, the padding and the watermark's placement all come from the design
 system's `.kathu-footer` classes.
+
+Its column links each stand 44px tall so they can be tapped, which makes the
+footer 42px taller from `sm` up and 83px taller on a phone, where the three
+columns stack. That height is deliberate and was accepted rather than
+inherited — the links were 25.6px targets until then.
 
 ## Requirements
 
@@ -399,6 +413,8 @@ closes.
 | 03c | Drops dynamics (card shape, scroll motion)                                | done     |
 | 03d | Header, footer and back-to-top rebuilt (stripe, band states, sheet,       |          |
 |     | watermark, real-text lockup)                                              | done     |
+| 03e | UI playbook retrofit (`ui-review.md` run over everything built before    |          |
+|     | the gate existed; 44px targets, the site's own 404)                       | done     |
 | 03f | Drops banner hero (`banner_drops.jpg`, restored `<h1>`)                    | done     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | todo     |

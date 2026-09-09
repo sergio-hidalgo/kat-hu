@@ -39,8 +39,12 @@ const links = [
 const path = Astro.url.pathname;
 const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
 
+/* `flex min-h-11 items-center` is the 44px target (INT-01, guide §9), not a
+   look: a bare inline anchor is only its line box — 25.6px at `text-sm` —
+   which is under the touch floor and under the 32px pointer floor. The band
+   is a fixed-height row with `items-center`, so nothing moves. */
 const link =
-  'font-body text-sm font-medium whitespace-nowrap no-underline transition-colors duration-fast';
+  'flex min-h-11 items-center font-body text-sm font-medium whitespace-nowrap no-underline transition-colors duration-fast';
 
 const active = 'text-ink underline decoration-violet-700 decoration-2 underline-offset-6';
 

@@ -12,6 +12,16 @@ const test: InlineConfig = {
   environment: 'node',
   include: ['src/**/*.test.ts'],
   /**
+   * The Container API cold-renders an `.astro` component through Astro's own
+   * pipeline the first time a file asks for one, which on a warm machine still
+   * runs past Vitest's 5s default — `Header.test.ts` and `BaseLayout.test.ts`,
+   * the two heaviest, failed with `Test timed out in 5000ms` while asserting
+   * nothing slow (issue I-008). The renders themselves are pure and offline;
+   * this timeout is headroom for the first compile, not permission for a test
+   * to wait on anything.
+   */
+  testTimeout: 20_000,
+  /**
    * Placeholders so a checkout with no `.env` can still run the suite:
    * `src/lib/sanity.ts` throws at import time on a missing project id, and
    * `src/data/posts.ts` imports it. Nothing here reaches the network — the

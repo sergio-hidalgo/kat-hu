@@ -38,6 +38,17 @@ describe('Header', () => {
     expect(html).toContain('aria-label="kathu — inicio"');
   });
 
+  it('gives the desktop nav links a 44px target', async () => {
+    const html = await renderHeader();
+
+    // One per link. A bare inline anchor is only its 25.6px line box, which
+    // is under both the touch and the pointer floor (INT-01, spec 03e); the
+    // band is a fixed-height row, so the height costs no layout.
+    expect((html.match(/flex min-h-11 items-center font-body/g) ?? []).length).toBe(
+      LINKS.length,
+    );
+  });
+
   it('marks the current page', async () => {
     const html = await renderHeader('https://kathu.es/drops');
 

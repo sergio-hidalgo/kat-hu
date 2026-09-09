@@ -105,12 +105,20 @@ const year = new Date().getFullYear();
           >
             {heading}
           </h2>
+          {/* The padding belongs on the anchor, never on the `li`: an inline
+              anchor's target is its own line box — 25.6px at `text-sm` — and
+              padding on the parent is dead space around it. `inline-flex
+              min-h-11` is the 44px target from INT-01 and guide §9, and
+              `inline-` keeps the link shrink-to-fit so it still centres below
+              `lg` and ranges left at `lg`. It costs 10.4px a link, which is
+              41.6px of footer from `sm` up and 83.2px on a phone, where all
+              three navs stack — accepted by the owner on 2026-09-09. */}
           <ul class="mt-3 list-none p-0">
             {links.map(({ href, label }) => (
-              <li class="py-1">
+              <li>
                 <a
                   href={href}
-                  class="font-body text-sm text-cloud no-underline transition-colors duration-fast hover:text-oak-200 hover:underline"
+                  class="inline-flex min-h-11 items-center font-body text-sm text-cloud no-underline transition-colors duration-fast hover:text-oak-200 hover:underline"
                 >
                   {label}
                 </a>

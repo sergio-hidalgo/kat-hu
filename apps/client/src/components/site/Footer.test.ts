@@ -90,6 +90,16 @@ describe('Footer', () => {
     expect(html).toContain('font-size: 29px');
   });
 
+  it('gives every column link a 44px target, on the anchor', async () => {
+    const html = await render();
+
+    // Eight links across the three columns. The height has to be on the
+    // anchor: padding on the `li` is dead space around a 25.6px line box
+    // (INT-01, guide §9, spec 03e).
+    expect((html.match(/inline-flex min-h-11 items-center/g) ?? []).length).toBe(8);
+    expect(html).not.toContain('<li class="py-1">');
+  });
+
   it('centres everything below lg and ranges it left from lg', async () => {
     const html = await render();
 
