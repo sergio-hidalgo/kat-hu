@@ -35,12 +35,25 @@ const fullWidthWatermark = watermark.replace(
   'class="kathu-footer__watermark max-w-none"',
 );
 
+/**
+ * Where each column sits, at all three arrangements. Every value is a column
+ * span or a column start — never a width (I-001).
+ *
+ * - **Phone**, below `sm`: Navegación and Legal share one row as two
+ *   four-column blocks starting at 3 and 7. That is symmetric about the
+ *   grid's centre line, so the pair reads as one centred block rather than
+ *   two lists pushed to the edges, and it saves roughly 200px of footer that
+ *   the 44px link targets had added (owner, 2026-09-09). Contacto keeps its
+ *   own row: its one link is the longest label in the footer.
+ * - **`sm` (480px) and up**: the three columns share a row, each centred in
+ *   its third — `sm:col-start-auto` releases the phone's explicit start.
+ * - **`lg` and up**: the desktop arrangement, ranged left, starting at grid
+ *   columns 5, 8 and 11 so a one-column gutter opens after the blurb.
+ */
 const columns = [
   {
     heading: 'Navegación',
-    /* Desktop only: the shift opens a one-column gutter between the blurb and
-       the links. Below lg the three columns already share a row. */
-    start: 'lg:col-start-5',
+    place: 'col-span-4 col-start-3 sm:col-span-4 sm:col-start-auto lg:col-span-2 lg:col-start-5',
     links: [
       { href: '/reservar', label: 'Reservar' },
       { href: '/sobre-kathu', label: 'Sobre kathu' },
@@ -50,7 +63,7 @@ const columns = [
   },
   {
     heading: 'Legal',
-    start: 'lg:col-start-8',
+    place: 'col-span-4 col-start-7 sm:col-span-4 sm:col-start-auto lg:col-span-2 lg:col-start-8',
     links: [
       { href: '/aviso-legal', label: 'Aviso legal' },
       { href: '/privacidad', label: 'Privacidad' },
@@ -59,7 +72,7 @@ const columns = [
   },
   {
     heading: 'Contacto',
-    start: 'lg:col-start-11',
+    place: 'col-span-12 sm:col-span-4 lg:col-span-2 lg:col-start-11',
     links: [{ href: 'mailto:hola@kat-hu.com', label: 'hola@kat-hu.com' }],
   },
 ];
@@ -90,12 +103,9 @@ const year = new Date().getFullYear();
     </div>
 
     {
-      columns.map(({ heading, start, links }) => (
+      columns.map(({ heading, place, links }) => (
         <nav
-          class:list={[
-            'col-span-12 text-center sm:col-span-4 lg:col-span-2 lg:text-left',
-            start,
-          ]}
+          class:list={['text-center lg:text-left', place]}
           aria-labelledby={`footer-${heading.toLowerCase()}`}
         >
           {/* Lora, not Urbanist: the guide forbids the display face below 20px. */}

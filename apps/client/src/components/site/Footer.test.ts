@@ -100,6 +100,21 @@ describe('Footer', () => {
     expect(html).not.toContain('<li class="py-1">');
   });
 
+  it('pairs Navegación and Legal on one row on a phone, centred as a block', async () => {
+    const html = await render();
+
+    // Four columns starting at 3 and at 7 are symmetric about the grid's
+    // centre line, so the two lists read as one centred block rather than two
+    // lists pushed to the edges. Contacto keeps its own row — its one link is
+    // the longest label in the footer.
+    expect(html).toContain('col-span-4 col-start-3');
+    expect(html).toContain('col-span-4 col-start-7');
+    expect(html).toContain('col-span-12 sm:col-span-4');
+    // …and `sm` releases the phone's explicit start, or the three columns
+    // could not share a row from 480px up.
+    expect((html.match(/sm:col-start-auto/g) ?? []).length).toBe(2);
+  });
+
   it('centres everything below lg and ranges it left from lg', async () => {
     const html = await render();
 

@@ -130,10 +130,18 @@ decoration: `aria-hidden`, unselectable, cropped by the footer itself. The
 surface, the padding and the watermark's placement all come from the design
 system's `.kathu-footer` classes.
 
-Its column links each stand 44px tall so they can be tapped, which makes the
-footer 42px taller from `sm` up and 83px taller on a phone, where the three
-columns stack. That height is deliberate and was accepted rather than
-inherited — the links were 25.6px targets until then.
+Its column links each stand 44px tall so they can be tapped — they were 25.6px
+targets until spec 03e, which is below the floor for a finger. On a phone
+**Navegación and Legal share one row**, as two four-column blocks starting at
+grid columns 3 and 7: symmetric about the centre line, so the pair reads as one
+centred block. Contacto keeps its own row, its single link being the longest
+label in the footer. From `sm` (480px) the three columns share a row as before,
+and `lg` is unchanged.
+
+Measured at 390px: the footer was 858px before spec 03e, 908px with the bigger
+targets alone, and **703px** once the two lists were paired — so the phone
+footer ends up 155px shorter than it started, with targets that can be hit.
+From `sm` up the targets cost 23px and nothing else moved.
 
 ## Requirements
 
