@@ -112,13 +112,15 @@ system), never an image of the words: it is selectable, it scales with the
 reader's font settings and it costs no image request. The two wordmark PNGs
 remain in `src/assets/brand/` for email and social only.
 
-The **tab icon** is the mark as `references/kathu_favicon.png` draws it —
-purple, white flowers — with a thick white outline and a transparent
-background, so it holds up on a dark browser tab strip as well as a light one.
-`BaseLayout` offers `favicon.svg` first and `favicon.ico` only as a fallback.
-The home-screen icons (`icon-192`, `icon-512`, `apple-touch-icon`) are a
-different job and keep their Shell backing. All of it comes from
-`pnpm --filter client favicons`.
+The **browser and home-screen icons are one drawing**: the mark as
+`references/kathu_favicon.png` has it — purple, white flowers — with a thick
+white outline around the silhouette, so it holds up against a dark surface as
+well as a light one. Only the backing differs: `favicon.svg`, `favicon.ico`,
+`icon-192` and `icon-512` are transparent, and `apple-touch-icon` sits on
+violet-900, because iOS composites transparency onto **black** and so the icon
+has to bring its own surface — violet-900 being the `theme_color` the manifest
+already declares. `BaseLayout` offers the SVG first and the `.ico` only as a
+fallback. All of it comes from `pnpm --filter client favicons`.
 
 On mobile the menu is a **full-screen white sheet** built on `<details>`, so
 it opens and its links work with no JavaScript; the script adds the scroll
