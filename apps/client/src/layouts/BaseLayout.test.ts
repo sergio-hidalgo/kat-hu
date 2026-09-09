@@ -19,6 +19,16 @@ async function renderLayout() {
 }
 
 describe('BaseLayout', () => {
+  it('offers the mark as a vector first, with the .ico only as a fallback', async () => {
+    const html = await renderLayout();
+
+    expect(html).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml">');
+    // `sizes="any"` is what stops the .ico outranking the SVG in Chrome.
+    expect(html).toContain('<link rel="icon" href="/favicon.ico" sizes="any">');
+    expect(html).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png">');
+    expect(html).toContain('<link rel="manifest" href="/site.webmanifest">');
+  });
+
   it('clears the stripe and the band when the announcement is on', async () => {
     const html = await renderLayout();
 

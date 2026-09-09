@@ -39,8 +39,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
 
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    {/* The vector first — a browser that understands it uses it at every size
+        and never resamples. `.ico` stays for the ones that do not, and for a
+        bookmark bar; `sizes="any"` keeps it from beating the SVG. All of them
+        are generated from `kathu-mark.svg` by `pnpm --filter client favicons`,
+        so the tab icon cannot drift from the lockup on the page. */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     {/* The manifest carries `theme_color`, so the colour lives there rather
         than as a hex in a component. */}
