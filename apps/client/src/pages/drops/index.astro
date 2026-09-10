@@ -5,6 +5,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
 import PostCard from '../../components/drops/PostCard.astro';
+import BannerFrame from '../../components/drops/BannerFrame.astro';
+import Ornament from '../../components/ui/Ornament.astro';
 import { BAND_PT, CHROME_PT, SCROLL_MT } from '../../components/site/header';
 import { announcement } from '../../data/announcement';
 import { getAllPosts } from '../../data/posts';
@@ -71,7 +73,7 @@ const columnPlacement = [
 const heroTop = announcement.enabled ? CHROME_PT : BAND_PT;
 
 const arrowClass =
-  'inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:text-ink disabled:cursor-not-allowed disabled:text-mist disabled:hover:text-mist';
+  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:text-ink disabled:cursor-not-allowed disabled:text-mist disabled:hover:text-mist';
 ---
 
 <BaseLayout
@@ -114,12 +116,14 @@ const arrowClass =
       class="absolute inset-0 -z-10 bg-linear-to-t from-violet-900/80 to-violet-900/20"
     >
     </div>
+    <BannerFrame stripe={announcement.enabled} />
 
     {/* Display type is hero-only and once per page (guide §2.4); this is that
         one. No action in the band — the primary action on a reading page is a
-        card (HIE-01). */}
-    <Grid class:list={[heroTop, 'pb-10 md:pb-12']}>
-      <div class="col-span-12 lg:col-span-8">
+        card (HIE-01). The top and bottom padding clear the frame's corners
+        (spec 04b); the words stay on column 1 and the ornaments keep to the margin. */}
+    <Grid class:list={[heroTop, 'pb-16 md:pb-14 lg:pb-16']}>
+      <div class="col-span-12 pt-14 md:pt-12 lg:col-span-8 lg:pt-16">
         <h1 class="text-display text-cloud">Mis drops</h1>
         <p class="mt-4 text-lead text-cloud">
           Artículos, trucos, recomendaciones, y más...
@@ -193,6 +197,9 @@ const arrowClass =
               class="col-span-12 hidden items-center justify-center gap-2 md:row-start-3"
               aria-label="Paginación"
             >
+              {/* 28px on phones, 36px from `sm`. On a very narrow screen the flanks give
+                  way first (`shrink-100`, `min-w-0`), so the 44px targets never do (spec 04b). */}
+              <Ornament name="side" class="w-7 min-w-0 shrink-100 sm:w-9" />
               <button type="button" class={arrowClass} data-page-step="-1" aria-label="Página anterior">
                 <ChevronLeft size={20} stroke-width={1.5} />
               </button>
@@ -200,6 +207,7 @@ const arrowClass =
               <button type="button" class={arrowClass} data-page-step="1" aria-label="Página siguiente">
                 <ChevronRight size={20} stroke-width={1.5} />
               </button>
+              <Ornament name="side" flip="x" class="w-7 min-w-0 shrink-100 sm:w-9" />
               <span id="recent-page-status" class="sr-only" aria-live="polite"></span>
             </nav>
           </Grid>
@@ -344,7 +352,7 @@ const arrowClass =
       span.textContent = '…';
       span.setAttribute('aria-hidden', 'true');
       span.className =
-        'inline-flex h-11 w-6 items-center justify-center font-body text-xs text-slate';
+        'inline-flex h-11 w-6 shrink-0 items-center justify-center font-body text-xs text-slate';
       return span;
     };
 
@@ -356,7 +364,7 @@ const arrowClass =
       // The circle and the weight carry the current page as well as the
       // colour, so it is never signalled by colour alone (guide §9).
       button.className =
-        'inline-flex h-11 w-11 items-center justify-center rounded-full font-body text-xs tabular-nums transition-colors duration-fast ' +
+        'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-body text-xs tabular-nums transition-colors duration-fast ' +
         (value === page
           ? 'border border-mist bg-shell font-semibold text-ink'
           : 'text-slate hover:bg-cloud hover:text-ink active:bg-mist');
