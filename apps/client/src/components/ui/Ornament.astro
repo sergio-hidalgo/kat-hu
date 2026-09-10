@@ -1,0 +1,46 @@
+---
+/**
+ * One of the three classical ornaments (spec 04b), inlined so its colour comes
+ * from CSS — the `Logo.astro` pattern: a `?raw` import, never `<img>`.
+ *
+ * The files in `assets/brand/ornament-*.svg` are sanitised copies of the
+ * owner's drawings in `references/`: same viewBox, same geometry, with the
+ * exporter's style block, ids and fills removed and `fill="currentColor"` on
+ * the root. `Ornament.test.ts` holds the geometry to the originals.
+ *
+ * Decoration only: hidden from assistive tech, never a target, never
+ * selectable. The caller gives a **width** (`w-10`); the height follows the
+ * viewBox. It sets no `display` of its own, so a caller's `hidden sm:block`
+ * never fights a base one — an absolutely positioned wrapper or a flex item
+ * is blockified anyway.
+ */
+import bigCorner from '../../assets/brand/ornament-big-corner.svg?raw';
+import smallCorner from '../../assets/brand/ornament-small-corner.svg?raw';
+import side from '../../assets/brand/ornament-side.svg?raw';
+import { ORNAMENTS, flipClass, type Flip, type OrnamentName } from './ornament';
+
+interface Props {
+  name: OrnamentName;
+  flip?: Flip;
+  class?: string;
+}
+
+const SVGS: Record<OrnamentName, string> = {
+  'big-corner': bigCorner,
+  'small-corner': smallCorner,
+  side,
+};
+
+const { name, flip, class: className } = Astro.props;
+---
+
+<span
+  aria-hidden="true"
+  data-ornament={name}
+  class:list={[
+    'pointer-events-none select-none [&>svg]:block [&>svg]:h-auto [&>svg]:w-full',
+    ORNAMENTS[name].tone,
+    flipClass(flip),
+    className,
+  ]}
+><Fragment set:html={SVGS[name]} /></span>

@@ -18,6 +18,7 @@ import Field from '../../components/ui/Field.astro';
 import { fieldControlClass } from '../../components/ui/field';
 import Testimonial from '../../components/ui/Testimonial.astro';
 import Toast from '../../components/ui/Toast.astro';
+import Ornament from '../../components/ui/Ornament.astro';
 import Logo from '../../components/site/Logo.astro';
 import { ArrowUp } from '@lucide/astro';
 import { BAND_H, LOGO_SIZE, STRIPE_H } from '../../components/site/header';
@@ -159,6 +160,36 @@ const bands = [
           <Chip tone="status">Agotado</Chip>
         </div>
       </Card>
+    </Grid>
+  </Section>
+
+  {/* Spec 04b. Each drawing as drawn, then its mirrors — the positions a page
+      uses them in. Violet on Shell here; the Cloud corner on violet-900 below. */}
+  <Section padding="sm">
+    <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Ornamentos</h2>
+      <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6">
+        <Ornament name="small-corner" class="w-10" />
+        <Ornament name="small-corner" flip="x" class="w-10" />
+        <p class="max-w-none text-xs text-slate">small-corner: esquinas de tarjeta</p>
+      </div>
+      <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6">
+        <Ornament name="side" class="w-9" />
+        <Ornament name="side" flip="x" class="w-9" />
+        <p class="max-w-none text-xs text-slate">side: flancos de paginación</p>
+      </div>
+    </Grid>
+  </Section>
+
+  <Section padding="sm" surface="violet">
+    <Grid class="gap-y-8">
+      <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6">
+        <Ornament name="big-corner" class="w-18" />
+        <Ornament name="big-corner" flip="x" class="w-18" />
+        <Ornament name="big-corner" flip="y" class="w-18" />
+        <Ornament name="big-corner" flip="both" class="w-18" />
+        <p class="max-w-none text-xs text-mist">big-corner: marco del banner</p>
+      </div>
     </Grid>
   </Section>
 

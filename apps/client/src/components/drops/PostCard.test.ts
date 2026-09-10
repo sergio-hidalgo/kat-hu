@@ -79,6 +79,29 @@ describe('PostCard', () => {
     expect(html).toContain('line-clamp-5');
   });
 
+  it('wears two small corners, the right one mirrored, with or without an image', async () => {
+    for (const props of [{ ...post, mainImage }, post]) {
+      const html = await render(props);
+      const corners = [...html.matchAll(/data-ornament="small-corner" class="([^"]*)"/g)].map(
+        ([, classes]) => classes,
+      );
+
+      // Spec 04b: bottom-left as drawn, bottom-right as its mirror.
+      expect(corners).toHaveLength(2);
+      expect(corners[0]).not.toContain('-scale-x-100');
+      expect(corners[1]).toContain('-scale-x-100');
+      expect(html.match(/aria-hidden="true" data-ornament/g)).toHaveLength(2);
+    }
+  });
+
+  it('sets the title in Violet Dusk', async () => {
+    const html = await render({ ...post, mainImage });
+    const titleClass = html.match(/<h3 class="([^"]*)"/)?.[1] ?? '';
+
+    expect(titleClass).toContain('text-violet-700');
+    expect(titleClass).not.toContain('text-ink');
+  });
+
   it('shows the date in Spanish and the like count', async () => {
     const html = await render({ ...post, mainImage });
 

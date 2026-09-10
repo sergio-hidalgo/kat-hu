@@ -3,6 +3,7 @@ import { Heart } from '@lucide/astro';
 import { formatDate, type Post } from '../../data/posts';
 import { imageUrl } from '../../lib/sanity';
 import Card from '../ui/Card.astro';
+import Ornament from '../ui/Ornament.astro';
 
 type Props = Pick<Post, 'id' | 'slug' | 'title' | 'excerpt' | 'date' | 'mainImage'> & {
   likes: number;
@@ -26,7 +27,7 @@ const height = 450;
 <Card
   interactive
   padded={false}
-  class="flex flex-col overflow-hidden"
+  class="relative flex flex-col overflow-hidden"
   data-post-id={id}
   data-date={date}
   data-likes={likes}
@@ -52,12 +53,16 @@ const height = 450;
     ) : null
   }
 
-  <div class="p-6 md:p-8">
+  {/* The bottom padding holds the corner ornaments below the last line, and
+      the side padding keeps the text inside their upright leaves (spec 04b).
+      Back to `px-8` at `lg`, where three columns make a card ~290px wide. */}
+  <div class="px-8 pt-6 pb-12 md:px-12 md:pt-8 md:pb-16 lg:px-8 xl:px-12">
     {/* Two lines of title, five of summary: the card's height is capped in
         lines rather than in pixels, so it tracks the fluid type scale and the
         16:9 crop by itself. The browser's own ellipsis; the whole title and
-        excerpt stay in the DOM for search and screen readers. */}
-    <h3 class="line-clamp-2 text-h4 text-ink">
+        excerpt stay in the DOM for search and screen readers. Violet Dusk
+        rather than the guide's Ink, by the owner's decision (spec 04b). */}
+    <h3 class="line-clamp-2 text-h4 text-violet-700">
       <a href={href} class="no-underline hover:underline">{title}</a>
     </h3>
 
@@ -75,4 +80,10 @@ const height = 450;
 
     <p class="line-clamp-5 max-w-none text-sm text-graphite">{excerpt}</p>
   </div>
+
+  {/* The same two corners on every card, with or without an image, in either
+      block — a card the script moves carries nothing that depends on where it
+      is (I-006). */}
+  <Ornament name="small-corner" class="absolute bottom-2 left-2 w-8 md:bottom-3 md:left-3 md:w-10" />
+  <Ornament name="small-corner" flip="x" class="absolute right-2 bottom-2 w-8 md:right-3 md:bottom-3 md:w-10" />
 </Card>

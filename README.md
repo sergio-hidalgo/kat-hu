@@ -421,10 +421,33 @@ the image rather than the viewport (`(max-width: 1066px) 1210px, 114vw`),
 because an `object-cover` band lays the photograph out up to 3.2× wider than
 the screen; `100vw` would hand a phone a 750px file to fill 1210px.
 
+### The ornaments
+
+`/drops` wears a classical frame, by the owner's decision of 2026-09-10 — a
+deliberate exception, on this page only, to the style guide's "no ornament"
+principle. Three drawings, each mirrored into the positions it needs:
+
+- **the banner** — `big-corner` in its four corners, in Cloud. The frame starts below the fixed chrome, so the
+  top ornaments are visible at scroll 0, and the corners step down in size so
+  they stay in the page margin and never sit on the heading;
+- **every card** — `small-corner` bottom-left and bottom-right, in violet-600,
+  with the title in violet-700;
+- **the pagination** — `side` on each flank, in violet-600, at every width;
+  on a very narrow phone the flanks shrink before the page buttons do.
+
+The files are `src/assets/brand/ornament-*.svg`: sanitised copies of the
+owner's SVGs with the same geometry, taking their colour from CSS. The colours
+are the design-system tokens nearest to the owner's originals, set in one place
+(`src/components/ui/ornament.ts`). The primitive is
+`src/components/ui/Ornament.astro`, shown on `/estilo`; the banner frame is
+`src/components/drops/BannerFrame.astro`. All of it is `aria-hidden`
+decoration.
+
 ### How the cards look and arrive
 
 A card is capped at **two lines of title and five lines of summary** (plus its
-16:9 image), clamped visually with `line-clamp` — the whole text stays in the
+16:9 image and the row its corner ornaments sit in), clamped visually with
+`line-clamp` — the whole text stays in the
 markup, so search engines and screen readers get the full sentence and only
 the box is capped. Cards with less text stay shorter, which is what keeps the
 second block reading as a masonry.
@@ -496,6 +519,8 @@ closes.
 | 03f | Drops banner hero (`banner_drops.jpg`, restored `<h1>`)                    | done     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | done     |
+| 04b | Drops page oldie (classical ornaments: banner frame, card corners,        |          |
+|     | pagination flanks)                                                        | in progress |
 | 05  | Landing page blocks                                                       | todo     |
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |

@@ -34,6 +34,14 @@ export const CHROME_PT = 'pt-29 md:pt-32';
 export const BAND_PT = 'pt-20 md:pt-22';
 
 /**
+ * The same two heights as offsets, for something positioned inside a band
+ * that runs under the chrome: the `/drops` banner's ornament frame starts
+ * below it, so its top ornaments are visible at scroll 0 (spec 04b).
+ */
+export const CHROME_TOP = 'top-29 md:top-32';
+export const BAND_TOP = 'top-20 md:top-22';
+
+/**
  * Band only, deliberately: anything scrolled to is scrolled to, and by then
  * the stripe has collapsed.
  */
