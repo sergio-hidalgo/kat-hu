@@ -3,6 +3,7 @@ import { Heart } from '@lucide/astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
+import FramedImage from '../../components/drops/FramedImage.astro';
 import { getPostBySlug, formatDate } from '../../data/posts';
 import { imageUrl, portableTextToHtml } from '../../lib/sanity';
 import { likesEnabled } from '../../lib/likes';
@@ -85,15 +86,19 @@ const backButton = [
           <a href="/drops/" class:list={[backButton, 'ml-auto']}>← Volver</a>
         </div>
 
+        {/* The banner's four white corners, over a faint tint that keeps them
+            off a light photograph (spec 04c). No image, no frame. */}
         {
           post.mainImage && (
-            <img
-              src={imageUrl(post.mainImage).width(1600).url()}
-              alt={post.mainImage.alt ?? ''}
-              loading="eager"
-              decoding="async"
-              class="mb-8 h-auto w-full"
-            />
+            <FramedImage class="mb-8">
+              <img
+                src={imageUrl(post.mainImage).width(1600).url()}
+                alt={post.mainImage.alt ?? ''}
+                loading="eager"
+                decoding="async"
+                class="h-auto w-full"
+              />
+            </FramedImage>
           )
         }
 

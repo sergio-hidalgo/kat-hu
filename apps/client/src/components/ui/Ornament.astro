@@ -1,6 +1,6 @@
 ---
 /**
- * One of the three classical ornaments (spec 04b), inlined so its colour comes
+ * One of the classical ornaments (spec 04b), inlined so its colour comes
  * from CSS — the `Logo.astro` pattern: a `?raw` import, never `<img>`.
  *
  * The files in `assets/brand/ornament-*.svg` are sanitised copies of the
@@ -14,24 +14,30 @@
  * never fights a base one — an absolutely positioned wrapper or a flex item
  * is blockified anyway.
  */
-import bigCorner from '../../assets/brand/ornament-big-corner.svg?raw';
 import smallCorner from '../../assets/brand/ornament-small-corner.svg?raw';
 import side from '../../assets/brand/ornament-side.svg?raw';
-import { ORNAMENTS, flipClass, type Flip, type OrnamentName } from './ornament';
+import {
+  KNOCKOUT_TONE,
+  ORNAMENTS,
+  flipClass,
+  type Flip,
+  type OrnamentName,
+} from './ornament';
 
 interface Props {
   name: OrnamentName;
   flip?: Flip;
+  /** Laid over a photograph: white instead of the shape's own tone (spec 04c). */
+  knockout?: boolean;
   class?: string;
 }
 
 const SVGS: Record<OrnamentName, string> = {
-  'big-corner': bigCorner,
   'small-corner': smallCorner,
   side,
 };
 
-const { name, flip, class: className } = Astro.props;
+const { name, flip, knockout = false, class: className } = Astro.props;
 ---
 
 <span
@@ -39,7 +45,7 @@ const { name, flip, class: className } = Astro.props;
   data-ornament={name}
   class:list={[
     'pointer-events-none select-none [&>svg]:block [&>svg]:h-auto [&>svg]:w-full',
-    ORNAMENTS[name].tone,
+    knockout ? KNOCKOUT_TONE : ORNAMENTS[name].tone,
     flipClass(flip),
     className,
   ]}

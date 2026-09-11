@@ -1,0 +1,36 @@
+---
+/**
+ * A drop's main image wearing the banner's four white corners (spec 04c).
+ *
+ * The banner's photograph sits under a violet-900 tint; a drop's does not, and
+ * a white corner over a bright window or a pale wall disappears. So between
+ * the image and the corners there is a tint of their own: violet-900, faint at
+ * the top and bottom edges where the corners are, and clear through the middle
+ * where the subject is. It is guide §6's overlay colour at a fraction of the
+ * hero's strength — enough to give white a darker ground, not enough to read
+ * as a filter (owner's decision of 2026-09-11).
+ *
+ * The image comes in through the slot, so the page keeps its own `src`, `alt`
+ * and loading hints. The tint takes the image's 8px radius (`rounded-sm`,
+ * guide §6); square, its corners would show past the photo's rounded ones.
+ */
+import CornerFrame from './CornerFrame.astro';
+
+interface Props {
+  /** Placement only — a margin. */
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={['relative', className]}>
+  <slot />
+  <div
+    aria-hidden="true"
+    data-image-tint
+    class="pointer-events-none absolute inset-0 rounded-sm bg-linear-to-b from-violet-900/30 via-violet-900/0 to-violet-900/30"
+  >
+  </div>
+  <CornerFrame top="top-0" />
+</div>
