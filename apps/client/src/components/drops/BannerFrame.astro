@@ -1,23 +1,19 @@
 ---
 /**
- * The classical frame around the `/drops` banner (spec 04b): four corners,
- * each a mirror of the owner's one drawing so its base sits against the edges
- * it decorates. Corners only — the owner removed the edge-centre pieces on
- * 2026-09-10.
+ * The classical frame around the `/drops` banner (specs 04b, 04c): the four
+ * white corners of `CornerFrame`, in a box that starts **below** the chrome.
  *
- * It lives inside the banner's `Section`, after the photograph and the tint.
  * The band runs under the fixed chrome (`overHero`), and at scroll 0 the band
- * is opaque Shell, so the frame's box starts **below** the chrome — the top
- * ornaments are then fully visible on first paint. That offset is a fact
- * about the chrome and is read from `header.ts`, never retyped (I-007).
+ * is opaque Shell, so starting the box under it is what keeps the top corners
+ * fully visible on first paint. That offset is a fact about the chrome and is
+ * read from `header.ts`, never retyped (I-007).
  *
- * The sizes step with the breakpoints so the corners' side arms, about a
- * third of the box, stay inside the 1-unit edge margin from `md` up (I-001),
- * which is what lets the heading stay on column 1. Below `md` a unit is
- * ~15px and nothing legible fits, so there the page's padding clears the
- * whole corner instead.
+ * From `md` up the corners' side arms stay inside the 1-unit edge margin,
+ * which is what lets the heading stay on column 1. Below `md` a unit is ~15px
+ * and nothing legible fits, so there the page's padding clears the whole
+ * corner instead.
  */
-import Ornament from '../ui/Ornament.astro';
+import CornerFrame from './CornerFrame.astro';
 import { BAND_TOP, CHROME_TOP } from '../site/header';
 
 interface Props {
@@ -26,24 +22,6 @@ interface Props {
 }
 
 const { stripe } = Astro.props;
-
-// ~40% under the first sizes from `lg` up, and nearly flat below it, so phones
-// and tablets keep a legible frame (owner's decisions of 2026-09-10).
-const corner = 'absolute w-9 lg:w-10 xl:w-12 2xl:w-14';
 ---
 
-<div
-  aria-hidden="true"
-  data-banner-frame
-  class:list={[
-    'pointer-events-none absolute inset-x-0 bottom-0 p-2 lg:p-3',
-    stripe ? CHROME_TOP : BAND_TOP,
-  ]}
->
-  <div class="relative h-full">
-    <Ornament name="big-corner" class={`${corner} top-0 left-0`} />
-    <Ornament name="big-corner" flip="x" class={`${corner} top-0 right-0`} />
-    <Ornament name="big-corner" flip="y" class={`${corner} bottom-0 left-0`} />
-    <Ornament name="big-corner" flip="both" class={`${corner} right-0 bottom-0`} />
-  </div>
-</div>
+<CornerFrame top={stripe ? CHROME_TOP : BAND_TOP} data-banner-frame />

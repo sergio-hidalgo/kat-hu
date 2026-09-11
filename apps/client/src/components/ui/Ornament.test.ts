@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import Ornament from './Ornament.astro';
-import { ORNAMENTS, type OrnamentName } from './ornament';
+import { KNOCKOUT_TONE, ORNAMENTS, type OrnamentName } from './ornament';
 
 /**
  * The ornaments are the owner's drawings (spec 04b). What the app may change
@@ -16,7 +16,6 @@ import { ORNAMENTS, type OrnamentName } from './ornament';
 const NAMES = Object.keys(ORNAMENTS) as OrnamentName[];
 
 const REFERENCE_FILE: Record<OrnamentName, string> = {
-  'big-corner': 'big_corner.svg',
   'small-corner': 'small_corner.svg',
   side: 'side.svg',
 };
@@ -64,6 +63,13 @@ describe('Ornament', () => {
     expect(html).toContain(ORNAMENTS[name].tone);
   });
 
+  it.each(NAMES)('paints %s white instead when it is a knockout over a photograph', async (name) => {
+    const html = await render({ name, knockout: true });
+
+    expect(html).toContain(KNOCKOUT_TONE);
+    expect(html).not.toContain(ORNAMENTS[name].tone);
+  });
+
   it('mirrors on x, y or both, and not at all without a flip', async () => {
     const none = await render({ name: 'side' });
     const x = await render({ name: 'side', flip: 'x' });
@@ -80,7 +86,7 @@ describe('Ornament', () => {
   });
 
   it('passes the caller’s width and placement through', async () => {
-    const html = await render({ name: 'big-corner', class: 'absolute w-12' });
+    const html = await render({ name: 'small-corner', class: 'absolute w-12' });
 
     expect(html).toContain('absolute w-12');
   });

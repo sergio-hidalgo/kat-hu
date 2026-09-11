@@ -424,12 +424,16 @@ the screen; `100vw` would hand a phone a 750px file to fill 1210px.
 ### The ornaments
 
 `/drops` wears a classical frame, by the owner's decision of 2026-09-10 — a
-deliberate exception, on this page only, to the style guide's "no ornament"
-principle. Three drawings, each mirrored into the positions it needs:
+deliberate exception, on `/drops` and its drops only, to the style guide's "no ornament"
+principle. Two drawings, each mirrored into the positions it needs:
 
-- **the banner** — `big-corner` in its four corners, in Cloud. The frame starts below the fixed chrome, so the
+- **the banner** — `small-corner` in its four corners, in white (spec 04c
+  replaced the heavier `big-corner`). The frame starts below the fixed chrome, so the
   top ornaments are visible at scroll 0, and the corners step down in size so
   they stay in the page margin and never sit on the heading;
+- **a drop's main image** — the same four white corners, inside the image's
+  edges, over a very faint violet tint at the photo's top and bottom (clear in
+  the middle), so the white always has a darker ground even on a light photo;
 - **every card** — `small-corner` bottom-left and bottom-right, in violet-600,
   with the title in violet-700;
 - **the pagination** — `side` on each flank, in violet-600, at every width;
@@ -437,10 +441,11 @@ principle. Three drawings, each mirrored into the positions it needs:
 
 The files are `src/assets/brand/ornament-*.svg`: sanitised copies of the
 owner's SVGs with the same geometry, taking their colour from CSS. The colours
-are the design-system tokens nearest to the owner's originals, set in one place
-(`src/components/ui/ornament.ts`). The primitive is
-`src/components/ui/Ornament.astro`, shown on `/estilo`; the banner frame is
-`src/components/drops/BannerFrame.astro`. All of it is `aria-hidden`
+are the design-system tokens nearest to the owner's originals, and white over a
+photograph, set in one place (`src/components/ui/ornament.ts`). The primitive is
+`src/components/ui/Ornament.astro`, shown on `/estilo`; the four-corner frame
+is `src/components/drops/CornerFrame.astro`, which
+`src/components/drops/BannerFrame.astro` places below the chrome. All of it is `aria-hidden`
 decoration.
 
 ### How the cards look and arrive
@@ -520,7 +525,8 @@ closes.
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | done     |
 | 04b | Drops page oldie (classical ornaments: banner frame, card corners,        |          |
-|     | pagination flanks)                                                        | in progress |
+|     | pagination flanks)                                                        | done     |
+| 04c | Drops white corners (lighter banner frame, framed drop image)             | in progress |
 | 05  | Landing page blocks                                                       | todo     |
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |

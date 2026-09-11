@@ -2,11 +2,12 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import BannerFrame from './BannerFrame.astro';
 import { BAND_TOP, CHROME_TOP } from '../site/header';
+import { KNOCKOUT_TONE } from '../ui/ornament';
 
 /**
- * The frame is four mirrors of one drawing (spec 04b). Which way each one
- * faces is the whole design, so the test pins every position's flip, and the
- * box's top offset to the chrome's own numbers.
+ * The banner's frame is `CornerFrame` (spec 04c), whose flips are pinned in
+ * its own test. What belongs to the banner alone is which corners it wears and
+ * where its box starts: below the chrome, by the chrome's own numbers.
  */
 
 async function render(stripe: boolean) {
@@ -14,44 +15,16 @@ async function render(stripe: boolean) {
   return container.renderToString(BannerFrame, { props: { stripe } });
 }
 
-type Placed = { name: string; classes: string };
-
-const ornaments = (html: string): Placed[] =>
-  [...html.matchAll(/data-ornament="([^"]+)" class="([^"]*)"/g)].map(
-    ([, name, classes]) => ({ name, classes }),
-  );
-
-const flips = ({ classes }: Placed) =>
-  [classes.includes('-scale-x-100') && 'x', classes.includes('-scale-y-100') && 'y']
-    .filter(Boolean)
-    .join('');
-
-const at = (placed: Placed[], name: string, ...positions: string[]) =>
-  placed.find(
-    (item) =>
-      item.name === name &&
-      positions.every((position) => item.classes.split(' ').includes(position)),
-  );
-
 describe('BannerFrame', () => {
-  it('renders the four corners and nothing else, all hidden decoration', async () => {
+  it('wears four white small corners and nothing else, all hidden decoration', async () => {
     const html = await render(false);
-    const placed = ornaments(html);
+    const names = [...html.matchAll(/data-ornament="([^"]+)"/g)].map(([, name]) => name);
 
-    // Corners only: the owner removed the edge-centre pieces (spec 04b).
-    expect(placed).toHaveLength(4);
-    expect(placed.every((item) => item.name === 'big-corner')).toBe(true);
+    // The big corners were retired for these by the owner (spec 04c).
+    expect(names).toEqual(Array(4).fill('small-corner'));
+    expect(html.match(new RegExp(`\\b${KNOCKOUT_TONE}\\b`, 'g'))).toHaveLength(4);
     expect(html).toContain('pointer-events-none');
     expect(html.match(/aria-hidden="true"/g)?.length).toBeGreaterThanOrEqual(5);
-  });
-
-  it('mirrors each ornament so its base sits against its own edge', async () => {
-    const placed = ornaments(await render(false));
-
-    expect(flips(at(placed, 'big-corner', 'top-0', 'left-0')!)).toBe('');
-    expect(flips(at(placed, 'big-corner', 'top-0', 'right-0')!)).toBe('x');
-    expect(flips(at(placed, 'big-corner', 'bottom-0', 'left-0')!)).toBe('y');
-    expect(flips(at(placed, 'big-corner', 'bottom-0', 'right-0')!)).toBe('xy');
   });
 
   it('starts below the stripe and the band when the announcement is on', async () => {
