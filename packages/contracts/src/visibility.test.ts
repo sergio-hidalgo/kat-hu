@@ -9,10 +9,10 @@ import {
 } from './visibility.js';
 
 /**
- * The registries are empty until specs 05/07/08/11 fill them, so these run
- * over whatever is there. They are written to start catching real mistakes —
- * a duplicate id, a shouted id, an English label — the moment an entry lands,
- * rather than to be rewritten then.
+ * These run over whatever each registry holds, so they catch a duplicate id,
+ * a shouted id or an empty label the moment an entry lands. `BLOCKS` is also
+ * pinned exactly (spec 05): the page renders in its order, and the database
+ * stores its ids.
  */
 const registries: Array<[string, readonly VisibilityEntry[]]> = [
   ['BLOCKS', BLOCKS],
@@ -42,6 +42,27 @@ describe.each(registries)('%s', (name, entries) => {
     for (const entry of entries) {
       expect(entry.label.trim().length, `${name} id ${entry.id}`).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('BLOCKS', () => {
+  it('lists exactly the eight landing blocks, in the order the page shows them', () => {
+    expect(BLOCKS.map((block) => block.id)).toEqual([
+      'hero',
+      'services',
+      'how-it-works',
+      'about-teaser',
+      'testimonials',
+      'blog-teaser',
+      'shop-teaser',
+      'cta',
+    ]);
+  });
+
+  it('starts every block visible except the two teasers', () => {
+    const hidden = BLOCKS.filter((block) => !block.defaultVisible).map((block) => block.id);
+
+    expect(hidden).toEqual(['blog-teaser', 'shop-teaser']);
   });
 });
 

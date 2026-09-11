@@ -19,6 +19,8 @@ import { fieldControlClass } from '../../components/ui/field';
 import Testimonial from '../../components/ui/Testimonial.astro';
 import Toast from '../../components/ui/Toast.astro';
 import Ornament from '../../components/ui/Ornament.astro';
+import ServiceCard from '../../components/ui/ServiceCard.astro';
+import SpotIllustration from '../../components/ui/SpotIllustration.astro';
 import Logo from '../../components/site/Logo.astro';
 import { ArrowUp } from '@lucide/astro';
 import { BAND_H, LOGO_SIZE, STRIPE_H } from '../../components/site/header';
@@ -167,6 +169,32 @@ const bands = [
       uses them in. Violet on Shell here; the Cloud corner on violet-900 below. */}
   <Section padding="sm">
     <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Tarjeta de sesión</h2>
+      <div class="col-span-12 md:col-span-6 lg:col-span-4">
+        <ServiceCard
+          title="Sesión online individual"
+          description="Para ti y tu gato. Entendemos qué le está pasando y eliges las esencias que le ayudan."
+          duration="60 min"
+          modality="Online"
+          price="55 €"
+          href="/reservar?servicio=individual"
+          actionLabel="Reservar esta sesión"
+          illustration="flower"
+        />
+      </div>
+      <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6 lg:col-span-8">
+        <SpotIllustration name="flower" />
+        <SpotIllustration name="cat" />
+        <SpotIllustration name="sprout" />
+        <p class="max-w-none text-xs text-slate">
+          Hueco de ilustración, 160×160: marcador hasta que lleguen las acuarelas
+        </p>
+      </div>
+    </Grid>
+  </Section>
+
+  <Section padding="sm">
+    <Grid class="gap-y-8">
       <h2 class="col-span-12 text-h2">Ornamentos</h2>
       <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6">
         <Ornament name="small-corner" class="w-10" />
@@ -189,8 +217,12 @@ const bands = [
         <Ornament name="small-corner" knockout class="w-12" />
         <Ornament name="small-corner" knockout flip="x" class="w-12" />
         <p class="max-w-none text-xs text-mist">
-          small-corner en blanco: marco del banner y de la imagen de un drop
+          small-corner en blanco: marco del banner, del hero y de la imagen de un drop
         </p>
+      </div>
+      <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6">
+        <Button knockout>Reserva tu sesión</Button>
+        <p class="max-w-none text-xs text-mist">knockout: borde blanco sobre una foto</p>
       </div>
     </Grid>
   </Section>

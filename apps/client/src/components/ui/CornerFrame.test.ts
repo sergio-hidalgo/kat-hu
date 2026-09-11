@@ -1,7 +1,7 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import CornerFrame from './CornerFrame.astro';
-import { KNOCKOUT_TONE, ORNAMENTS } from '../ui/ornament';
+import { KNOCKOUT_TONE, ORNAMENTS } from './ornament';
 
 /**
  * Four mirrors of one drawing over a photograph (spec 04c). `small-corner` is

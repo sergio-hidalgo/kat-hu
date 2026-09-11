@@ -1,0 +1,32 @@
+---
+/**
+ * The 160×160 slot for a service's spot illustration (spec 05; `ui-kathu`'s
+ * design references: one soft, muted watercolour per card). The owner's
+ * artwork is an asset still to come, so until it arrives the slot holds a
+ * quiet Lucide stand-in on a Shell disc — deliberate enough that the card
+ * reads as finished, never as a missing image. Decorative: hidden from
+ * assistive tech either way.
+ */
+import { Cat, Flower2, Sprout } from '@lucide/astro';
+
+interface Props {
+  name: 'flower' | 'cat' | 'sprout';
+  class?: string;
+}
+
+const ICONS = { flower: Flower2, cat: Cat, sprout: Sprout };
+
+const { name, class: className } = Astro.props;
+const Icon = ICONS[name];
+---
+
+<div
+  aria-hidden="true"
+  data-spot={name}
+  class:list={[
+    'flex size-40 shrink-0 items-center justify-center rounded-full bg-shell text-violet-400',
+    className,
+  ]}
+>
+  <Icon size={48} stroke-width={1.5} />
+</div>

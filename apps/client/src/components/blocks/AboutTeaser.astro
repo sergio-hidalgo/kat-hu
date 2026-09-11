@@ -1,0 +1,49 @@
+---
+/**
+ * `block:about-teaser` (spec 05): who the florapeuta is, in a paragraph, and
+ * the way to the whole story on `/sobre-kathu`.
+ *
+ * The photo is the owner's second picture of Laura, set in the Studio. Until
+ * there is one the block is text alone on the same columns — a finished block,
+ * not an empty frame waiting for a picture. With one, it is a 4:5 crop (guide
+ * §6) beside the words.
+ */
+import Section from '../layout/Section.astro';
+import Grid from '../layout/Grid.astro';
+import { TEXT_LINK } from '../ui/link';
+import type { LandingCopy } from '../../data/landing';
+import { imageUrl } from '../../lib/sanity';
+
+interface Props {
+  copy: LandingCopy['about-teaser'];
+}
+
+const { copy } = Astro.props;
+const { image } = copy;
+
+const width = 640;
+const height = 800;
+---
+
+<Section data-block="about-teaser">
+  <Grid class="items-center gap-y-8">
+    {
+      image && (
+        <img
+          src={imageUrl(image).width(width).height(height).fit('crop').url()}
+          alt={image.alt ?? ''}
+          width={width}
+          height={height}
+          loading="lazy"
+          decoding="async"
+          class="col-span-12 h-auto w-full sm:col-span-8 md:col-span-4"
+        />
+      )
+    }
+    <div class:list={['col-span-12', image ? 'md:col-span-7 md:col-start-6' : 'md:col-span-8']}>
+      <h2 class="text-h2 text-ink">{copy.headline}</h2>
+      <p class="mt-4 text-lead text-graphite">{copy.paragraph}</p>
+      <a href="/sobre-kathu" class:list={[TEXT_LINK, 'mt-4']}>Conoce la historia de kathu</a>
+    </div>
+  </Grid>
+</Section>

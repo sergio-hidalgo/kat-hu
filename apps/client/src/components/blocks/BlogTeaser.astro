@@ -1,0 +1,65 @@
+---
+/**
+ * `block:blog-teaser` (spec 05): the three newest drops as the same
+ * `PostCard`s `/drops` shows, and the way to all of them. Hidden by default
+ * until spec 08 finishes `/drops`.
+ *
+ * The cards bring their two corner ornaments with them — they are the card's
+ * own, so the ornament rule follows `PostCard` wherever it is placed.
+ *
+ * With no posts, or Sanity unreachable, it renders nothing rather than an
+ * empty heading, and never takes the page down with it.
+ */
+import Section from '../layout/Section.astro';
+import Grid from '../layout/Grid.astro';
+import PostCard from '../drops/PostCard.astro';
+import { TEXT_LINK } from '../ui/link';
+import type { LandingCopy } from '../../data/landing';
+import { getLatestPosts } from '../../data/posts';
+import { getLikeCounts } from '../../lib/likes';
+
+interface Props {
+  copy: LandingCopy['blog-teaser'];
+}
+
+const { copy } = Astro.props;
+
+const [posts, counts] = await Promise.all([
+  getLatestPosts().catch((error) => {
+    console.warn('[blog-teaser] could not read the posts, hiding the block:', error);
+    return [];
+  }),
+  getLikeCounts(),
+]);
+---
+
+{
+  posts.length > 0 && (
+    <Section data-block="blog-teaser">
+      <Grid class="gap-y-8">
+        {/* The heading takes a row of its own: at 8 columns it would leave 4
+            free, and the first card would climb up beside it on wide screens. */}
+        <div class="col-span-12">
+          <h2 class="text-h2 text-ink">{copy.headline}</h2>
+          <p class="mt-4 text-lead text-graphite">{copy.lead}</p>
+        </div>
+        {posts.map((post) => (
+          <div class="col-span-12 md:col-span-6 lg:col-span-4">
+            <PostCard
+              id={post.id}
+              slug={post.slug}
+              title={post.title}
+              excerpt={post.excerpt}
+              date={post.date}
+              mainImage={post.mainImage}
+              likes={counts[post.id] ?? 0}
+            />
+          </div>
+        ))}
+        <p class="col-span-12 max-w-none">
+          <a href="/drops/" class={TEXT_LINK}>Ver todos los drops</a>
+        </p>
+      </Grid>
+    </Section>
+  )
+}

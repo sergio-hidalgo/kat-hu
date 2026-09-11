@@ -1,0 +1,27 @@
+---
+/**
+ * `block:cta` (spec 05): one closing sentence and the way to book. Centred —
+ * the closing call to action is one of the few things guide §4 lets centre.
+ * The button is outlined: the page's one filled action is the hero's
+ * (HIE-01).
+ */
+import Section from '../layout/Section.astro';
+import Grid from '../layout/Grid.astro';
+import Button from '../ui/Button.astro';
+import type { LandingCopy } from '../../data/landing';
+
+interface Props {
+  copy: LandingCopy['cta'];
+}
+
+const { copy } = Astro.props;
+---
+
+<Section data-block="cta" surface="cloud">
+  <Grid>
+    <div class="col-span-12 flex flex-col items-center text-center md:col-span-8 md:col-start-3">
+      <h2 class="text-h2 text-ink">{copy.headline}</h2>
+      <Button href="/reservar" variant="secondary" class="mt-8">Reserva tu sesión</Button>
+    </div>
+  </Grid>
+</Section>

@@ -42,6 +42,16 @@ export const CHROME_TOP = 'top-29 md:top-32';
 export const BAND_TOP = 'top-20 md:top-22';
 
 /**
+ * The rest of the first screen below the chrome, as a minimum height: the
+ * landing hero starts just under the bar and ends at the bottom edge of the
+ * screen (spec 05). The same two heights as above in rem (`top-29` is
+ * 29 × 0.25rem), which `Header.test.ts` holds them to. `svh`, because on a
+ * phone `vh` is measured with the browser's toolbars hidden.
+ */
+export const CHROME_SCREEN_MIN_H = 'min-h-[calc(100svh_-_7.25rem)] md:min-h-[calc(100svh_-_8rem)]';
+export const BAND_SCREEN_MIN_H = 'min-h-[calc(100svh_-_5rem)] md:min-h-[calc(100svh_-_5.5rem)]';
+
+/**
  * Band only, deliberately: anything scrolled to is scrolled to, and by then
  * the stripe has collapsed.
  */

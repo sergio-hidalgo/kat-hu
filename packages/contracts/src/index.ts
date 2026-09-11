@@ -13,6 +13,7 @@ export {
   VISIBILITY_ID_PATTERN,
   allVisibilityKeys,
   visibilityKey,
+  type BlockId,
   type VisibilityEntry,
   type VisibilityKind,
 } from './visibility.js';

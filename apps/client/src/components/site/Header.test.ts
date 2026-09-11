@@ -11,7 +11,7 @@ import { describe, expect, it, vi } from 'vitest';
  * function with its own suite in `lib/chrome-scroll.test.ts`.
  */
 
-const LINKS = ['/reservar', '/sobre-kathu', '/drops', '/tienda'];
+const LINKS = ['/sesiones', '/sobre-kathu', '/drops', '/tienda'];
 
 async function renderHeader(url = 'https://kathu.es/drops') {
   // Fresh module graph per render, so a mocked announcement is picked up.
@@ -26,7 +26,34 @@ describe('Header', () => {
 
     for (const href of LINKS) expect(html).toContain(`href="${href}"`);
     expect(html).toContain('Sobre kathu');
-    expect(html).toContain('Reservar');
+    // The first link reads *Sesiones* and goes to /sesiones, not /reservar (spec 05).
+    expect(html).toMatch(/>\s*Sesiones\s*</);
+    expect(html).not.toMatch(/>\s*Reservar\s*</);
+  });
+
+  it('gives the open menu a way home: Inicio first, and a linked lockup', async () => {
+    const html = await renderHeader();
+    const sheet = html.slice(html.indexOf('id="site-sheet"'));
+    const items = [...sheet.matchAll(/<a href="([^"]+)" data-sheet-link[^>]*>\s*([^<]+?)\s*<\/a>/g)].map(
+      ([, href, label]) => [href, label],
+    );
+
+    expect(items[0]).toEqual(['/', 'Inicio']);
+    expect(items.slice(1).map(([href]) => href)).toEqual(LINKS);
+    expect(sheet).toMatch(/<a href="\/" aria-label="kathu — inicio"/);
+  });
+
+  it('derives the screen-filling heights from the chrome’s own offsets', async () => {
+    const { BAND_SCREEN_MIN_H, BAND_TOP, CHROME_SCREEN_MIN_H, CHROME_TOP } = await import('./header');
+    const rems = (offsets: string) => [...offsets.matchAll(/top-(\d+)/g)].map(([, n]) => Number(n) / 4);
+    const minus = (heights: string) =>
+      [...heights.matchAll(/100svh_-_([\d.]+)rem/g)].map(([, n]) => Number(n));
+
+    // One screen minus the chrome, at both breakpoints: the landing hero ends
+    // exactly at the bottom edge (spec 05), so the two must never drift.
+    expect(minus(CHROME_SCREEN_MIN_H)).toEqual(rems(CHROME_TOP));
+    expect(minus(BAND_SCREEN_MIN_H)).toEqual(rems(BAND_TOP));
+    expect(rems(CHROME_TOP)).toHaveLength(2);
   });
 
   it('labels its controls in Spanish', async () => {

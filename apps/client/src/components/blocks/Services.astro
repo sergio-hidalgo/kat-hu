@@ -1,0 +1,44 @@
+---
+/**
+ * `block:services` (spec 05): the three sessions as guide §7.4 cards, each
+ * booking its own service (`/reservar?servicio=<id>`, which spec 06 reads).
+ * Three across from `lg`; two and one below it, where three would squeeze a
+ * card narrower than its illustration.
+ */
+import Section from '../layout/Section.astro';
+import Grid from '../layout/Grid.astro';
+import ServiceCard from '../ui/ServiceCard.astro';
+import { SCROLL_MT } from '../site/header';
+import { SERVICE_IDS, type LandingCopy } from '../../data/landing';
+
+interface Props {
+  copy: LandingCopy['services'];
+}
+
+const { copy } = Astro.props;
+
+const ILLUSTRATION = { individual: 'flower', familia: 'cat', seguimiento: 'sprout' } as const;
+---
+
+<Section data-block="services" id="servicios" class={SCROLL_MT}>
+  <Grid class="gap-y-8">
+    {/* The heading takes a row of its own: at 8 columns it would leave 4
+        free, and the first card would climb up beside it on wide screens. */}
+    <div class="col-span-12">
+      <h2 class="text-h2 text-ink">{copy.headline}</h2>
+      <p class="mt-4 text-lead text-graphite">{copy.lead}</p>
+    </div>
+    {
+      SERVICE_IDS.map((id) => (
+        <div class="col-span-12 md:col-span-6 lg:col-span-4">
+          <ServiceCard
+            {...copy[id]}
+            href={`/reservar?servicio=${id}`}
+            actionLabel="Reservar esta sesión"
+            illustration={ILLUSTRATION[id]}
+          />
+        </div>
+      ))
+    }
+  </Grid>
+</Section>
