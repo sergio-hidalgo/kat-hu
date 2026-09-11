@@ -1,0 +1,45 @@
+---
+/**
+ * `block:how-it-works` (spec 05): the three steps of a session, in a row from
+ * `md` — numbered only because they are a sequence. The hero's *Cómo funciona*
+ * link lands here, so the band clears the fixed bar when scrolled to (I-007).
+ */
+import Section from '../layout/Section.astro';
+import Grid from '../layout/Grid.astro';
+import { SCROLL_MT } from '../site/header';
+import type { LandingCopy } from '../../data/landing';
+
+interface Props {
+  copy: LandingCopy['how-it-works'];
+}
+
+const { copy } = Astro.props;
+---
+
+<Section data-block="how-it-works" id="como-funciona" surface="cloud" class={SCROLL_MT}>
+  <Grid class="gap-y-8">
+    {/* The heading takes a row of its own: at 8 columns it would leave 4
+        free, and the first card would climb up beside it on wide screens. */}
+    <div class="col-span-12">
+      <h2 class="text-h2 text-ink">{copy.headline}</h2>
+      <p class="mt-4 text-lead text-graphite">{copy.lead}</p>
+    </div>
+    {/* `contents`, so each step is placed on the page grid itself (I-001).
+        `role="list"` because Safari drops the list role from an element
+        whose box is `display: contents`. The ordered list already tells a
+        screen reader the number, so the drawn numeral is hidden from it. */}
+    <ol role="list" class="contents">
+      {
+        copy.steps.map((step, index) => (
+          <li class="col-span-12 md:col-span-4">
+            <p aria-hidden="true" class="max-w-none font-display text-h2 text-violet-600">
+              {index + 1}
+            </p>
+            <h3 class="mt-2 text-h3 text-ink">{step.title}</h3>
+            <p class="mt-2 text-sm text-graphite">{step.description}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </Grid>
+</Section>

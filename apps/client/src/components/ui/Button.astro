@@ -14,6 +14,14 @@ interface Props {
   disabled?: boolean;
   /** One Slate line under the button saying why it is unavailable. */
   disabledReason?: string;
+  /**
+   * Over a photograph: a thin white border, so a primary button keeps an edge
+   * where the image behind it is as dark as its own fill — guide §3.4's
+   * knockout white (spec 05, owner's decision of 2026-09-11). Primary only:
+   * the other variants draw their own edge or none, and a disabled button
+   * keeps the one disabled look.
+   */
+  knockout?: boolean;
   class?: string;
   [key: string]: unknown;
 }
@@ -24,6 +32,7 @@ const {
   type = 'button',
   disabled = false,
   disabledReason,
+  knockout = false,
   class: className,
   ...rest
 } = Astro.props;
@@ -52,7 +61,12 @@ const Tag = href && !disabled ? 'a' : 'button';
 const wrapped = Boolean(disabledReason);
 
 const attrs = {
-  'class:list': [base, disabled ? off : variants[variant], !wrapped && className],
+  'class:list': [
+    base,
+    disabled ? off : variants[variant],
+    knockout && !disabled && variant === 'primary' && 'border border-white',
+    !wrapped && className,
+  ],
   href: Tag === 'a' ? href : undefined,
   type: Tag === 'button' ? type : undefined,
   disabled: Tag === 'button' && disabled ? true : undefined,

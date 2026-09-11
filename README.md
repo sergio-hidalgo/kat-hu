@@ -283,6 +283,45 @@ crosses that line.
 wildcard, and an unlisted origin gets no `Access-Control-Allow-Origin` header
 at all.
 
+## The landing
+
+`/` is built from **eight blocks** that the owner can switch on and off —
+from `/admin` once spec 10 lands; until then each block's default applies.
+The list, in page order, is `BLOCKS` in `packages/contracts`. Each block is
+one file in `apps/client/src/components/blocks/`, `registry.ts` there maps an
+id to its file, and `src/pages/index.astro` renders the visible ones in
+order. A hidden block leaves nothing behind — no empty section, no gap.
+
+| Block          | What it shows                                                        | On by default |
+| :------------- | :------------------------------------------------------------------- | :------------ |
+| `hero`         | Full first screen: headline, *Reserva tu sesión*, Laura and her cat  | yes           |
+| `services`     | Three session cards with duration, price and their own booking link | yes           |
+| `how-it-works` | The three steps of a session (the hero's *Cómo funciona* lands here) | yes           |
+| `about-teaser` | Who the florapeuta is, and a link to `/sobre-kathu`                  | yes           |
+| `testimonials` | Up to three testimonials — hidden while there are none               | yes           |
+| `blog-teaser`  | The three newest drops                                               | no (spec 08)  |
+| `shop-teaser`  | Nothing yet — spec 11 adds three products                            | no (spec 11)  |
+| `cta`          | One closing sentence and a way to book                               | yes           |
+
+**The words live in Sanity** — the *Portada* document and the *Testimonio*
+documents (see the schema contract below). Spanish defaults ship in
+`src/data/landing.ts`, so the page is complete with an empty Studio, and a
+field the owner fills replaces only its own default. If Sanity cannot be
+reached the page still renders: the copy falls back to the defaults, and the
+testimonials and blog teaser hide.
+
+**The hero** fills the first screen below the bar, whatever its size: the
+lavender photograph trims its sides to fit, the four white corners of the
+`/drops` banner frame it — the bottom-right one drawn over the picture — the words and the button sit at the top, and the
+picture of Laura with her cat — whole and large — is pinned to the
+bottom-right edge. *Reserva tu sesión* is the
+page's only filled button, edged in white against the photograph; every
+other action on `/` is outlined or a text link.
+
+**The navigation** reads Sesiones (`/sesiones`) · Sobre kathu · Drops · Tienda
+in the bar and the footer. The mobile menu also starts with *Inicio*, and its
+logo links home.
+
 ## Content (Sanity CMS)
 
 The client's `/drops` section reads its posts from Sanity **while it renders
@@ -335,6 +374,25 @@ other silently empties the section — the two files are a contract.
 Only `title`, `slug` and `body` are required; every other field degrades
 gracefully, so an editor cannot break the build by leaving one blank. Drafts
 are never published — the client reads with `perspective: 'published'`.
+
+The landing reads two more types, defined in `apps/studio/schemaTypes/landing.ts`
+and `testimonial.ts` and read by `src/data/landing.ts` and `testimonials.ts`.
+
+**`landing`** — one document (*Portada*), pinned in the Studio so there is
+never a second. Every field is optional; an empty one uses the site's default.
+
+| Object        | Fields                                                                                      |
+| :------------ | :------------------------------------------------------------------------------------------ |
+| `hero`        | `headline`, `lead`                                                                          |
+| `services`    | `headline`, `lead`, and `individual` / `familia` / `seguimiento`, each `title`, `description`, `duration`, `modality`, `price` |
+| `howItWorks`  | `headline`, `lead`, and `step1` / `step2` / `step3`, each `title`, `description`             |
+| `aboutTeaser` | `headline`, `paragraph`, `image` (with `alt`) — without a photo the block is text alone      |
+| `testimonials`| `headline`                                                                                  |
+| `blogTeaser`  | `headline`, `lead`                                                                          |
+| `cta`         | `headline`                                                                                  |
+
+**`testimonial`** — `quote` (text, required), `name` (required), `cat`
+(optional), `order` (number, lowest first). The landing shows three at most.
 
 ### Content appears on publish
 
@@ -404,7 +462,7 @@ rather than pushing it down. The words inside clear the chrome by importing
 `CHROME_PT` / `BAND_PT` from `src/components/site/header.ts` — the same one
 place the layout and the `scroll-margin-top` read (issue I-007).
 
-The band is shorter than the landing's `80vh` — `clamp(20rem, 30vw, 28rem)` —
+The band is shorter than the landing's full-screen hero — `clamp(20rem, 30vw, 28rem)` —
 because the source is 1584 × 419 (3.8:1). A viewport-tall crop of it would be
 a sliver, and the file is not wide enough to serve past 1584px without the
 browser upscaling it.
@@ -424,13 +482,14 @@ the screen; `100vw` would hand a phone a 750px file to fill 1210px.
 ### The ornaments
 
 `/drops` wears a classical frame, by the owner's decision of 2026-09-10 — a
-deliberate exception, on `/drops` and its drops only, to the style guide's "no ornament"
+deliberate exception, on `/drops`, its drops and the landing hero only, to the style guide's "no ornament"
 principle. Two drawings, each mirrored into the positions it needs:
 
 - **the banner** — `small-corner` in its four corners, in white (spec 04c
   replaced the heavier `big-corner`). The frame starts below the fixed chrome, so the
   top ornaments are visible at scroll 0, and the corners step down in size so
   they stay in the page margin and never sit on the heading;
+- **the landing hero** — the same four white corners as the banner (spec 05);
 - **a drop's main image** — the same four white corners, inside the image's
   edges, over a very faint violet tint at the photo's top and bottom (clear in
   the middle), so the white always has a darker ground even on a light photo;
@@ -444,8 +503,8 @@ owner's SVGs with the same geometry, taking their colour from CSS. The colours
 are the design-system tokens nearest to the owner's originals, and white over a
 photograph, set in one place (`src/components/ui/ornament.ts`). The primitive is
 `src/components/ui/Ornament.astro`, shown on `/estilo`; the four-corner frame
-is `src/components/drops/CornerFrame.astro`, which
-`src/components/drops/BannerFrame.astro` places below the chrome. All of it is `aria-hidden`
+is `src/components/ui/CornerFrame.astro`, which
+`src/components/drops/BannerFrame.astro` places below the chrome on `/drops`. All of it is `aria-hidden`
 decoration.
 
 ### How the cards look and arrive
@@ -501,6 +560,19 @@ Deliberately not built yet. Listed roughly in the order they would pay off.
       frontend a set of possible values around the topics dealt with in the post,
       with a maximum of 3 selections, being estrés / agresividad / juego / etc.
 
+## Planned work — the landing
+
+- **Watercolour spot illustrations** for the three session cards — an asset
+  for the owner. Until they arrive, each 160×160 slot shows a quiet Lucide
+  stand-in (`components/ui/SpotIllustration.astro`).
+- **Laura's second photo** for the about teaser: Studio → Portada →
+  Presentación → Foto. The block is text alone until then.
+- **Session prices and durations to confirm.** The defaults (55 € / 60 min,
+  75 € / 90 min, 30 € / 30 min) are placeholders; set the real ones in the
+  Studio.
+- **Pages the navigation already links to**: `/sesiones` (no spec yet),
+  `/sobre-kathu` (spec 07), `/tienda` (spec 11).
+
 ## Roadmap
 
 In dependency order. Each line is a spec; the number is the file in the
@@ -526,8 +598,8 @@ closes.
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | done     |
 | 04b | Drops page oldie (classical ornaments: banner frame, card corners,        |          |
 |     | pagination flanks)                                                        | done     |
-| 04c | Drops white corners (lighter banner frame, framed drop image)             | in progress |
-| 05  | Landing page blocks                                                       | todo     |
+| 04c | Drops white corners (lighter banner frame, framed drop image)             | done     |
+| 05  | Landing page blocks                                                       | in progress |
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |
 | 07  | About page                                                                | todo     |

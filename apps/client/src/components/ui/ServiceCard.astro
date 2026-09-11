@@ -1,0 +1,53 @@
+---
+/**
+ * Guide §7.4, the service / reserva card (spec 05): left-aligned, spot
+ * illustration, `text-h3` title, two lines, duration • modality in Slate with
+ * a Mist dot, the price in `text-h4` violet-700 with the euro sign after it.
+ *
+ * The button is **outlined**, not the guide's primary: the landing has exactly
+ * one filled violet-700 action, the hero's (HIE-01). Full width on a phone,
+ * its own width from `md`. The price and the button sit at the bottom, so
+ * cards in one row line up however long their descriptions are.
+ */
+import type { ComponentProps } from 'astro/types';
+import Button from './Button.astro';
+import Card from './Card.astro';
+import SpotIllustration from './SpotIllustration.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  duration: string;
+  modality: string;
+  price: string;
+  href: string;
+  actionLabel: string;
+  illustration: ComponentProps<typeof SpotIllustration>['name'];
+  class?: string;
+}
+
+const {
+  title,
+  description,
+  duration,
+  modality,
+  price,
+  href,
+  actionLabel,
+  illustration,
+  class: className,
+} = Astro.props;
+---
+
+<Card class:list={['flex h-full flex-col', className]}>
+  <SpotIllustration name={illustration} />
+  <h3 class="mt-6 text-h3 text-ink">{title}</h3>
+  <p class="mt-2 max-w-none text-sm text-graphite">{description}</p>
+  <p class="mt-4 max-w-none text-xs text-slate">
+    {duration}<span class="text-mist"> • </span>{modality}
+  </p>
+  <p class="mt-auto max-w-none pt-4 text-h4 text-violet-700">{price}</p>
+  <Button href={href} variant="secondary" class="mt-6 w-full md:w-auto md:self-start">
+    {actionLabel}
+  </Button>
+</Card>

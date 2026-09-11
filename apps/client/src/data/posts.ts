@@ -43,6 +43,14 @@ const LIST_QUERY = /* groq */ `
     | order(coalesce(publishedAt, _createdAt) desc) {${POST_FIELDS}}
 `;
 
+/** How many posts the landing's blog teaser shows (spec 05). */
+export const LATEST_COUNT = 3;
+
+const LATEST_QUERY = /* groq */ `
+  *[_type == $type && defined(slug.current)]
+    | order(coalesce(publishedAt, _createdAt) desc) [0...${LATEST_COUNT}] {${POST_FIELDS}}
+`;
+
 const DETAIL_QUERY = /* groq */ `
   *[_type == $type && slug.current == $slug][0] {${POST_FIELDS}}
 `;
@@ -75,6 +83,12 @@ function normalise(raw: Post): Post {
 export async function getAllPosts(): Promise<Post[]> {
   const posts = await sanityClient.fetch<Post[]>(LIST_QUERY, { type: DOC_TYPE });
   return posts.map(normalise);
+}
+
+/** The newest few published posts, for the landing — not the whole list. */
+export async function getLatestPosts(): Promise<Post[]> {
+  const posts = await sanityClient.fetch<Post[]>(LATEST_QUERY, { type: DOC_TYPE });
+  return (posts ?? []).map(normalise);
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
