@@ -1,15 +1,19 @@
 ---
 /**
- * `block:services` (spec 05): the three sessions as guide §7.4 cards, each
- * booking its own service (`/reservar?servicio=<id>`, which spec 06 reads).
- * Three across from `lg`; two and one below it, where three would squeeze a
- * card narrower than its illustration.
+ * `block:services` (spec 05, 05b): the owner's sessions as guide §7.4 cards,
+ * however many there are, each booking its own (`/reservar?servicio=<id>`,
+ * the session's slug, which spec 06 reads).
+ *
+ * Every card is three across from `lg`, two and one below it, **whatever the
+ * count**: a fourth card starts a new row, left-aligned, rather than squeezing
+ * a row narrower than its 160px slot (ALN-02).
  */
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import ServiceCard from '../ui/ServiceCard.astro';
 import { SCROLL_MT } from '../site/header';
-import { SERVICE_IDS, type LandingCopy } from '../../data/landing';
+import type { LandingCopy } from '../../data/landing';
+import { imageUrl } from '../../lib/sanity';
 
 interface Props {
   copy: LandingCopy['services'];
@@ -17,7 +21,16 @@ interface Props {
 
 const { copy } = Astro.props;
 
-const ILLUSTRATION = { individual: 'flower', familia: 'cat', seguimiento: 'sprout' } as const;
+/** Stand-ins by position until the watercolours arrive — the default three look as they always did. */
+const STAND_INS = ['flower', 'cat', 'sprout'] as const;
+
+/**
+ * The CDN image at twice the 160px slot's width, for dense screens. Width
+ * alone: given a width *and* a height, the URL builder adds a `rect` crop to
+ * their aspect, which would cut the watercolour; `object-contain` fits
+ * whatever shape arrives into the slot.
+ */
+const IMAGE_PX = 320;
 ---
 
 <Section data-block="services" id="servicios" class={SCROLL_MT}>
@@ -29,13 +42,23 @@ const ILLUSTRATION = { individual: 'flower', familia: 'cat', seguimiento: 'sprou
       <p class="mt-4 text-lead text-graphite">{copy.lead}</p>
     </div>
     {
-      SERVICE_IDS.map((id) => (
+      copy.items.map((item, index) => (
         <div class="col-span-12 md:col-span-6 lg:col-span-4">
           <ServiceCard
-            {...copy[id]}
-            href={`/reservar?servicio=${id}`}
+            title={item.title}
+            description={item.description}
+            duration={item.duration}
+            modality={item.modality}
+            price={item.price}
+            href={`/reservar?servicio=${item.id}`}
             actionLabel="Reservar esta sesión"
-            illustration={ILLUSTRATION[id]}
+            image={
+              item.image && {
+                src: imageUrl(item.image).width(IMAGE_PX).url(),
+                alt: item.image.alt?.trim() ?? '',
+              }
+            }
+            illustration={STAND_INS[index % STAND_INS.length]}
           />
         </div>
       ))

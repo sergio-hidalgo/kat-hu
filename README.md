@@ -295,18 +295,20 @@ order. A hidden block leaves nothing behind — no empty section, no gap.
 | Block          | What it shows                                                        | On by default |
 | :------------- | :------------------------------------------------------------------- | :------------ |
 | `hero`         | Full first screen: headline, *Reserva tu sesión*, Laura and her cat  | yes           |
-| `services`     | Three session cards with duration, price and their own booking link | yes           |
-| `how-it-works` | The three steps of a session (the hero's *Cómo funciona* lands here) | yes           |
+| `services`     | Session cards written in the Studio, each with its booking link      | yes           |
+| `how-it-works` | The steps of a session (the hero's *Cómo funciona* lands here)       | yes           |
 | `about-teaser` | Who the florapeuta is, and a link to `/sobre-kathu`                  | yes           |
 | `testimonials` | Up to three testimonials — hidden while there are none               | yes           |
 | `blog-teaser`  | The three newest drops                                               | no (spec 08)  |
 | `shop-teaser`  | Nothing yet — spec 11 adds three products                            | no (spec 11)  |
 | `cta`          | One closing sentence and a way to book                               | yes           |
 
-**The words live in Sanity** — the *Portada* document and the *Testimonio*
-documents (see the schema contract below). Spanish defaults ship in
-`src/data/landing.ts`, so the page is complete with an empty Studio, and a
-field the owner fills replaces only its own default. If Sanity cannot be
+**The words live in Sanity** — the *Portada* document for each block's
+heading, and the *Sesión*, *Paso* and *Testimonio* documents for what repeats,
+as many as the owner wants (see the schema contract below). Spanish defaults
+ship in `src/data/landing.ts`, so the page is complete with an empty Studio: a
+heading the owner fills replaces only its own default, and the first published
+*Sesión* or *Paso* replaces the default list whole. If Sanity cannot be
 reached the page still renders: the copy falls back to the defaults, and the
 testimonials and blog teaser hide.
 
@@ -353,7 +355,27 @@ pnpm --filter studio deploy        # hosts it at https://<name>.sanity.studio
 
 Deploying gives the content editor a URL with SSO login and no terminal. Invite
 them as an **Editor** from `https://manage.sanity.io`. Field labels are in
-Spanish, in `apps/studio/schemaTypes/post.ts`.
+Spanish, in `apps/studio/schemaTypes/*.ts`.
+
+The sidebar reads **Portada · Sesiones · Pasos de «Cómo funciona» ·
+Testimonios**, then **Entradas**. The three lists are sorted by their *Orden*
+field, the same order the page uses — number in tens (10, 20, 30) so a new one
+can go between two.
+
+**Starting content.** The landing's copy can be put into the Studio once, so
+the owner edits it rather than retyping it:
+
+```sh
+pnpm --filter studio exec sanity login   # once, as someone with write access
+pnpm --filter studio seed
+```
+
+It publishes *Portada*, the three default *Sesiones* and the three default
+*Pasos* (fixed ids, `apps/studio/seed/landing.ts`) and prints `created` or
+`already there` for each. It only ever creates: a document that already exists
+— edited or not — is never overwritten, so running it again is harmless. It
+writes no testimonials, images or posts. Discard any unpublished *Portada*
+draft first, or the draft hides the seeded version in the Studio.
 
 ### Schema contract
 
@@ -375,21 +397,36 @@ Only `title`, `slug` and `body` are required; every other field degrades
 gracefully, so an editor cannot break the build by leaving one blank. Drafts
 are never published — the client reads with `perspective: 'published'`.
 
-The landing reads two more types, defined in `apps/studio/schemaTypes/landing.ts`
-and `testimonial.ts` and read by `src/data/landing.ts` and `testimonials.ts`.
+The landing reads four more types, defined in `apps/studio/schemaTypes/landing.ts`,
+`service.ts`, `step.ts` and `testimonial.ts`, and read by `src/data/landing.ts`
+and `testimonials.ts`.
 
 **`landing`** — one document (*Portada*), pinned in the Studio so there is
-never a second. Every field is optional; an empty one uses the site's default.
+never a second, with one tab per block. It holds only what each block says
+once; what repeats is its own type below. Every field is optional; an empty
+one uses the site's default.
 
 | Object        | Fields                                                                                      |
 | :------------ | :------------------------------------------------------------------------------------------ |
 | `hero`        | `headline`, `lead`                                                                          |
-| `services`    | `headline`, `lead`, and `individual` / `familia` / `seguimiento`, each `title`, `description`, `duration`, `modality`, `price` |
-| `howItWorks`  | `headline`, `lead`, and `step1` / `step2` / `step3`, each `title`, `description`             |
+| `services`    | `headline`, `lead` — the sessions are `service` documents                                   |
+| `howItWorks`  | `headline`, `lead` — the steps are `step` documents                                         |
 | `aboutTeaser` | `headline`, `paragraph`, `image` (with `alt`) — without a photo the block is text alone      |
 | `testimonials`| `headline`                                                                                  |
 | `blogTeaser`  | `headline`, `lead`                                                                          |
 | `cta`         | `headline`                                                                                  |
+
+**`service`** (*Sesión*) — one session card each: `title` (required), `slug`
+(required; the `?servicio=` in its booking link), `description`, `duration`,
+`modality`, `price` (`55 €`), `image` (with `alt`; shown whole in the card's
+160×160 slot), `order` (number, lowest first). As many as the owner writes.
+
+**`step`** (*Paso*) — one step of *Cómo funciona* each: `title` (required),
+`description`, `order`. The site numbers them by position.
+
+Sessions and steps are taken **whole or not at all**: once one is published,
+only the published ones show; with none, the site shows its own three
+defaults. A blank optional field is left off the card, never filled in.
 
 **`testimonial`** — `quote` (text, required), `name` (required), `cat`
 (optional), `order` (number, lowest first). The landing shows three at most.
@@ -562,14 +599,15 @@ Deliberately not built yet. Listed roughly in the order they would pay off.
 
 ## Planned work — the landing
 
-- **Watercolour spot illustrations** for the three session cards — an asset
-  for the owner. Until they arrive, each 160×160 slot shows a quiet Lucide
-  stand-in (`components/ui/SpotIllustration.astro`).
+- **Watercolour spot illustrations** for the session cards — an asset for the
+  owner, uploaded per session: Studio → Sesiones → *the session* → Imagen.
+  Until one arrives, its 160×160 slot shows a quiet Lucide stand-in
+  (`components/ui/SpotIllustration.astro`).
 - **Laura's second photo** for the about teaser: Studio → Portada →
   Presentación → Foto. The block is text alone until then.
 - **Session prices and durations to confirm.** The defaults (55 € / 60 min,
-  75 € / 90 min, 30 € / 30 min) are placeholders; set the real ones in the
-  Studio.
+  75 € / 90 min, 30 € / 30 min) are placeholders; set the real ones per
+  session in Studio → Sesiones.
 - **Pages the navigation already links to**: `/sesiones` (no spec yet),
   `/sobre-kathu` (spec 07), `/tienda` (spec 11).
 
@@ -599,7 +637,8 @@ closes.
 | 04b | Drops page oldie (classical ornaments: banner frame, card corners,        |          |
 |     | pagination flanks)                                                        | done     |
 | 04c | Drops white corners (lighter banner frame, framed drop image)             | done     |
-| 05  | Landing page blocks                                                       | in progress |
+| 05  | Landing page blocks                                                       | done     |
+| 05b | Improve blocks format                                                     | in progress |
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |
 | 07  | About page                                                                | todo     |

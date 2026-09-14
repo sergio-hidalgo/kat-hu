@@ -21,6 +21,7 @@ import Toast from '../../components/ui/Toast.astro';
 import Ornament from '../../components/ui/Ornament.astro';
 import ServiceCard from '../../components/ui/ServiceCard.astro';
 import SpotIllustration from '../../components/ui/SpotIllustration.astro';
+import lavenderFields from '../../assets/brand/lavender_fields.png';
 import Logo from '../../components/site/Logo.astro';
 import { ArrowUp } from '@lucide/astro';
 import { BAND_H, LOGO_SIZE, STRIPE_H } from '../../components/site/header';
@@ -182,7 +183,20 @@ const bands = [
           illustration="flower"
         />
       </div>
-      <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6 lg:col-span-8">
+      {/* Spec 05b: the owner's image in the same 160×160 slot, whole — a wide
+          picture shows it is never cropped — and a card with no price. */}
+      <div class="col-span-12 md:col-span-6 lg:col-span-4">
+        <ServiceCard
+          title="Seguimiento"
+          description="Revisamos cómo ha respondido tu gato y ajustamos las esencias."
+          duration="30 min"
+          href="/reservar?servicio=seguimiento"
+          actionLabel="Reservar esta sesión"
+          image={{ src: lavenderFields.src, alt: '' }}
+          illustration="sprout"
+        />
+      </div>
+      <div class="col-span-12 flex flex-wrap items-center gap-8 lg:col-span-4">
         <SpotIllustration name="flower" />
         <SpotIllustration name="cat" />
         <SpotIllustration name="sprout" />

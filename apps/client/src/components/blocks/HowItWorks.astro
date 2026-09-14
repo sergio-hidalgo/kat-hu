@@ -1,19 +1,23 @@
 ---
 /**
- * `block:how-it-works` (spec 05): the three steps of a session, in a row from
- * `md` — numbered only because they are a sequence. The hero's *Cómo funciona*
- * link lands here, so the band clears the fixed bar when scrolled to (I-007).
+ * `block:how-it-works` (spec 05, 05b): the steps of a session — as many as the
+ * owner wrote — numbered by position only because they are a sequence. Their
+ * columns follow the count (`stepSpan`), so a row of steps fills the grid. The
+ * hero's *Cómo funciona* link lands here, so the band clears the fixed bar when
+ * scrolled to (I-007).
  */
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import { SCROLL_MT } from '../site/header';
 import type { LandingCopy } from '../../data/landing';
+import { stepSpan } from './howItWorks';
 
 interface Props {
   copy: LandingCopy['how-it-works'];
 }
 
 const { copy } = Astro.props;
+const span = stepSpan(copy.steps.length);
 ---
 
 <Section data-block="how-it-works" id="como-funciona" surface="cloud" class={SCROLL_MT}>
@@ -31,12 +35,12 @@ const { copy } = Astro.props;
     <ol role="list" class="contents">
       {
         copy.steps.map((step, index) => (
-          <li class="col-span-12 md:col-span-4">
+          <li class={span}>
             <p aria-hidden="true" class="max-w-none font-display text-h2 text-violet-600">
               {index + 1}
             </p>
             <h3 class="mt-2 text-h3 text-ink">{step.title}</h3>
-            <p class="mt-2 text-sm text-graphite">{step.description}</p>
+            {step.description && <p class="mt-2 text-sm text-graphite">{step.description}</p>}
           </li>
         ))
       }
