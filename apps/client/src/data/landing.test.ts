@@ -7,8 +7,9 @@ import { getLandingCopy, LANDING_DEFAULTS, mergeCopy } from './landing';
 
 /**
  * The landing must render finished Spanish copy whatever state the CMS is in
- * (spec 05): empty, half-filled, or unreachable. The CMS wins field by field,
- * and only where the editor has written something.
+ * (spec 05): empty, half-filled, or unreachable. Headings win field by field;
+ * the sessions and the steps are taken whole from the CMS or whole from the
+ * defaults, never mixed (spec 05b).
  */
 
 // Sanity's `fetch` is typed per query; the fixtures here are plain objects.
@@ -26,6 +27,24 @@ const strings = (value: unknown): string[] =>
     : value && typeof value === 'object'
       ? Object.values(value).flatMap(strings)
       : [];
+
+const image = {
+  _type: 'image',
+  asset: { _ref: 'image-abc-320x320-png', _type: 'reference' },
+  alt: 'Una rama de lavanda en acuarela',
+};
+
+/** A session row as the query returns it. Synthetic copy. */
+const session = (id: string, extra: Record<string, unknown> = {}) => ({
+  id,
+  title: `Sesión ${id}`,
+  description: `Descripción de ${id}`,
+  duration: '45 min',
+  modality: 'Online',
+  price: '40 €',
+  image: null,
+  ...extra,
+});
 
 describe('mergeCopy', () => {
   it('keeps the fallback where the CMS is missing, blank or not a string', () => {
@@ -45,11 +64,10 @@ describe('mergeCopy', () => {
     expect(merged).toEqual({ a: 'Hola', nested: { b: 'Adiós' } });
   });
 
-  it('merges lists position by position', () => {
-    const fallback = [{ t: 'uno' }, { t: 'dos' }];
+  it('never merges a list item by item — lists are taken whole elsewhere', () => {
+    const fallback = { list: [{ t: 'uno' }, { t: 'dos' }] };
 
-    expect(mergeCopy(fallback, [{ t: '' }, { t: 'Segundo' }])).toEqual([{ t: 'uno' }, { t: 'Segundo' }]);
-    expect(mergeCopy(fallback, 'no es una lista')).toEqual(fallback);
+    expect(mergeCopy(fallback, { list: [{ t: 'otro' }] })).toEqual(fallback);
   });
 
   it('never changes the fallback it was given', () => {
@@ -66,34 +84,25 @@ describe('LANDING_DEFAULTS', () => {
   });
 
   it('prices with the euro sign after the number', () => {
-    for (const service of ['individual', 'familia', 'seguimiento'] as const) {
-      expect(LANDING_DEFAULTS.services[service].price).toMatch(/^\d+ €$/);
-    }
+    for (const item of LANDING_DEFAULTS.services.items) expect(item.price).toMatch(/^\d+ €$/);
+  });
+
+  it('keeps the three sessions the /estilo sample and the seed name', () => {
+    expect(LANDING_DEFAULTS.services.items.map(({ id }) => id)).toEqual(['individual', 'familia', 'seguimiento']);
+  });
+
+  it('does not count the steps in the lead — the owner decides how many there are', () => {
+    expect(LANDING_DEFAULTS['how-it-works'].lead).not.toMatch(/\d|\b(uno|dos|tres|cuatro|cinco|seis)\b/i);
   });
 });
 
 describe('getLandingCopy', () => {
-  it('renders the Spanish defaults when there is no landing document', async () => {
+  it('renders the Spanish defaults when there is nothing in the CMS', async () => {
     fetch.mockResolvedValueOnce(null);
-
     await expect(getLandingCopy()).resolves.toEqual(LANDING_DEFAULTS);
-  });
 
-  it('lets the CMS copy win where it is filled and keeps the defaults elsewhere', async () => {
-    fetch.mockResolvedValueOnce({
-      hero: { headline: 'Tu gato, más tranquilo', lead: '' },
-      'how-it-works': { steps: [null, { title: 'Videollamada' }, null] },
-    });
-
-    const copy = await getLandingCopy();
-
-    expect(copy.hero.headline).toBe('Tu gato, más tranquilo');
-    expect(copy.hero.lead).toBe(LANDING_DEFAULTS.hero.lead);
-    expect(copy['how-it-works'].steps[1].title).toBe('Videollamada');
-    expect(copy['how-it-works'].steps[1].description).toBe(
-      LANDING_DEFAULTS['how-it-works'].steps[1].description,
-    );
-    expect(copy.services).toEqual(LANDING_DEFAULTS.services);
+    fetch.mockResolvedValueOnce({ landing: null, services: [], steps: [] });
+    await expect(getLandingCopy()).resolves.toEqual(LANDING_DEFAULTS);
   });
 
   it('falls back to the defaults when Sanity cannot be reached', async () => {
@@ -103,23 +112,99 @@ describe('getLandingCopy', () => {
     await expect(getLandingCopy()).resolves.toEqual(LANDING_DEFAULTS);
   });
 
+  it('lets written headings win field by field and keeps the defaults elsewhere', async () => {
+    fetch.mockResolvedValueOnce({
+      landing: {
+        hero: { headline: 'Tu gato, más tranquilo', lead: '' },
+        'how-it-works': { headline: '  Así trabajamos  ' },
+      },
+      services: [],
+      steps: [],
+    });
+
+    const copy = await getLandingCopy();
+
+    expect(copy.hero.headline).toBe('Tu gato, más tranquilo');
+    expect(copy.hero.lead).toBe(LANDING_DEFAULTS.hero.lead);
+    expect(copy['how-it-works'].headline).toBe('Así trabajamos');
+    expect(copy['how-it-works'].lead).toBe(LANDING_DEFAULTS['how-it-works'].lead);
+    expect(copy.services.items).toEqual(LANDING_DEFAULTS.services.items);
+  });
+
+  it('takes four CMS sessions whole, in query order, with no default mixed in', async () => {
+    const rows = ['bienestar', 'convivencia', 'duelo', 'repaso'].map((id) => session(id));
+    fetch.mockResolvedValueOnce({ landing: null, services: rows, steps: [] });
+
+    const { items } = (await getLandingCopy()).services;
+
+    expect(items.map(({ id }) => id)).toEqual(['bienestar', 'convivencia', 'duelo', 'repaso']);
+    expect(items.map(({ title }) => title)).not.toContain(LANDING_DEFAULTS.services.items[0].title);
+  });
+
+  it('takes a single CMS step as the whole list', async () => {
+    fetch.mockResolvedValueOnce({ landing: null, services: [], steps: [{ title: 'Hablamos', description: null }] });
+
+    expect((await getLandingCopy())['how-it-works'].steps).toEqual([{ title: 'Hablamos' }]);
+  });
+
+  it('drops an item without a title, or a session without an id, and uses the defaults if none is left', async () => {
+    fetch.mockResolvedValueOnce({
+      landing: null,
+      services: [session('sin-titulo', { title: '  ' }), session('  '), session('buena')],
+      steps: [{ title: '' }, { title: 'Hablamos' }],
+    });
+
+    const copy = await getLandingCopy();
+    expect(copy.services.items.map(({ id }) => id)).toEqual(['buena']);
+    expect(copy['how-it-works'].steps.map(({ title }) => title)).toEqual(['Hablamos']);
+
+    fetch.mockResolvedValueOnce({ landing: null, services: [session('x', { title: '' })], steps: [{ title: ' ' }] });
+
+    const fallback = await getLandingCopy();
+    expect(fallback.services.items).toEqual(LANDING_DEFAULTS.services.items);
+    expect(fallback['how-it-works'].steps).toEqual(LANDING_DEFAULTS['how-it-works'].steps);
+  });
+
+  it('leaves a blank optional line out rather than filling it, and keeps an image only with an asset', async () => {
+    fetch.mockResolvedValueOnce({
+      landing: null,
+      services: [
+        session('sin-precio', { description: ' ', duration: '', modality: null, price: '   ', image: { _type: 'image' } }),
+        session('con-imagen', { image }),
+      ],
+      steps: [],
+    });
+
+    const [bare, withImage] = (await getLandingCopy()).services.items;
+
+    expect(bare.description).toBeUndefined();
+    expect(bare.duration).toBeUndefined();
+    expect(bare.modality).toBeUndefined();
+    expect(bare.price).toBeUndefined();
+    expect(bare.image).toBeUndefined();
+    expect(withImage.image).toEqual(image);
+  });
+
   it('passes the about image through only when it has an asset', async () => {
-    const image = { _type: 'image', asset: { _ref: 'image-abc-800x1000-jpg', _type: 'reference' }, alt: 'Laura con un gato' };
+    const photo = { ...image, alt: 'Laura con un gato' };
 
-    fetch.mockResolvedValueOnce({ 'about-teaser': { image } });
-    expect((await getLandingCopy())['about-teaser'].image).toEqual(image);
+    fetch.mockResolvedValueOnce({ landing: { 'about-teaser': { image: photo } } });
+    expect((await getLandingCopy())['about-teaser'].image).toEqual(photo);
 
-    fetch.mockResolvedValueOnce({ 'about-teaser': { image: { _type: 'image' } } });
+    fetch.mockResolvedValueOnce({ landing: { 'about-teaser': { image: { _type: 'image' } } } });
     expect((await getLandingCopy())['about-teaser'].image).toBeUndefined();
   });
 
-  it('asks for the singleton with parameters, never by building the query', async () => {
+  it('asks for everything with parameters, never by building the query', async () => {
     fetch.mockResolvedValueOnce(null);
     await getLandingCopy();
 
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('_type == $type && _id == $id'), {
-      type: 'landing',
-      id: 'landing',
-    });
+    const [query, params] = fetch.mock.calls[0] as [string, Record<string, string>];
+
+    expect(query).toContain('_type == $landingType && _id == $landingId');
+    expect(query).toContain('_type == $serviceType');
+    expect(query).toContain('_type == $stepType');
+    expect(query).not.toMatch(/_type == ["']/);
+    expect(params).toEqual({ landingType: 'landing', landingId: 'landing', serviceType: 'service', stepType: 'step' });
   });
 });

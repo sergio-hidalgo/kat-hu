@@ -2,44 +2,59 @@ import type { BlockId } from '@kat-hu/contracts';
 import { sanityClient, type SanityImage } from '../lib/sanity';
 
 /**
- * The words on the landing (spec 05): one Sanity `landing` singleton with an
- * object per block, so the owner changes copy without a deploy. Structure,
- * order, links and button labels stay in code; only the words live there.
+ * The words on the landing (spec 05), so the owner changes copy without a
+ * deploy. Structure, order, links and button labels stay in code. Since spec
+ * 05b there are two kinds of content, read in one round trip:
  *
- * Every string has a Spanish default below, and the CMS wins **field by
- * field**, only where the editor has written something. An empty document, a
- * half-filled one, or Sanity being unreachable all still render a finished
- * page — the landing is where bookings start, so it never waits on the CMS.
+ * - **What a block says once** — a heading, a lead, a paragraph — lives in the
+ *   `landing` singleton and is laid over the Spanish defaults below **field by
+ *   field**, only where the editor has written something.
+ * - **What repeats** — the sessions and the steps — are documents of their own
+ *   (`service`, `step`), as many as the owner wants. A list is taken **whole or
+ *   not at all**: once the CMS has one usable item, only CMS items render; with
+ *   none, the defaults do. Never a mix — a default card beside the owner's
+ *   would offer a session that does not exist.
  *
- * Field names are a contract with `apps/studio/schemaTypes/landing.ts`.
+ * An empty CMS, a half-filled one, or Sanity being unreachable all still render
+ * a finished page — the landing is where bookings start, so it never waits on
+ * the CMS.
+ *
+ * Field names are a contract with `apps/studio/schemaTypes/landing.ts`,
+ * `service.ts` and `step.ts`. The same copy seeds the Studio from
+ * `apps/studio/seed/landing.ts` (apps never import each other), so a change to
+ * a default belongs in both.
  */
 const DOC_TYPE = 'landing';
 
 /** The singleton's fixed id, pinned by the Studio's structure. */
 const DOC_ID = 'landing';
 
-/** The services the cards offer, in order. `?servicio=<id>` for spec 06. */
-export const SERVICE_IDS = ['individual', 'familia', 'seguimiento'] as const;
-export type ServiceId = (typeof SERVICE_IDS)[number];
+const SERVICE_TYPE = 'service';
+const STEP_TYPE = 'step';
 
-export interface ServiceCopy {
+/** One session card. */
+export interface ServiceItem {
+  /** The document's slug — `/reservar?servicio=<id>`, which spec 06 reads. */
+  id: string;
   title: string;
-  description: string;
-  duration: string;
-  modality: string;
+  description?: string;
+  duration?: string;
+  modality?: string;
   /** As shown, euro sign after the number: `55 €`. */
-  price: string;
+  price?: string;
+  /** The owner's watercolour for the card's 160×160 slot. */
+  image?: SanityImage;
 }
 
-export interface StepCopy {
+export interface StepItem {
   title: string;
-  description: string;
+  description?: string;
 }
 
 export interface LandingCopy {
   hero: { headline: string; lead: string };
-  services: { headline: string; lead: string } & Record<ServiceId, ServiceCopy>;
-  'how-it-works': { headline: string; lead: string; steps: [StepCopy, StepCopy, StepCopy] };
+  services: { headline: string; lead: string; items: ServiceItem[] };
+  'how-it-works': { headline: string; lead: string; steps: StepItem[] };
   /** `image` is the owner's second photo of Laura; the block works without it. */
   'about-teaser': { headline: string; paragraph: string; image?: SanityImage };
   testimonials: { headline: string };
@@ -61,34 +76,40 @@ export const LANDING_DEFAULTS: LandingCopy = {
   services: {
     headline: 'Sesiones que se adaptan a tu casa',
     lead: 'Todas son online, así que tu gato se queda tranquilo en su territorio mientras buscamos lo que necesita.',
-    individual: {
-      title: 'Sesión online individual',
-      description:
-        'Para ti y tu gato. Entendemos qué le está pasando y eliges con la florapeuta las esencias que le ayudan.',
-      duration: '60 min',
-      modality: 'Online',
-      price: '55 €',
-    },
-    familia: {
-      title: 'Sesión para la familia multiespecie',
-      description:
-        'Para cuando en casa conviven varios gatos, personas u otros animales y la armonía se ha roto.',
-      duration: '90 min',
-      modality: 'Online',
-      price: '75 €',
-    },
-    seguimiento: {
-      title: 'Seguimiento',
-      description:
-        'Revisamos cómo ha respondido tu gato y ajustamos las esencias para que el cambio se quede.',
-      duration: '30 min',
-      modality: 'Online',
-      price: '30 €',
-    },
+    items: [
+      {
+        id: 'individual',
+        title: 'Sesión online individual',
+        description:
+          'Para ti y tu gato. Entendemos qué le está pasando y eliges con la florapeuta las esencias que le ayudan.',
+        duration: '60 min',
+        modality: 'Online',
+        price: '55 €',
+      },
+      {
+        id: 'familia',
+        title: 'Sesión para la familia multiespecie',
+        description:
+          'Para cuando en casa conviven varios gatos, personas u otros animales y la armonía se ha roto.',
+        duration: '90 min',
+        modality: 'Online',
+        price: '75 €',
+      },
+      {
+        id: 'seguimiento',
+        title: 'Seguimiento',
+        description:
+          'Revisamos cómo ha respondido tu gato y ajustamos las esencias para que el cambio se quede.',
+        duration: '30 min',
+        modality: 'Online',
+        price: '30 €',
+      },
+    ],
   },
   'how-it-works': {
     headline: 'Cómo funciona una sesión',
-    lead: 'Tres pasos, sin que tu gato tenga que salir de casa.',
+    // No count in the lead: the owner decides how many steps there are.
+    lead: 'Paso a paso, sin que tu gato tenga que salir de casa.',
     steps: [
       {
         title: 'Cuéntanos',
@@ -129,16 +150,15 @@ export const LANDING_DEFAULTS: LandingCopy = {
  * The fallback, with every string the CMS has actually filled laid over it.
  * Only keys the fallback has are read — an unexpected field in the document
  * never reaches a page — and a blank or whitespace-only string counts as not
- * written. Exported so the rule is tested directly.
+ * written. A list is returned as the fallback has it: lists are never merged
+ * item by item, they follow the whole-or-nothing rule in `getLandingCopy`.
+ * Exported so the rule is tested directly.
  */
 export function mergeCopy<T>(fallback: T, cms: unknown): T {
   if (typeof fallback === 'string') {
     return (typeof cms === 'string' && cms.trim() ? cms.trim() : fallback) as T;
   }
-  if (Array.isArray(fallback)) {
-    const list = Array.isArray(cms) ? cms : [];
-    return fallback.map((item, index) => mergeCopy(item, list[index])) as T;
-  }
+  if (Array.isArray(fallback)) return fallback;
   if (fallback && typeof fallback === 'object') {
     const source = cms && typeof cms === 'object' ? (cms as Record<string, unknown>) : {};
     return Object.fromEntries(
@@ -148,40 +168,113 @@ export function mergeCopy<T>(fallback: T, cms: unknown): T {
   return fallback;
 }
 
-/** Studio names are camelCase; the page keys copy by block id. */
-const LANDING_QUERY = /* groq */ `
-  *[_type == $type && _id == $id][0] {
+/** A written string, trimmed; anything else — blank included — is not written. */
+const written = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim() ? value.trim() : undefined;
+
+/** An image only once it points at an uploaded asset. */
+const uploaded = (value: unknown): SanityImage | undefined =>
+  (value as Partial<SanityImage> | null | undefined)?.asset?._ref ? (value as SanityImage) : undefined;
+
+const rowsOf = (value: unknown): Record<string, unknown>[] =>
+  Array.isArray(value) ? value.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object') : [];
+
+/** The CMS sessions that can be shown: a title and a slug, after trimming. */
+function toServiceItems(value: unknown): ServiceItem[] {
+  return rowsOf(value).flatMap((row) => {
+    const id = written(row.id);
+    const title = written(row.title);
+    if (!id || !title) return [];
+    return [
+      {
+        id,
+        title,
+        description: written(row.description),
+        duration: written(row.duration),
+        modality: written(row.modality),
+        price: written(row.price),
+        image: uploaded(row.image),
+      },
+    ];
+  });
+}
+
+/** The CMS steps that can be shown: a title, after trimming. */
+function toStepItems(value: unknown): StepItem[] {
+  return rowsOf(value).flatMap((row) => {
+    const title = written(row.title);
+    return title ? [{ title, description: written(row.description) }] : [];
+  });
+}
+
+/** Whole from the CMS, or whole from the defaults — never a mix. */
+const wholeOrDefault = <T>(cms: T[], fallback: T[]): T[] => (cms.length > 0 ? cms : fallback);
+
+/**
+ * Studio names are camelCase; the page keys copy by block id. Lists sort by
+ * `order`, then oldest first: a sequence reads in the order it was written.
+ */
+const LANDING_QUERY = /* groq */ `{
+  "landing": *[_type == $landingType && _id == $landingId][0] {
     hero,
-    services,
-    "how-it-works": {
-      "headline": howItWorks.headline,
-      "lead": howItWorks.lead,
-      "steps": [howItWorks.step1, howItWorks.step2, howItWorks.step3]
-    },
+    "services": services { headline, lead },
+    "how-it-works": howItWorks { headline, lead },
     "about-teaser": aboutTeaser,
     testimonials,
     "blog-teaser": blogTeaser,
     cta
-  }
-`;
+  },
+  "services": *[_type == $serviceType && defined(title) && defined(slug.current)]
+    | order(coalesce(order, 1000) asc, _createdAt asc) {
+      "id": slug.current,
+      title,
+      description,
+      duration,
+      modality,
+      price,
+      image
+    },
+  "steps": *[_type == $stepType && defined(title)]
+    | order(coalesce(order, 1000) asc, _createdAt asc) {
+      title,
+      description
+    }
+}`;
+
+interface LandingQueryResult {
+  landing?: Record<string, unknown> | null;
+  services?: unknown;
+  steps?: unknown;
+}
 
 /** The landing's copy for this request: CMS where written, defaults elsewhere. */
 export async function getLandingCopy(): Promise<LandingCopy> {
-  let raw: Record<string, unknown> | null = null;
+  let raw: LandingQueryResult | null = null;
 
   try {
-    raw = await sanityClient.fetch<Record<string, unknown> | null>(LANDING_QUERY, {
-      type: DOC_TYPE,
-      id: DOC_ID,
+    raw = await sanityClient.fetch<LandingQueryResult | null>(LANDING_QUERY, {
+      landingType: DOC_TYPE,
+      landingId: DOC_ID,
+      serviceType: SERVICE_TYPE,
+      stepType: STEP_TYPE,
     });
   } catch (error) {
     console.warn('[landing] could not read the copy, using the defaults:', error);
   }
 
-  const copy = mergeCopy(LANDING_DEFAULTS, raw);
-  const image = (raw?.['about-teaser'] as { image?: SanityImage } | undefined)?.image;
+  const copy = mergeCopy(LANDING_DEFAULTS, raw?.landing);
+  const image = uploaded((raw?.landing?.['about-teaser'] as { image?: unknown } | null | undefined)?.image);
 
-  if (image?.asset?._ref) copy['about-teaser'] = { ...copy['about-teaser'], image };
-
-  return copy;
+  return {
+    ...copy,
+    services: {
+      ...copy.services,
+      items: wholeOrDefault(toServiceItems(raw?.services), LANDING_DEFAULTS.services.items),
+    },
+    'how-it-works': {
+      ...copy['how-it-works'],
+      steps: wholeOrDefault(toStepItems(raw?.steps), LANDING_DEFAULTS['how-it-works'].steps),
+    },
+    'about-teaser': image ? { ...copy['about-teaser'], image } : copy['about-teaser'],
+  };
 }

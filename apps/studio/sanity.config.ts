@@ -26,6 +26,19 @@ const dataset = process.env.SANITY_STUDIO_DATASET || 'production';
  */
 const SINGLETONS = new Set(['landing']);
 
+/**
+ * The landing's lists (spec 05b), right under *Portada* and each sorted by its
+ * `order` field, so the list in the Studio reads in the same order as the page.
+ */
+const ORDERED_LISTS = [
+  { type: 'service', title: 'Sesiones' },
+  { type: 'step', title: 'Pasos de «Cómo funciona»' },
+  { type: 'testimonial', title: 'Testimonios' },
+] as const;
+
+/** Types already placed above the divider. */
+const PINNED = new Set<string>([...SINGLETONS, ...ORDERED_LISTS.map(({ type }) => type)]);
+
 export default defineConfig({
   name: 'default',
   title: 'kat-hu',
@@ -41,8 +54,21 @@ export default defineConfig({
               .title('Portada')
               .id('landing')
               .child(S.document().schemaType('landing').documentId('landing')),
+            ...ORDERED_LISTS.map(({ type, title }) =>
+              S.listItem()
+                .title(title)
+                .id(type)
+                .schemaType(type)
+                .child(
+                  S.documentTypeList(type)
+                    .title(title)
+                    .defaultOrdering([{ field: 'order', direction: 'asc' }]),
+                ),
+            ),
             S.divider(),
-            ...S.documentTypeListItems().filter((item) => !SINGLETONS.has(item.getId() ?? '')),
+            ...S.documentTypeListItems()
+              .filter((item) => !PINNED.has(item.getId() ?? ''))
+              .map((item) => (item.getId() === 'post' ? item.title('Entradas') : item)),
           ]),
     }),
     visionTool(),

@@ -11,6 +11,7 @@
     "check": "tsc --noEmit",
     "deploy": "sanity deploy",
     "start": "sanity start",
+    "seed": "sanity exec seed/landing.ts --with-user-token",
     "test": "echo \"studio: no tests\""
   },
   "dependencies": {
