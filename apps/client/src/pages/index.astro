@@ -5,11 +5,16 @@
  * hidden one is simply not rendered — no gap, no wrapper, no comment left
  * behind. The copy is read once per request and each block gets its slice.
  *
+ * The wrapper carries the colour rhythm (spec 05c, `blocks/rhythm.ts`): it
+ * colours the bands by the order they actually render in, so switching a
+ * block off never leaves two bands of the same colour side by side.
+ *
  * No `overHero`: the hero starts just below the bar (owner, 2026-09-11).
  */
 import { BLOCKS } from '@kat-hu/contracts';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { BLOCK_COMPONENTS } from '../components/blocks/registry';
+import { RHYTHM } from '../components/blocks/rhythm';
 import { getLandingCopy } from '../data/landing';
 import { isVisible } from '../lib/flags';
 
@@ -19,13 +24,16 @@ const copy = await getLandingCopy();
 ---
 
 <BaseLayout
+  edgeReserved
   title="kathu"
   description="Terapia floral holística para familias multiespecie. Sesiones online con una florapeuta."
 >
-  {
-    visible.map(({ id }) => {
-      const Block = BLOCK_COMPONENTS[id];
-      return <Block copy={copy[id]} flags={flags} />;
-    })
-  }
+  <div data-landing class={RHYTHM}>
+    {
+      visible.map(({ id }) => {
+        const Block = BLOCK_COMPONENTS[id];
+        return <Block copy={copy[id]} flags={flags} />;
+      })
+    }
+  </div>
 </BaseLayout>

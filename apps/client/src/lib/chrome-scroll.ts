@@ -8,16 +8,24 @@
  * Three states, one attribute:
  *
  * - `top`    — the reader is at the top of the page. The stripe is shown and
- *              the band is opaque Shell.
+ *              the band is opaque Crema.
  * - `glass`  — past 40px of scroll. The stripe is collapsed and the band is
- *              translucent Shell with a blur, a Mist rule and `shadow-sm`.
- * - `hidden` — past one full viewport and still going down. The band is
- *              translated out of the way and the back-to-top button takes
- *              over.
+ *              translucent Crema with a blur and `shadow-sm`.
+ * - `hidden` — the band is translated out of the way and the back-to-top
+ *              button takes over.
  *
- * Coming back up, the band returns at `glass` after 80px of upward travel —
- * a hysteresis, so a trackpad twitch cannot flicker it. The stripe comes back
- * only at the very top: it belongs to the top of the page, not to the header.
+ * **When the page gives a line of its own** (`hideAfter`) the band follows
+ * position alone: hidden below the line, shown above it, whichever way the
+ * reader is going. On the landing the line is where the band's bottom passes
+ * the bottom of the botanical edge under the hero, so the band leaves once
+ * the hero is behind it and comes back only when that edge is back at the top
+ * of the screen (owner, 2026-09-28 — it used to leave too late and come back
+ * too early).
+ *
+ * **Otherwise** it hides past one viewport while going down, and returns at
+ * `glass` after 80px of upward travel — a hysteresis, so a trackpad twitch
+ * cannot flicker it. Either way the stripe comes back only at the very top: it
+ * belongs to the top of the page, not to the header.
  */
 
 export type BandState = 'top' | 'glass' | 'hidden';
@@ -46,6 +54,12 @@ export type ChromeInput = {
    * `nextAnchor` maintains it.
    */
   lastY: number;
+  /**
+   * The page's own line, when it has one: below it the band is hidden, above
+   * it the band is shown — by position alone (see the module note). Never
+   * later than the viewport.
+   */
+  hideAfter?: number;
 };
 
 /**
@@ -61,8 +75,14 @@ export function nextChromeState({
   viewportHeight,
   previous,
   lastY,
+  hideAfter,
 }: ChromeInput): ChromeState {
   if (scrollY <= TOP_THRESHOLD_PX) return state('top');
+
+  // The page's own line: position alone decides, either way.
+  if (hideAfter !== undefined && Number.isFinite(hideAfter)) {
+    return state(scrollY > hideLineFor(viewportHeight, hideAfter) ? 'hidden' : 'glass');
+  }
 
   if (previous.band === 'hidden') {
     // Only a deliberate move back up brings it back, and never the stripe.
@@ -70,9 +90,18 @@ export function nextChromeState({
   }
 
   const goingDown = scrollY > lastY;
-  const pastOneViewport = scrollY > viewportHeight;
 
-  return state(goingDown && pastOneViewport ? 'hidden' : 'glass');
+  return state(goingDown && scrollY > viewportHeight ? 'hidden' : 'glass');
+}
+
+/**
+ * Where hiding may start: the page's own line when it gives a usable one,
+ * one viewport otherwise — never later than the viewport, and never inside
+ * the top threshold, where the band must stay.
+ */
+export function hideLineFor(viewportHeight: number, hideAfter?: number): number {
+  if (hideAfter === undefined || !Number.isFinite(hideAfter)) return viewportHeight;
+  return Math.min(viewportHeight, Math.max(TOP_THRESHOLD_PX, hideAfter));
 }
 
 /**

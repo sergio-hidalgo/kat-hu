@@ -10,12 +10,13 @@
  * chrome's motion off for free — which is exactly what it cannot do for a
  * scripted animation.
  *
- * **The band is opaque Shell in every state and the lockup is always the
- * violet one** (owner's decision, 2026-09-08). There is no transparent
+ * **The band is opaque Crema in every state and the lockup is always the
+ * violet one** (owner's decision, 2026-09-08; Crema since guide v2 §07). There is no transparent
  * treatment over a hero and no knockout swap: one logo, one background, so
  * nothing about the header changes with the page behind it.
  *
- * Sizes supersede guide §7.7 — see `header.ts`.
+ * Sizes supersede the guide's — see `header.ts`. Guide v2 §07: navigation in
+ * Urbanist 500 16px Ink, the current page Violeta and underlined.
  *
  * The mobile menu stays a `<details>` disclosure, so it opens and its links
  * work with no JavaScript at all. The script only adds what a `<details>`
@@ -53,7 +54,7 @@ const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
 const link =
   'flex min-h-11 items-center font-body text-sm font-medium whitespace-nowrap no-underline transition-colors duration-fast';
 
-const active = 'text-ink underline decoration-violet-700 decoration-2 underline-offset-6';
+const active = 'text-violet underline decoration-violet decoration-2 underline-offset-6';
 
 /* The sheet covers the page but never the stripe: opening the menu must not
    move anything that was already on screen. */
@@ -63,14 +64,17 @@ const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
 <div
   id="site-chrome"
   data-band="top"
-  class="group fixed inset-x-0 top-0 z-40 transition-transform duration-base ease-out-soft data-[band=hidden]:-translate-y-full"
+  class="group fixed inset-x-0 top-0 z-40 transition-transform duration-base ease-soft data-[band=hidden]:-translate-y-full"
 >
   {announcement.enabled && <AnnouncementBar />}
 
-  {/* Shell at rest; translucent Shell with a blur once the page has moved.
-      Never below /70 — Slate links over a photograph stop clearing §9. */}
+  {/* Crema at rest; translucent Crema with a blur once the page has moved.
+      Never below /70 — Ink links over a busy band must still clear AA. The
+      thin rule along the bottom is there in every state (owner, 2026-09-27).
+      It is drawn inside the band, not as a border, so the chrome keeps the
+      exact height `header.ts` records and nothing below it moves. */}
   <header
-    class="bg-shell transition-[background-color,box-shadow] duration-base ease-out-soft group-data-[band=glass]:border-b group-data-[band=glass]:border-mist group-data-[band=glass]:bg-shell/80 group-data-[band=glass]:shadow-sm group-data-[band=glass]:backdrop-blur-[12px]"
+    class="relative bg-cream transition-[background-color,box-shadow] duration-base ease-soft after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-border group-data-[band=glass]:bg-cream/80 group-data-[band=glass]:shadow-sm group-data-[band=glass]:backdrop-blur-[12px]"
   >
     <Section as="div" padding="none">
       <Grid class:list={[BAND_H, 'items-center']}>
@@ -89,7 +93,7 @@ const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
               <a
                 href={href}
                 aria-current={isActive(href) ? 'page' : undefined}
-                class:list={[link, isActive(href) ? active : 'text-slate hover:text-ink']}
+                class:list={[link, isActive(href) ? active : 'text-ink hover:text-violet']}
               >
                 {label}
               </a>
@@ -99,22 +103,22 @@ const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
 
         <details id="site-menu" class="col-span-6 justify-self-end md:hidden">
           <summary
-            class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-sm text-slate [&::-webkit-details-marker]:hidden"
+            class="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded text-ink [&::-webkit-details-marker]:hidden"
             aria-label="Abrir el menú"
             aria-expanded="false"
           >
-            <Menu size={24} stroke-width={1.5} />
+            <Menu size={24} stroke-width={1.75} />
           </summary>
 
           {/* A sheet, not a band under the bar: the rest of the screen, in
-              white — the one surface guide §3.4 sanctions for a sheet. Its
+              Crema — guide v2 has no white surface at all. Its
               first row sits exactly where the band's was, so the lockup and
               the control in the corner do not move as it opens. */}
           <div
             id="site-sheet"
             class:list={[
               sheetTop,
-              'fixed inset-x-0 bottom-0 z-50 flex flex-col bg-white',
+              'fixed inset-x-0 bottom-0 z-50 flex flex-col bg-cream',
               /* Past the top of the page the stripe is collapsed, so there is
                  nothing to sit below and the sheet takes the whole screen. */
               'group-data-[band=glass]:top-0 group-data-[band=hidden]:top-0',
@@ -127,10 +131,10 @@ const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
               <button
                 id="site-menu-close"
                 type="button"
-                class="col-span-6 flex h-11 w-11 cursor-pointer items-center justify-center justify-self-end rounded-sm text-slate transition-colors duration-fast hover:text-ink"
+                class="col-span-6 flex h-11 w-11 cursor-pointer items-center justify-center justify-self-end rounded text-ink transition-colors duration-fast hover:text-violet"
                 aria-label="Cerrar el menú"
               >
-                <X size={24} stroke-width={1.5} />
+                <X size={24} stroke-width={1.75} />
               </button>
             </Grid>
 
@@ -149,7 +153,7 @@ const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
                           aria-current={isActive(href) ? 'page' : undefined}
                           class:list={[
                             'flex min-h-11 items-center justify-center px-4 text-center font-body text-lead no-underline',
-                            isActive(href) ? active : 'text-graphite',
+                            isActive(href) ? active : 'text-ink',
                           ]}
                         >
                           {label}
@@ -184,6 +188,22 @@ const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
     let current: ChromeState = AT_TOP;
     let anchor = 0;
     let queued = false;
+    const band = chrome.querySelector('header');
+
+    /**
+     * The page's own line: the scroll position at which the band's bottom
+     * passes the **bottom** of the first botanical edge in `<main>` — on the
+     * landing, the plants over the hero's foot. Below it the band is hidden,
+     * above it shown (owner, 2026-09-28). A page with no such edge gives none,
+     * and the policy keeps its one-viewport rule.
+     */
+    const hideAfter = (): number | undefined => {
+      const edge = Array.from(document.querySelectorAll<HTMLElement>('main [data-edge]')).find(
+        (element) => element.getClientRects().length > 0,
+      );
+      if (!edge || !band) return undefined;
+      return edge.getBoundingClientRect().bottom + window.scrollY - band.getBoundingClientRect().height;
+    };
 
     const paint = () => {
       queued = false;
@@ -196,6 +216,7 @@ const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
         viewportHeight: window.innerHeight,
         previous: current,
         lastY: anchor,
+        hideAfter: hideAfter(),
       });
       anchor = nextAnchor({ scrollY: window.scrollY, band: next.band, lastY: anchor });
 
@@ -243,8 +264,8 @@ const sheetTop = announcement.enabled ? STRIPE_TOP : 'top-0';
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
       const styles = getComputedStyle(root);
-      const duration = Number.parseFloat(styles.getPropertyValue('--duration-base')) || 200;
-      const easing = styles.getPropertyValue('--ease-out-soft').trim() || 'ease-out';
+      const duration = Number.parseFloat(styles.getPropertyValue('--dur-base')) || 240;
+      const easing = styles.getPropertyValue('--ease').trim() || 'ease-out';
 
       sheet?.animate([{ opacity: 0 }, { opacity: 1 }], { duration, easing });
 

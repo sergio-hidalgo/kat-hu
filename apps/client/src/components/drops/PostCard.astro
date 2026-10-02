@@ -45,8 +45,8 @@ const height = 450;
           class="block h-auto w-full rounded-none"
         />
         {/* Bottom-right on a Shell scrim, so it stays legible on any photo. */}
-        <span class="absolute right-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-shell/92 px-2 py-1 text-xs text-ink tabular-nums">
-          <Heart size={16} stroke-width={1.5} class="fill-red text-red" />
+        <span class="absolute right-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-cream/92 px-2 py-1 text-xs text-ink tabular-nums">
+          <Heart size={16} stroke-width={1.5} class="fill-error text-error" />
           <span class="like-count">{likes}</span>
         </span>
       </a>
@@ -62,7 +62,7 @@ const height = 450;
         16:9 crop by itself. The browser's own ellipsis; the whole title and
         excerpt stay in the DOM for search and screen readers. Violet Dusk
         rather than the guide's Ink, by the owner's decision (spec 04b). */}
-    <h3 class="line-clamp-2 text-h4 text-violet-700">
+    <h3 class="line-clamp-2 text-h4 text-violet">
       <a href={href} class="no-underline hover:underline">{title}</a>
     </h3>
 
@@ -71,7 +71,7 @@ const height = 450;
       {
         !mainImage && (
           <span class="inline-flex items-center gap-1 tabular-nums">
-            <Heart size={16} stroke-width={1.5} class="fill-red text-red" />
+            <Heart size={16} stroke-width={1.5} class="fill-error text-error" />
             <span class="like-count">{likes}</span>
           </span>
         )

@@ -19,6 +19,7 @@ vi.mock('../lib/likes', async (importOriginal) => ({
 import Index from './index.astro';
 import { getTestimonials } from '../data/testimonials';
 import { defaultFlags, type Flags } from '../lib/flags';
+import { RHYTHM } from '../components/blocks/rhythm';
 
 /**
  * The landing is the registry, rendered (spec 05): visible blocks in registry
@@ -72,13 +73,48 @@ describe('landing page', () => {
 
     const ids = rendered(await render());
     expect(ids).not.toContain('testimonials');
-    expect(ids).toContain('cta');
+    expect(ids).toContain('services');
   });
 
-  it('keeps exactly one filled primary action on the page (HIE-01)', async () => {
+  it('keeps the filled primary actions to the hero’s and the one preferred session’s (HIE-01)', async () => {
+    const html = await render();
+    const hero = html.slice(
+      html.indexOf('data-block="hero"'),
+      html.indexOf('data-block="', html.indexOf('data-block="hero"') + 1),
+    );
+
+    expect(hero.match(/bg-violet text-cream hover:bg-violet-hover/g)).toHaveLength(1);
+    // The owner's exception (2026-10-02): the preferred session's button is filled too.
+    expect(html.match(/bg-violet text-cream hover:bg-violet-hover/g)).toHaveLength(2);
+    expect(html.match(/data-badge/g)).toHaveLength(1);
+  });
+
+  it('wraps the blocks in the colour rhythm, each block a direct child band', async () => {
+    const html = await render();
+    const wrapper = (html.match(/<div data-landing class="([^"]*)">/)?.[1] ?? '').replaceAll('&amp;', '&');
+
+    expect(wrapper).toBe(RHYTHM);
+    // Every rendered block is a <section> straight under the wrapper, which
+    // is what the structural selectors count.
+    const inside = html.slice(html.indexOf('data-landing'));
+    for (const id of rendered(html)) expect(inside).toMatch(new RegExp(`<section[^>]*data-block="${id}"`));
+  });
+
+  it('leaves the footer’s edge room to its last band, not to main (spec 05c)', async () => {
     const html = await render();
 
-    expect(html.match(/bg-violet-700 text-cloud hover:bg-violet-600/g)).toHaveLength(1);
+    expect(html).not.toMatch(/<main[^>]*pb-\(--edge-height\)/);
+  });
+
+  it('sets the hero title and every section title in Violeta (owner, 2026-09-28)', async () => {
+    const titles = [...main(await render()).matchAll(/<h[12]\b[^>]*class="([^"]*)"/g)].map(([, c]) => c.split(' '));
+
+    // hero, about, how it works, services, testimonials — the blog teaser is off by default.
+    expect(titles.length).toBeGreaterThanOrEqual(5);
+    for (const classes of titles) {
+      expect(classes).toContain('text-violet');
+      expect(classes).not.toContain('text-ink');
+    }
   });
 
   it('starts the hero below the bar rather than under it', async () => {

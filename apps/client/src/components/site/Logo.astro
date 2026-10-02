@@ -1,29 +1,26 @@
 ---
 /**
  * The kathu lockup: the cat mark as an inline SVG plus the word as **real
- * text** — never an image of the words (guide §2.2). It is selectable, it
+ * text** — never an image of the words (guide §02). It is selectable, it
  * scales with the reader's font settings, it costs no image request, and it
  * still reads correctly with images disabled.
  *
- * All of the styling is the design system's: `.kathu-logo` in
- * `kathu-tokens.css` sizes the whole lockup off a single `font-size` (mark
- * `1.56em`, gap `0.28em`, the "hu" in violet-300). Never re-derive those as
- * utilities.
+ * All of the styling is `.kathu-logo` in `styles/theme.css`, which sizes the
+ * whole lockup off a single `font-size`: the mark `1.4em`, the gap `0.22em`,
+ * the word Urbanist 800, *kat* and the mark in Violeta, *hu* in Glicina. Never
+ * re-derive those as utilities.
  *
- * `variant="dark"` means *for dark surfaces* — it applies
- * `.kathu-logo--light`, the knockout version used on violet-900. The header
- * never uses it: the band is opaque Shell in every state and the mark is
- * always violet (owner's decision, 2026-09-08).
+ * `variant="dark"` means *for dark surfaces* — it applies `.kathu-logo--light`,
+ * the inverted version for the Violeta footer (*kat* and the mark in Crema).
+ * The header never uses it: the band is Crema in every state.
  *
  * The `font-size` is an inline style because it is the one dimension the CSS
- * needs and there is no type token for it — the tokens ship
- * `--text-wordmark--font-weight` with no matching size, so no `text-*`
- * utility exists to name it.
+ * needs and no type token names it.
  */
 import mark from '../../assets/brand/kathu-mark.svg?raw';
 
 interface Props {
-  /** `dark` = knockout, for violet-900 surfaces. */
+  /** `dark` = inverted, for the Violeta footer. */
   variant?: 'light' | 'dark';
   /** The lockup's `font-size` in px — the only dimension it has. */
   size?: number;

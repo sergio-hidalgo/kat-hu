@@ -25,15 +25,30 @@ export const step = defineType({
       rows: 3,
     }),
     defineField({
+      name: 'image',
+      title: 'Imagen',
+      type: 'image',
+      description:
+        'La imagen de la parte de arriba del paso. Se recorta en un rectángulo apaisado (7:3), así que deja lo importante en el centro. Sin imagen, la web muestra un bloque violeta.',
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Descripción de la imagen',
+          type: 'string',
+          description: 'Solo si la imagen cuenta algo a quien no puede verla. Si es decorativa, déjalo vacío.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'order',
       title: 'Orden',
       type: 'number',
-      description:
-        'Los números más bajos salen primero, de diez en diez (10, 20, 30). La web los numera sola.',
+      description: 'Los números más bajos salen primero, de diez en diez (10, 20, 30). La web los numera sola.',
     }),
   ],
   orderings: [{ title: 'Orden', name: 'orderAsc', by: [{ field: 'order', direction: 'asc' }] }],
   preview: {
-    select: { title: 'title', subtitle: 'description' },
+    select: { title: 'title', subtitle: 'description', media: 'image' },
   },
 });

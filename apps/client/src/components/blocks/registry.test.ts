@@ -6,7 +6,7 @@ import { BLOCK_COMPONENTS, blockFileName } from './registry';
 
 /**
  * The registry in `packages/contracts`, the files in this folder and the map
- * in `registry.ts` must describe the same eight blocks (spec 05). A block
+ * in `registry.ts` must describe the same seven blocks (spec 05). A block
  * that is registered but has no file cannot render; a file that is not
  * registered could never be switched off.
  */
@@ -16,7 +16,7 @@ describe('block registry', () => {
   it('names a block’s file after its id', () => {
     expect(blockFileName('hero')).toBe('Hero.astro');
     expect(blockFileName('how-it-works')).toBe('HowItWorks.astro');
-    expect(blockFileName('cta')).toBe('Cta.astro');
+    expect(blockFileName('hero')).toBe('Hero.astro');
   });
 
   it('has a component file for every registered block', () => {

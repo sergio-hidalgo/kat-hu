@@ -3,10 +3,9 @@ import { describe, expect, it } from 'vitest';
 import Footer from './Footer.astro';
 
 /**
- * The footer's surface, padding and watermark placement belong to the design
- * system's `.kathu-footer` / `.kathu-footer__watermark` classes, so what this
- * asserts is that the component *uses* them rather than re-deriving them —
- * plus the two things the guide's footer demo has and ours used to lack.
+ * The footer's surface and padding belong to `.kathu-footer`, so what this
+ * asserts is that the component *uses* it rather than re-deriving it. The band
+ * carries no watermark since the owner's request of 2026-09-27.
  */
 
 async function render() {
@@ -19,33 +18,19 @@ describe('Footer', () => {
     const html = await render();
 
     expect(html).toContain('kathu-footer');
-    expect(html).toContain('kathu-footer__watermark');
     // The violet, the isolation and the padding come from the class; setting
     // any of them here would be setting them twice.
-    expect(html).not.toContain('bg-violet-900');
+    expect(html).not.toMatch(/bg-violet(?![\w-])/);
     expect(html).not.toContain('isolate');
     expect(html).not.toContain('overflow-hidden');
     expect(html).not.toContain('pt-16');
   });
 
-  it('inlines the watermark as decoration, out of the accessibility tree', async () => {
+  it('carries no watermark behind the content (owner, 2026-09-27)', async () => {
     const html = await render();
 
-    expect(html).toMatch(/<svg class="kathu-footer__watermark[^"]*" aria-hidden="true"/);
-    expect(html).toContain('focusable="false"');
-    expect(html).toContain('viewBox="0 0 852 189"');
-    expect(html).toContain('preserveAspectRatio="xMinYMax slice"');
-    // It takes its colour from CSS, so it must be currentColor and not a hex.
-    expect(html).toContain('fill="currentColor"');
-    expect(html).not.toMatch(/#[0-9a-fA-F]{3,8}/);
-  });
-
-  it('runs the watermark the full width of the footer', async () => {
-    const html = await render();
-
-    // `max-w-none` removes the design system's 1320px cap; it is the only
-    // `max-w-*` the grid rule allows, because it never chooses a width.
-    expect(html).toContain('class="kathu-footer__watermark max-w-none"');
+    expect(html).not.toContain('watermark');
+    expect(html).not.toContain('viewBox="0 0 852 189"');
   });
 
   it('centres the copyright and the disclaimer, and nothing else', async () => {
@@ -74,16 +59,35 @@ describe('Footer', () => {
     expect(html).toContain('hola@kat-hu.com');
   });
 
-  it('puts the veterinary disclaimer in White under the copyright', async () => {
+  it('puts the veterinary disclaimer in Lavanda under the copyright', async () => {
     const html = await render();
 
     expect(html).toContain('Todos los derechos reservados');
     expect(html).toMatch(
-      /text-white">\s*kathu no sustituye la atención veterinaria\. Consulta siempre con tu\s+veterinaria de referencia\./,
+      /text-lavender">\s*kathu no sustituye la atención veterinaria\. Consulta siempre con tu\s+veterinaria de referencia\./,
     );
+    expect(html).not.toMatch(/\btext-white\b/);
   });
 
-  it('wears the knockout lockup, 20% up on the guide’s 24px', async () => {
+  it('sets column titles in Crema and links in Lavanda that turn Crema on hover (guide §07)', async () => {
+    const html = await render();
+
+    expect(html).toMatch(/<h2 id="footer-navegación" class="font-body text-xs font-bold text-cream"/);
+    expect((html.match(/text-lavender no-underline transition-colors duration-fast hover:text-cream hover:underline/g) ?? []).length).toBe(8);
+  });
+
+  it('opens with the closing botanical edge, the dog, the rabbit and the cat, over the band above', async () => {
+    const html = await render();
+    const edge = html.match(/<div[^>]*data-edge="footer"[^>]*>/)?.[0] ?? '';
+
+    expect(edge).toContain('aria-hidden="true"');
+    expect(edge).toContain('bottom-[calc(100%-1px)]');
+    expect(edge).toContain('text-violet');
+    // A sibling of the band, drawn first.
+    expect(html.indexOf('data-edge="footer"')).toBeLessThan(html.indexOf('class="kathu-footer"'));
+  });
+
+  it('wears the inverted lockup, 20% up on the guide’s 24px', async () => {
     const html = await render();
 
     expect(html).toContain('kathu-logo kathu-logo--light');

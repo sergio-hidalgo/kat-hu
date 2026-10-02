@@ -46,16 +46,16 @@ describe.each(registries)('%s', (name, entries) => {
 });
 
 describe('BLOCKS', () => {
-  it('lists exactly the eight landing blocks, in the order the page shows them', () => {
+  it('lists exactly the seven landing blocks, in the order the page shows them', () => {
+    // The owner's order of 2026-09-28 (spec 05c): the Lavanda pair, then Crema.
     expect(BLOCKS.map((block) => block.id)).toEqual([
       'hero',
-      'services',
-      'how-it-works',
       'about-teaser',
+      'how-it-works',
+      'services',
       'testimonials',
       'blog-teaser',
       'shop-teaser',
-      'cta',
     ]);
   });
 

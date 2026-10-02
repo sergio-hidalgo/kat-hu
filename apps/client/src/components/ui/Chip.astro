@@ -1,7 +1,9 @@
 ---
 /**
- * Guide §7.3. Two chips only: the oak price chip — the one place oak carries
- * type, at 16:1 — and the mist status chip used for *Agotado* and friends.
+ * A pill (guide §05: round corners are for pills and avatars). Two tones:
+ * `price` in Lavanda with Ink (11.6:1), and `status` — *Agotado* and friends —
+ * on Hueso with a border and Pizarra (6.4:1). Neither is ever the only way a
+ * state is told: the words say it.
  */
 type Tone = 'price' | 'status';
 
@@ -13,14 +15,14 @@ interface Props {
 const { tone = 'price', class: className } = Astro.props;
 
 const tones: Record<Tone, string> = {
-  price: 'bg-oak-200 text-ink font-semibold',
-  status: 'bg-mist text-slate',
+  price: 'bg-lavender text-ink font-semibold',
+  status: 'border border-border bg-bone text-slate',
 };
 ---
 
 <span
   class:list={[
-    'inline-flex items-center rounded-sm px-2 py-0.5 font-body text-sm',
+    'inline-flex items-center rounded-full px-3 py-0.5 font-body text-sm',
     tones[tone],
     className,
   ]}

@@ -25,7 +25,7 @@ describe('BackToTop', () => {
 
     expect(html).toContain('h-12 w-12');
     expect(html).toContain('rounded-full');
-    expect(html).toContain('bg-violet-700');
+    expect(html).toMatch(/bg-violet(?![\w-])/);
     expect((html.match(/<svg/g) ?? []).length).toBe(1);
     // No ring, no label, no second button.
     expect(html).not.toContain('progress');

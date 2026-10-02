@@ -1,16 +1,23 @@
 ---
 /**
- * `block:services` (spec 05, 05b): the owner's sessions as guide §7.4 cards,
- * however many there are, each booking its own (`/reservar?servicio=<id>`,
- * the session's slug, which spec 06 reads).
+ * `block:services` (spec 05, 05b, 05c): the owner's sessions as guide §07
+ * service cards, however many there are, each booking its own
+ * (`/reservar?servicio=<id>`, the session's slug, which spec 06 reads).
  *
  * Every card is three across from `lg`, two and one below it, **whatever the
  * count**: a fourth card starts a new row, left-aligned, rather than squeezing
  * a row narrower than its 160px slot (ALN-02).
+ *
+ * The heading and lead are centred on the middle eight columns — guide §04
+ * lets a section heading and a short lead centre, and the span, not a width
+ * utility, sets the measure (I-001). One línea-fina daisy leans in from the
+ * left margin behind the cards, from `lg` only (guide §06: one flower at a
+ * time on a phone, and this band has none there).
  */
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import ServiceCard from '../ui/ServiceCard.astro';
+import Flora from '../ui/Flora.astro';
 import { SCROLL_MT } from '../site/header';
 import type { LandingCopy } from '../../data/landing';
 import { imageUrl } from '../../lib/sanity';
@@ -21,44 +28,51 @@ interface Props {
 
 const { copy } = Astro.props;
 
-/** Stand-ins by position until the watercolours arrive — the default three look as they always did. */
-const STAND_INS = ['flower', 'cat', 'sprout'] as const;
-
 /**
- * The CDN image at twice the 160px slot's width, for dense screens. Width
- * alone: given a width *and* a height, the URL builder adds a `rect` crop to
- * their aspect, which would cut the watercolour; `object-contain` fits
- * whatever shape arrives into the slot.
+ * The CDN image cropped to the card's 13:6 slot at twice its width, for dense
+ * screens. A width and a height together make the URL builder crop to their
+ * aspect, honouring the owner's hotspot.
  */
-const IMAGE_PX = 320;
+/** The button's words when the owner wrote none for that session. */
+const DEFAULT_ACTION = 'Reservar esta sesión';
+
+const IMAGE_PX = { width: 800, height: 369 };
 ---
 
-<Section data-block="services" id="servicios" class={SCROLL_MT}>
+<Section
+  data-block="services"
+  id="servicios"
+  edge
+  class:list={['isolate overflow-x-clip', SCROLL_MT]}
+>
+  <Flora
+    line="daisy"
+    class="absolute top-24 -left-24 -z-10 hidden w-56 -rotate-12 text-warning opacity-35 lg:block"
+  />
   <Grid class="gap-y-8">
     {/* The heading takes a row of its own: at 8 columns it would leave 4
         free, and the first card would climb up beside it on wide screens. */}
-    <div class="col-span-12">
-      <h2 class="text-h2 text-ink">{copy.headline}</h2>
-      <p class="mt-4 text-lead text-graphite">{copy.lead}</p>
+    <div class="col-span-12 text-center md:col-span-8 md:col-start-3">
+      <h2 class="text-h2 text-violet">{copy.headline}</h2>
+      <p class="mt-4 max-w-none text-lead text-graphite">{copy.lead}</p>
     </div>
     {
-      copy.items.map((item, index) => (
+      copy.items.map((item) => (
         <div class="col-span-12 md:col-span-6 lg:col-span-4">
           <ServiceCard
             title={item.title}
             description={item.description}
-            duration={item.duration}
-            modality={item.modality}
             price={item.price}
+            features={item.features}
+            preferred={item.preferred}
             href={`/reservar?servicio=${item.id}`}
-            actionLabel="Reservar esta sesión"
+            actionLabel={item.buttonLabel ?? DEFAULT_ACTION}
             image={
               item.image && {
-                src: imageUrl(item.image).width(IMAGE_PX).url(),
+                src: imageUrl(item.image).width(IMAGE_PX.width).height(IMAGE_PX.height).fit('crop').url(),
                 alt: item.image.alt?.trim() ?? '',
               }
             }
-            illustration={STAND_INS[index % STAND_INS.length]}
           />
         </div>
       ))

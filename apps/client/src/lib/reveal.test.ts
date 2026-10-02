@@ -73,8 +73,8 @@ function animate(this: Element, keyframes: Keyframe[], options: KeyframeAnimatio
 }
 
 const tokens: Record<string, string> = {
-  '--duration-slow': '320ms',
-  '--ease-out-soft': 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+  '--dur-base': '240ms',
+  '--ease': 'cubic-bezier(0.22, 0.61, 0.36, 1)',
 };
 
 function view(overrides: Partial<RevealView> = {}, values = tokens): RevealView {
@@ -133,9 +133,9 @@ describe('createReveal', () => {
     createReveal({ window: view() }).observe([card]);
     FakeObserver.last?.enter(card);
 
-    // Twice `--duration-slow`: an entrance is not a state change.
+    // Twice `--dur-base`: an entrance is not a state change.
     expect(animations[0].options).toMatchObject({
-      duration: 640,
+      duration: 480,
       easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
     });
   });
@@ -146,7 +146,7 @@ describe('createReveal', () => {
     FakeObserver.last?.enter(card);
 
     expect(animations[0].options).toMatchObject({
-      duration: 640,
+      duration: 480,
       easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
     });
   });

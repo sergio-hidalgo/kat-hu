@@ -43,14 +43,78 @@ describe('HowItWorks', () => {
     const items = steps(count);
     const html = await render({ ...defaults, steps: items });
     const positions = items.map((step) => html.indexOf(step.title));
-    const numerals = [...html.matchAll(/<p aria-hidden="true"[^>]*>\s*(\d+)\s*<\/p>/g)].map(([, n]) => Number(n));
+    const numerals = [...html.matchAll(/<span aria-hidden="true">(\d+)\. <\/span>/g)].map(([, n]) => Number(n));
 
     expect(html).toContain('<ol role="list"');
     expect(html.match(/<li\b/g)).toHaveLength(count);
-    expect(html.split(`<li class="${stepSpan(count)}"`).length - 1).toBe(count);
+    expect(html.split(`<li class="${stepSpan(count)} flex flex-col items-center px-6 text-center"`).length - 1).toBe(count);
     expect(positions.every((position) => position > -1)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
     expect(numerals).toEqual(Array.from({ length: count }, (_, index) => index + 1));
+  });
+
+  it('holds the steps in one Panel, a subgrid of the page grid (guide §07, I-001)', async () => {
+    const html = await render();
+    const panel = html.match(/<ol role="list" data-panel class="([^"]*)"/)?.[1].split(' ') ?? [];
+
+    expect(panel).toEqual(
+      expect.arrayContaining([
+        'col-span-12',
+        'grid',
+        'grid-cols-subgrid',
+        'bg-panel',
+        'rounded',
+        'border',
+        'border-cream/70',
+      ]),
+    );
+    // Not a second grid: no column count of its own.
+    expect(panel.some((c) => /^grid-cols-\d/.test(c))).toBe(false);
+  });
+
+  it('holds a Violeta placeholder over each step that has no picture yet, one shape per step', async () => {
+    const html = await render({ ...defaults, steps: steps(3) });
+
+    expect(
+      html.match(/data-placeholder aria-hidden="true" class="[^"]*\baspect-\[7\/3\][^"]*\bbg-violet\b/g),
+    ).toHaveLength(3);
+    expect(html).not.toContain('<img');
+    expect(html).not.toContain('data-flora="process');
+  });
+
+  it('shows the owner’s picture from the CDN, cropped to the slot, with its alt, instead of the placeholder', async () => {
+    const [first, second] = steps(2);
+    const html = await render({
+      ...defaults,
+      steps: [
+        {
+          ...first,
+          image: {
+            _type: 'image',
+            asset: { _ref: 'image-Tb9Ew8CXIwaY6R1kjMvI0uRR-600x600-png', _type: 'reference' },
+            alt: ' Una videollamada ',
+          },
+        },
+        second,
+      ],
+    });
+    const img = html.match(/<img[^>]*>/)?.[0] ?? '';
+    const src = img.match(/src="([^"]*)"/)?.[1].replaceAll('&amp;', '&') ?? '';
+    const params = new URL(src).searchParams;
+
+    expect(src).toMatch(/^https:\/\/cdn\.sanity\.io\/images\//);
+    expect(params.get('w')).toBe('800');
+    expect(params.get('h')).toBe('343');
+    expect(img).toContain('alt="Una videollamada"');
+    expect(img).toMatch(/class="[^"]*\baspect-\[7\/3\][^"]*\bobject-cover\b/);
+    expect(html.match(/data-placeholder/g)).toHaveLength(1);
+  });
+
+  it('writes the descriptions in Grafito — Pizarra is under AA on the Panel', async () => {
+    const html = await render();
+
+    expect(html).toContain('text-sm text-graphite');
+    expect(html).not.toMatch(/<li[^>]*>[\s\S]*?text-slate/);
   });
 
   it('leaves out an explanation the owner did not write', async () => {
@@ -68,6 +132,7 @@ describe('HowItWorks', () => {
     const html = await render();
     const heading = html.match(/<div class="([^"]*)">\s*<h2/)?.[1];
 
-    expect(heading).toBe('col-span-12');
+    // A full row on a phone; centred on the middle eight columns from md.
+    expect(heading).toBe('col-span-12 text-center md:col-span-8 md:col-start-3');
   });
 });

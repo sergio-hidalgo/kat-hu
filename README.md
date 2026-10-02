@@ -45,17 +45,30 @@ tracked record of what exists. See the "Roadmap" section for the order.
 ## Design system
 
 The visual language is fixed and lives outside the app, in the local-only
-`references/` folder: `kathu-style-guide.md` (the rules) and
-`kathu-tokens.css` (the Tailwind v4 `@theme`). The app carries a
+`references/` folder: `kathu-style-guide-v2.md` (guide v2, the rules) and
+`kathu-tokens.css` (plain CSS custom properties). The app carries a
 **byte-for-byte copy** of the tokens at
 `apps/client/src/styles/kathu-tokens.css`; the copy follows the reference,
-never the other way round.
+never the other way round. `apps/client/src/styles/theme.css` is the app's own
+Tailwind layer on top: it maps every token onto a utility (`bg-violet`,
+`text-ink`, `rounded`, `shadow-sm`…) and switches Tailwind's own palette off,
+so only the design system's names exist.
 
 - **Tailwind v4** through `@tailwindcss/vite`. Utilities inline in the
   `.astro` files — there are no `<style>` blocks and no hex values anywhere
   in `apps/client/src`.
-- **Two typefaces**, self-hosted from `apps/client/public/fonts/`: Urbanist
-  for `text-display`/`h1`/`h2`, Lora for everything else.
+- **Two typefaces**, self-hosted from `apps/client/public/fonts/`: Lora for
+  headings (display → h4), Urbanist for text, navigation, buttons and prices.
+- **Six base colours** — Violeta, Glicina, Lavanda, Piedra, Crema, Hueso —
+  plus Ink/Grafito/Pizarra for text and four semantic colours. No white and no
+  pure black. The landing's bands alternate Crema and Lavanda, each closed by
+  a botanical silhouette in the colour of the next; the footer closes every
+  page with a dog, a rabbit and a cat among the plants. Every silhouette
+  casts a faint, crisp Ink shadow upwards, and each lies over both bands it
+  joins by a pixel, so no hairline can open between them.
+- **The flowers are vectors**, traced from the owner's drawings, so one
+  drawing takes any colour token: the process icons, the línea-fina studies
+  and the edges. Only the two pressed-flower photographs stay rasters.
 - **One grid, and everything is on it.** It is the full width of the screen
   and identical at every screen size: 12 columns, a gap between every pair,
   and the same gap at the left and right screen edges, with **column width,
@@ -90,8 +103,8 @@ attribute:
 
 | State    | When                                       | What you see                                                     |
 | :------- | :----------------------------------------- | :--------------------------------------------------------------- |
-| `top`    | the first 40px of the page                 | the stripe, and the band opaque with no rule                     |
-| `glass`  | past 40px                                  | the stripe collapsed; the band translucent, blurred, Mist rule   |
+| `top`    | the first 40px of the page                 | the stripe, and the band opaque with its thin bottom rule        |
+| `glass`  | past 40px                                  | the stripe collapsed; the band translucent, blurred, thin rule   |
 | `hidden` | past one viewport and still scrolling down | the band slides away and the back-to-top button appears          |
 
 Scrolling back up brings the band back as `glass` after 80px — a hysteresis,
@@ -104,7 +117,7 @@ file. The decisions themselves are a pure function,
 visible exactly when the band is hidden, and returns focus to the header's
 logo after it scrolls.
 
-The band is **opaque and the lockup is always the violet one** — there is no
+The band is **opaque Crema and the lockup is always the violet one** — there is no
 transparent-over-hero treatment and no knockout swap in the header. Its
 height is written down once, in `src/components/site/header.ts`, which the
 layout, the stripe and `/drops`' `scroll-margin-top` all import instead of
@@ -120,12 +133,13 @@ The **browser and home-screen icons are one drawing**: the mark as
 white outline around the silhouette, so it holds up against a dark surface as
 well as a light one. Only the backing differs: `favicon.svg`, `favicon.ico`,
 `icon-192` and `icon-512` are transparent, and `apple-touch-icon` sits on
-violet-900, because iOS composites transparency onto **black** and so the icon
-has to bring its own surface — violet-900 being the `theme_color` the manifest
-already declares. `BaseLayout` offers the SVG first and the `.ico` only as a
+Crema, because iOS composites transparency onto **black** and so the icon has
+to bring its own surface — Crema rather than Violeta, because the mark's own
+purple is too close to v2's Violeta to read on it. The manifest declares
+Violeta as its `theme_color` and Crema as its `background_color`. `BaseLayout` offers the SVG first and the `.ico` only as a
 fallback. All of it comes from `pnpm --filter client favicons`.
 
-On mobile the menu is a **full-screen white sheet** built on `<details>`, so
+On mobile the menu is a **full-screen Crema sheet** built on `<details>`, so
 it opens and its links work with no JavaScript; the script adds the scroll
 lock, Escape, the focus trap and the return of focus to the trigger.
 
@@ -136,12 +150,15 @@ a layout shift. That flag is a placeholder for the visibility flag
 `block:announcement`, which spec 10 will register in `packages/contracts`;
 spec 08 can move the words themselves into Sanity without changing the shape.
 
-The **footer** carries the cropped wordmark as a watermark, flush to its
-bottom-left in violet-800 — 1.22:1 against the violet-900 surface, meant to
-register as a change in the surface rather than as something to read. It is
-decoration: `aria-hidden`, unselectable, cropped by the footer itself. The
-surface, the padding and the watermark's placement all come from the design
-system's `.kathu-footer` classes.
+The **footer** opens with the closing botanical edge (the plants with a dog and
+a cat) over a plain Violeta band — no watermark since the owner's request of
+2026-09-27. Because the edge overlays whatever comes before the footer, every
+page keeps its height free at the foot of `<main>` (the landing's last band
+does it itself). The band's surface and padding come from `.kathu-footer`.
+
+The **header band carries a thin rule along its bottom in every state**
+(owner, 2026-09-27), drawn inside the band rather than as a border so the
+chrome's height in `header.ts` stays exact.
 
 Its column links each stand 44px tall so they can be tapped — they were 25.6px
 targets until spec 03e, which is below the floor for a finger. On a phone
@@ -285,7 +302,7 @@ at all.
 
 ## The landing
 
-`/` is built from **eight blocks** that the owner can switch on and off —
+`/` is built from **seven blocks** that the owner can switch on and off —
 from `/admin` once spec 10 lands; until then each block's default applies.
 The list, in page order, is `BLOCKS` in `packages/contracts`. Each block is
 one file in `apps/client/src/components/blocks/`, `registry.ts` there maps an
@@ -295,13 +312,12 @@ order. A hidden block leaves nothing behind — no empty section, no gap.
 | Block          | What it shows                                                        | On by default |
 | :------------- | :------------------------------------------------------------------- | :------------ |
 | `hero`         | Full first screen: headline, *Reserva tu sesión*, Laura and her cat  | yes           |
-| `services`     | Session cards written in the Studio, each with its booking link      | yes           |
-| `how-it-works` | The steps of a session (the hero's *Cómo funciona* lands here)       | yes           |
 | `about-teaser` | Who the florapeuta is, and a link to `/sobre-kathu`                  | yes           |
-| `testimonials` | Up to three testimonials — hidden while there are none               | yes           |
+| `how-it-works` | The steps of a session (the hero's *Cómo funciona* lands here)       | yes           |
+| `services`     | Session cards written in the Studio, each with its booking link      | yes           |
+| `testimonials` | Testimonials — a row of three, a carousel from four; hidden with none | yes           |
 | `blog-teaser`  | The three newest drops                                               | no (spec 08)  |
 | `shop-teaser`  | Nothing yet — spec 11 adds three products                            | no (spec 11)  |
-| `cta`          | One closing sentence and a way to book                               | yes           |
 
 **The words live in Sanity** — the *Portada* document for each block's
 heading, and the *Sesión*, *Paso* and *Testimonio* documents for what repeats,
@@ -313,12 +329,31 @@ reached the page still renders: the copy falls back to the defaults, and the
 testimonials and blog teaser hide.
 
 **The hero** fills the first screen below the bar, whatever its size: the
-lavender photograph trims its sides to fit, the four white corners of the
-`/drops` banner frame it — the bottom-right one drawn over the picture — the words and the button sit at the top, and the
-picture of Laura with her cat — whole and large — is pinned to the
-bottom-right edge. *Reserva tu sesión* is the
-page's only filled button, edged in white against the photograph; every
-other action on `/` is outlined or a text link.
+gradient from Hueso in the top-left corner to Glicina in the bottom-right,
+Hueso holding solid for the first stretch and Glicina taking the larger share
+(owner, 2026-09-27); the headline in Violeta and the smaller words in Ink —
+the only colour that clears AA for text that size across the gradient on
+every screen measured —
+the words and the button at the top of its light side, and the colour picture of Laura with her cat — whole and
+large, sized by the band's height on desktop so her head sits level with the
+headline — pinned to the bottom-right edge, its foot behind the botanical edge
+that closes the band. *Reserva tu sesión* is the hero's filled button, and the one
+*preferred* session's card button is filled too (owner, 2026-10-02); every other
+action on `/` is the Piedra secondary or a text link.
+
+**After the hero the bands come in two colours, in the owner's order**
+(2026-09-28): the about teaser and how a session works on Lavanda, then the
+sessions and the testimonials on Crema (the closing call to action was
+removed by the owner on 2026-09-28). A silhouette of
+plants marks each change of colour — over the hero's foot, and where Lavanda
+meets Crema — and the page closes with the animals above the footer. The
+rules look at the bands that actually render, so switching a block off, or a
+block hiding itself for lack of content, reflows them. The process
+steps sit together on one panel, each with a picture from the Studio (a violet
+placeholder block until it is added);
+the about teaser shows Laura's portrait with a pressed flower on its corner;
+the testimonials sign with initials and *Familia de …*. At most two
+decorative flowers are in view on a desktop, one on a phone (guide v2 §06).
 
 **The navigation** reads Sesiones (`/sesiones`) · Sobre kathu · Drops · Tienda
 in the bar and the footer. The mobile menu also starts with *Inicio*, and its
@@ -411,25 +446,28 @@ one uses the site's default.
 | `hero`        | `headline`, `lead`                                                                          |
 | `services`    | `headline`, `lead` — the sessions are `service` documents                                   |
 | `howItWorks`  | `headline`, `lead` — the steps are `step` documents                                         |
-| `aboutTeaser` | `headline`, `paragraph`, `image` (with `alt`) — without a photo the block is text alone      |
+| `aboutTeaser` | The Studio's **Terapeuta** tab: `headline`, `paragraph`, `linkLabel`, `linkHref` (a path on this site, e.g. `/sobre-kathu` — anything else falls back to it), `image` (with `alt`) — without a photo the block shows Laura's brand portrait |
 | `testimonials`| `headline`                                                                                  |
 | `blogTeaser`  | `headline`, `lead`                                                                          |
-| `cta`         | `headline`                                                                                  |
 
 **`service`** (*Sesión*) — one session card each: `title` (required), `slug`
-(required; the `?servicio=` in its booking link), `description`, `duration`,
-`modality`, `price` (`55 €`), `image` (with `alt`; shown whole in the card's
-160×160 slot), `order` (number, lowest first). As many as the owner writes.
+(required; the `?servicio=` in its booking link), `description` (the subtitle),
+`features` (up to three lines, each with a check), `buttonLabel`, `preferred`
+(a badge and the filled button), `price` (`55 €`), `image` (with `alt`; cropped
+to the card's 13:6 slot), `order` (number, lowest first). `duration` and
+`modality` are hidden legacy fields the site falls back to for a session with no
+`features`. As many as the owner writes.
 
 **`step`** (*Paso*) — one step of *Cómo funciona* each: `title` (required),
-`description`, `order`. The site numbers them by position.
+`description`, `image` (with `alt`; cropped to the step's 7:3 slot), `order`.
+The site numbers them by position.
 
 Sessions and steps are taken **whole or not at all**: once one is published,
 only the published ones show; with none, the site shows its own three
 defaults. A blank optional field is left off the card, never filled in.
 
 **`testimonial`** — `quote` (text, required), `name` (required), `cat`
-(optional), `order` (number, lowest first). The landing shows three at most.
+(optional), `order` (number, lowest first). The landing shows up to twelve: a row up to three, a carousel from four.
 
 ### Content appears on publish
 
@@ -490,7 +528,7 @@ builds and renders; likes are additive, not load-bearing.
 ### The banner
 
 `/drops` opens on a full-bleed band — `src/assets/brand/banner_drops.jpg`
-under the same violet-900 gradient the landing hero wears — carrying the
+under a dark violet tint (Violeta activo, the darkest token) — carrying the
 page's `<h1>`, *Mis drops*, and one lead line. It is built exactly like the
 landing's hero: the image is a direct child of the `Section`, outside the
 `Grid`, and `overHero` on the layout lets the band start at the top of the
@@ -506,8 +544,8 @@ browser upscaling it.
 
 The photograph — lavender and dried oak under a pipette releasing a violet
 drop — is chosen to sit in the palette rather than to be corrected into it:
-under the overlay the band maps 90% onto the violet ramp, and Cloud clears
-9.8:1 behind the `<h1>`.
+under the overlay the band maps onto the violet ramp, and the Crema `<h1>`
+reads clearly on it.
 
 Below `md` the crop is **anchored at 65% rather than centred**, so the pipette
 — the reason the photograph belongs to this route — stays in frame on a phone
@@ -519,26 +557,26 @@ the screen; `100vw` would hand a phone a 750px file to fill 1210px.
 ### The ornaments
 
 `/drops` wears a classical frame, by the owner's decision of 2026-09-10 — a
-deliberate exception, on `/drops`, its drops and the landing hero only, to the style guide's "no ornament"
-principle. Two drawings, each mirrored into the positions it needs:
+deliberate exception, on `/drops` and its drops only, to the style guide's "no ornament"
+principle (the landing hero wore the corners too until spec 05c gave it a
+botanical edge instead). Two drawings, each mirrored into the positions it needs:
 
-- **the banner** — `small-corner` in its four corners, in white (spec 04c
+- **the banner** — `small-corner` in its four corners, in Crema (spec 04c
   replaced the heavier `big-corner`). The frame starts below the fixed chrome, so the
   top ornaments are visible at scroll 0, and the corners step down in size so
   they stay in the page margin and never sit on the heading;
-- **the landing hero** — the same four white corners as the banner (spec 05);
-- **a drop's main image** — the same four white corners, inside the image's
+- **a drop's main image** — the same four Crema corners, inside the image's
   edges, over a very faint violet tint at the photo's top and bottom (clear in
-  the middle), so the white always has a darker ground even on a light photo;
-- **every card** — `small-corner` bottom-left and bottom-right, in violet-600,
-  with the title in violet-700;
-- **the pagination** — `side` on each flank, in violet-600, at every width;
+  the middle), so the corners always have a darker ground even on a light photo;
+- **every card** — `small-corner` bottom-left and bottom-right, in Violeta,
+  with the title in Violeta;
+- **the pagination** — `side` on each flank, in Violeta, at every width;
   on a very narrow phone the flanks shrink before the page buttons do.
 
 The files are `src/assets/brand/ornament-*.svg`: sanitised copies of the
 owner's SVGs with the same geometry, taking their colour from CSS. The colours
-are the design-system tokens nearest to the owner's originals, and white over a
-photograph, set in one place (`src/components/ui/ornament.ts`). The primitive is
+are the design-system tokens nearest to the owner's originals, and Crema over a
+photograph (v2 has no white), set in one place (`src/components/ui/ornament.ts`). The primitive is
 `src/components/ui/Ornament.astro`, shown on `/estilo`; the four-corner frame
 is `src/components/ui/CornerFrame.astro`, which
 `src/components/drops/BannerFrame.astro` places below the chrome on `/drops`. All of it is `aria-hidden`
@@ -599,12 +637,14 @@ Deliberately not built yet. Listed roughly in the order they would pay off.
 
 ## Planned work — the landing
 
-- **Watercolour spot illustrations** for the session cards — an asset for the
-  owner, uploaded per session: Studio → Sesiones → *the session* → Imagen.
-  Until one arrives, its 160×160 slot shows a quiet Lucide stand-in
-  (`components/ui/SpotIllustration.astro`).
-- **Laura's second photo** for the about teaser: Studio → Portada →
-  Presentación → Foto. The block is text alone until then.
+- **Session and step pictures** — an asset for the owner, uploaded per session
+  and per step in the Studio (Imagen). Until one arrives, a session shows a
+  Piedra block and a step a Violeta block in the same shape.
+- **The about teaser's photo** can be replaced in the Studio: Portada →
+  Terapeuta → Foto. Until one is set it shows Laura's portrait from the
+  brand assets (spec 05c).
+- **The `/drops` pages in guide v2.** Spec 05c moved them onto the v2 tokens
+  without redesigning them; a follow-up spec gives them the v2 language.
 - **Session prices and durations to confirm.** The defaults (55 € / 60 min,
   75 € / 90 min, 30 € / 30 min) are placeholders; set the real ones per
   session in Studio → Sesiones.
@@ -624,21 +664,22 @@ closes.
 |     | Supabase (branch `01-client-blog-scafolding`, PR #1)                      | done     |
 | 02  | Design system foundation (Tailwind v4, tokens, 12-column grid,            |          |
 |     | header/footer, UI primitives, `/estilo`)                                  | done     |
-| 03  | Test tooling (Vitest everywhere, `pnpm test`)                              | done     |
+| 03  | Test tooling (Vitest everywhere, `pnpm test`)                             | done     |
 | 03b | Node runtime floor                                                        | done     |
 | 03c | Drops dynamics (card shape, scroll motion)                                | done     |
 | 03d | Header, footer and back-to-top rebuilt (stripe, band states, sheet,       |          |
 |     | watermark, real-text lockup)                                              | done     |
-| 03e | UI playbook retrofit (`ui-review.md` run over everything built before    |          |
+| 03e | UI playbook retrofit (`ui-review.md` run over everything built before     |          |
 |     | the gate existed; 44px targets, the site's own 404)                       | done     |
-| 03f | Drops banner hero (`banner_drops.jpg`, restored `<h1>`)                    | done     |
+| 03f | Drops banner hero (`banner_drops.jpg`, restored `<h1>`)                   | done     |
 | 04  | Runtime, contracts, Supabase base (Node adapter, React,                   |          |
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | done     |
 | 04b | Drops page oldie (classical ornaments: banner frame, card corners,        |          |
 |     | pagination flanks)                                                        | done     |
 | 04c | Drops white corners (lighter banner frame, framed drop image)             | done     |
 | 05  | Landing page blocks                                                       | done     |
-| 05b | Improve blocks format                                                     | in progress |
+| 05b | Improve blocks format                                                     | done     |
+| 05c | Redesign system (guide v2: tokens, landing rebuild, vector flowers)       | done     |
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |
 | 07  | About page                                                                | todo     |

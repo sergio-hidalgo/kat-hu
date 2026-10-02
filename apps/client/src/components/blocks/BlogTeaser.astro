@@ -35,12 +35,12 @@ const [posts, counts] = await Promise.all([
 
 {
   posts.length > 0 && (
-    <Section data-block="blog-teaser">
+    <Section data-block="blog-teaser" edge>
       <Grid class="gap-y-8">
         {/* The heading takes a row of its own: at 8 columns it would leave 4
             free, and the first card would climb up beside it on wide screens. */}
         <div class="col-span-12">
-          <h2 class="text-h2 text-ink">{copy.headline}</h2>
+          <h2 class="text-h2 text-violet">{copy.headline}</h2>
           <p class="mt-4 text-lead text-graphite">{copy.lead}</p>
         </div>
         {posts.map((post) => (

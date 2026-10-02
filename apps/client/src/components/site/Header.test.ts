@@ -82,11 +82,11 @@ describe('Header', () => {
     expect(html).toContain('href="/drops" aria-current="page"');
   });
 
-  it('starts in the `top` state with an opaque band and one violet lockup', async () => {
+  it('starts in the `top` state with an opaque Crema band and one violet lockup', async () => {
     const html = await renderHeader();
 
     expect(html).toContain('data-band="top"');
-    expect(html).toContain('bg-shell');
+    expect(html).toMatch(/<header\s+class="relative bg-cream /);
     // No knockout swap, ever: exactly one lockup in the band, and the light
     // variant is the footer's alone.
     expect(html).not.toContain('kathu-logo--light');
@@ -112,12 +112,32 @@ describe('Header', () => {
     expect(html).not.toContain('logo_text');
   });
 
-  it('renders the mobile menu as a details disclosure with a white sheet', async () => {
+  it('draws the thin bottom rule in every state, inside the band so the chrome keeps its height', async () => {
+    const header = (await renderHeader()).match(/<header\s+class="([^"]*)"/)?.[1].split(' ') ?? [];
+
+    // Always, not only in the glass state (owner, 2026-09-27)…
+    expect(header).toEqual(expect.arrayContaining(['after:absolute', 'after:bottom-0', 'after:h-px', 'after:bg-border']));
+    expect(header.some((c) => c.startsWith('group-data-[band=glass]:border'))).toBe(false);
+    // …and never as a border, which would add a pixel to the chrome.
+    expect(header).not.toContain('border-b');
+  });
+
+  it('renders the mobile menu as a details disclosure with a Crema sheet — v2 has no white', async () => {
     const html = await renderHeader();
 
     expect(html).toContain('<details');
     expect(html).toContain('<summary');
-    expect(html).toContain('fixed inset-x-0 bottom-0 z-50 flex flex-col bg-white');
+    expect(html).toContain('fixed inset-x-0 bottom-0 z-50 flex flex-col bg-cream');
+    expect(html).not.toMatch(/\bbg-white\b/);
+  });
+
+  it('sets the navigation in Ink, the current page in Violeta and underlined (guide §07)', async () => {
+    const html = await renderHeader();
+    const current = html.match(/<a href="\/drops" aria-current="page" class="([^"]*)"/)?.[1] ?? '';
+    const other = html.match(/<a href="\/tienda" class="([^"]*)"/)?.[1] ?? '';
+
+    expect(current).toContain('text-violet underline decoration-violet');
+    expect(other).toContain('text-ink hover:text-violet');
   });
 
   it('starts the sheet below the stripe, so opening the menu moves nothing', async () => {
@@ -156,7 +176,7 @@ describe('Header', () => {
     const html = await renderHeader();
 
     expect(html).not.toContain('no debería aparecer');
-    expect(html).not.toContain('bg-violet-700');
+    expect(html).not.toMatch(/bg-violet(?![\w-])/);
 
     vi.doUnmock('../../data/announcement');
     vi.resetModules();

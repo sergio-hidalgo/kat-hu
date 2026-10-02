@@ -1,51 +1,55 @@
 ---
 /**
- * `block:hero` — the landing's first screen (spec 05).
+ * `block:hero` — the landing's first screen (spec 05, reskinned in 05c).
  *
  * **It fills the rest of the first screen: from just under the bar to the
  * bottom edge.** The page does not run it under the fixed chrome (no
  * `overHero`), so `<main>` already starts below the bar, and the hero's
  * minimum height is the screen minus that same chrome, read from `header.ts`.
  * `min-`, so on a very short screen the content pushes it taller rather than
- * overflowing. The photograph fills it with `object-cover`, trimming the sides
- * as the screen narrows (owner's requests of 2026-09-11).
+ * overflowing.
  *
- * `sizes` describes that crop, not the viewport: the source is 2401×1058
- * (2.27:1), so on any screen narrower than that — every phone and most
- * desktops — it is laid out about 227vh wide, and `100vw` would hand out a
- * file far too small for it. It stops at 1920px and quality 60: the photo sits
- * under the violet tint, where neither costs anything visible, and on a phone
- * that is 143 KB instead of 324 KB for the page's largest paint (Lighthouse).
+ * **Guide v2 §03/§07, with the owner's gradient.** The band runs from Hueso in
+ * the top-left corner to Glicina in the bottom-right, Glicina taking the larger
+ * share (owner, 2026-09-27; `bg-hero` in `theme.css`), with no photograph
+ * behind it. The words sit on the light side: from `lg` they take six
+ * columns, ending at 48% of the screen. The headline is **Violeta** (owner,
+ * 2026-09-27): display type is large text, so its floor is 3:1, which Violeta
+ * clears even on pure Glicina (3.38:1). The smaller words — lead, micro line,
+ * link — are Ink, the only colour measured to clear 4.5:1 over the whole
+ * gradient at every screen size; the text link keeps its Violeta underline. **One decision** — the page's single
+ * filled action (HIE-01, INT-02) — with *¿Cómo funciona?* beside it as a text
+ * link, only while that block is visible, and the micro line in italic under
+ * them.
  *
- * Over the photograph: the violet-900 tint (guide §6); the four white corners,
- * drawn last so the bottom-right one sits on top of the picture; the words at the
- * **top** of the band, clear of the top corners, with **one decision** — the
- * page's single filled action, edged in white because its violet has no edge
- * against the tint (HIE-01, INT-02) — and *Cómo funciona* beside it as a text
- * link, only while that block is visible.
+ * **Laura with her cat** is a colour cut-out, part of the composition rather
+ * than a portrait to crop (owner, 2026-09-11/12; colour since 05c): shown whole,
+ * with no rounding, pinned to the band's bottom-right edge on the dark side of
+ * the gradient. A direct child of the band, outside the grid, so its size is a
+ * share of the screen — 80% on a phone, 60% from `md`. Below `lg` it follows
+ * the words and `mt-auto` drops it to the bottom, so the band grows instead of
+ * letting the two overlap. From `lg` it is taken out of the flow and sized by
+ * the band's **height** (owner, 2026-09-27): about 88% of it — her head level
+ * with the headline — which at the picture's 1.79:1 is the band's height
+ * × 1.58, capped at 62% of the width so a wide, short screen never pushes it
+ * into the words. The band's height is the screen minus the chrome, the same
+ * sum as its `min-h`.
  *
- * **Laura with her cat** is part of the composition, not a portrait to crop
- * (owner, 2026-09-11/12): shown whole at its own 3:2, with no rounding (it is
- * a cut-out, and the 8px image radius would clip it), pinned to the band's
- * bottom-right edge with no margin. Like the full-bleed photo it is a direct
- * child of the band, outside the grid, so its size is a share of the screen —
- * 80% on a phone, 60% from `md`, half from `lg` — rather than columns. Below
- * `lg` it follows the words and `mt-auto` drops it to the bottom, so the band
- * grows instead of letting the two overlap; from `lg` it is taken out of the
- * flow and the words sit above it.
+ * The band closes with a botanical edge (guide §07: "borde botánico abajo"),
+ * drawn by the band that follows, which paints after this one — so the plants
+ * stand in front of the picture's foot.
  */
 import { Image } from 'astro:assets';
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import Button from '../ui/Button.astro';
-import CornerFrame from '../ui/CornerFrame.astro';
-import { TEXT_LINK_ON_DARK } from '../ui/link';
+import Flora from '../ui/Flora.astro';
+import { TEXT_LINK_ON_HERO } from '../ui/link';
 import { BAND_SCREEN_MIN_H, CHROME_SCREEN_MIN_H } from '../site/header';
 import { announcement } from '../../data/announcement';
 import type { LandingCopy } from '../../data/landing';
 import { isVisible, type Flags } from '../../lib/flags';
-import lavender from '../../assets/brand/lavender_fields.png';
-import together from '../../assets/brand/hero_together_bw.png';
+import together from '../../assets/brand/hero-picture.png';
 
 interface Props {
   copy: LandingCopy['hero'];
@@ -55,52 +59,119 @@ interface Props {
 const { copy, flags } = Astro.props;
 
 const screenMinH = announcement.enabled ? CHROME_SCREEN_MIN_H : BAND_SCREEN_MIN_H;
+
+/* From `lg`: 88% of the band's height at the picture's aspect (0.88 × 1.793),
+   never more than 62% of the width. The chrome is 8rem with the stripe, 5.5rem
+   without — `header.ts`'s `CHROME_TOP` / `BAND_TOP` at `md` and up. */
+const pictureWidth = announcement.enabled
+  ? 'lg:w-[min(62%,calc((100svh_-_8rem)*1.58))]'
+  : 'lg:w-[min(62%,calc((100svh_-_5.5rem)*1.58))]';
 const howItWorks = isVisible(flags, 'block', 'how-it-works');
+
+/** Guide §04's own example of the micro line: italic, under the actions. */
+const MICRO = 'Todo online · Tus peludos no se mueven de casa';
 ---
 
 <Section
   padding="none"
   data-block="hero"
-  class:list={['relative isolate flex flex-col', screenMinH]}
+  class:list={['relative isolate flex flex-col overflow-hidden bg-hero', screenMinH]}
 >
-  <Image
-    src={lavender}
-    alt=""
-    widths={[768, 1280, 1920]}
-    sizes="(min-aspect-ratio: 227/100) 100vw, 227vh"
-    quality={60}
-    loading="eager"
-    fetchpriority="high"
-    class="absolute inset-0 -z-10 h-full w-full rounded-none object-cover"
+  {/* Two línea-fina drawings on the gradient (owner, 2026-09-28), from `lg`
+      only — below it the words run the full width. A Violeta leaf at 30%
+      opacity at the right edge, halfway down, behind the picture — anchored
+      64px past the screen edge like the Terapeuta band's leaf, and 40%
+      larger than it (w-67, 268px); Glicina vanished
+      against the gradient's Glicina end, so it is Violeta, faint enough to
+      be felt rather than seen. And, in the words' column, a daisy behind the
+      title on the left, in the dark amber of the tokens (`--color-warning`,
+      the nearest to the dark yellow asked for, used as decoration by the
+      owner's choice) at 50% opacity. */}
+  <Flora
+    line="leaf"
+    class="absolute top-1/2 -right-16 -z-10 hidden w-67 -translate-y-1/2 text-violet opacity-30 lg:block"
   />
-  {/* Guide §6: the violet-900 tint, never a lightened image with dark text. */}
-  <div class="absolute inset-0 -z-10 bg-linear-to-t from-violet-900/80 to-violet-900/20">
-  </div>
-  {/* The top padding clears the top corners at each breakpoint (their box
-      ends at 44px, 52px from `lg`, 68px at `2xl`) with a little air. */}
-  <Grid class="relative z-10 pt-14 pb-8 md:pt-16 lg:pt-20 lg:pb-0 xl:pt-24">
-    <div class="col-span-12 lg:col-span-7">
-      <h1 class="text-display text-cloud">{copy.headline}</h1>
-      <p class="mt-6 text-lead text-cloud">{copy.lead}</p>
+  <Grid class="relative z-10 pt-12 pb-8 md:pt-16 lg:pt-20 lg:pb-0 xl:pt-24">
+    <div class="relative col-span-12 lg:col-span-6">
+      <h1 class="text-display text-violet">{copy.headline}</h1>
+      <p class="mt-6 text-lead text-ink">{copy.lead}</p>
       <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2">
-        <Button href="/reservar" knockout>Reserva tu sesión</Button>
-        {howItWorks && <a href="#como-funciona" class={TEXT_LINK_ON_DARK}>Cómo funciona</a>}
+        <Button href="/reservar">Reserva tu sesión</Button>
+        {howItWorks && (
+          <a href="#como-funciona" data-scroll-center class={TEXT_LINK_ON_HERO}>
+            ¿Cómo funciona?
+          </a>
+        )}
       </div>
+      <p class="mt-6 text-sm text-ink italic">{MICRO}</p>
+      {/* Behind the title (`-z-10` inside the words' own layer, so every word
+          paints over it), at 35% opacity, with the top quarter of the flower
+          past the band's top, clipped, so it seems to slip under the header
+          (owner, 2026-09-28). The drawing fills its 4:5 box from 10.4% down,
+          76.3% of it tall; the words start 80px (`lg`) or 96px (`xl`) below
+          the band's top. So the box rises the words' offset plus 29.5% of its
+          own height: 132px for w-36 (144×180), 168px for w-48 (192×240).
+          `left` is the grid's edge margin (a 25th of the screen) plus about
+          40% of the daisy's width, which sits past the screen edge. */}
+      <Flora
+        line="daisy"
+        class="absolute -top-33 -left-[calc(4vw+3.75rem)] -z-10 hidden w-36 text-warning opacity-35 lg:block xl:-top-42 xl:-left-[calc(4vw+5rem)] xl:w-48"
+      />
     </div>
   </Grid>
 
   <Image
     src={together}
-    alt="Laura, la florapeuta de kathu, sonríe junto a su gato"
-    widths={[480, 768, 1024, 1536]}
-    sizes="(min-width: 1024px) 50vw, (min-width: 768px) 60vw, 80vw"
+    alt="Laura, la florapeuta de kathu, sonríe abrazada a su gato naranja"
+    widths={[480, 768, 1024, 1404]}
+    sizes="(min-width: 1024px) 62vw, (min-width: 760px) 60vw, 80vw"
     loading="eager"
-    class="mt-auto h-auto w-4/5 self-end rounded-none md:w-3/5 lg:absolute lg:right-0 lg:bottom-0 lg:w-1/2"
+    fetchpriority="high"
+    class:list={[
+      'mt-auto h-auto w-4/5 self-end rounded-none md:w-3/5 lg:absolute lg:right-0 lg:bottom-0',
+      pictureWidth,
+    ]}
   />
 
-  {/* Drawn after the picture, so the bottom-right corner sits on top of it
-      (owner, 2026-09-12): on a phone the picture is in the flow and any
-      positioned box paints above it; from `lg` both are positioned and the
-      later one wins. The words' grid stays above both (`z-10`). */}
-  <CornerFrame top="top-0" />
+{/* Inside the band: in `astro dev` a script is emitted where it is written, and
+    one between the hero and the next band would break the `+` selector that
+    draws the botanical edge over the hero's foot (`rhythm.ts`). */}
+<script>
+  import { landingScrollTop } from '../../lib/scroll-center';
+
+  /**
+   * *¿Cómo funciona?* glides to the process band and lands with the bottom of
+   * the botanical edge over its foot at the bottom of the screen, so the whole
+   * edge shows (owner, 2026-09-29), instead of the anchor's instant jump that
+   * left the band above in view. The edge belongs to the next band, so it is
+   * measured there; with no edge showing, the band's own foot is used.
+   * Without JavaScript the link is still a plain anchor, and the band's
+   * `scroll-margin-top` keeps it clear of the bar. Reduced motion jumps, like
+   * the back-to-top button.
+   */
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-scroll-center]')) {
+    link.addEventListener('click', (event) => {
+      const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      if (!target) return;
+      event.preventDefault();
+
+      const box = target.getBoundingClientRect();
+      const edge = target.nextElementSibling?.querySelector<HTMLElement>(':scope > [data-edge]');
+      const foot = edge && edge.getClientRects().length > 0 ? edge.getBoundingClientRect().bottom : box.bottom;
+      const top = landingScrollTop({
+        top: box.top + window.scrollY,
+        foot: foot + window.scrollY,
+        viewportHeight: window.innerHeight,
+        maxScroll: document.documentElement.scrollHeight - window.innerHeight,
+      });
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' });
+
+      // The address still says where the reader went, and focus follows, so a
+      // keyboard reader continues from the band rather than from the hero.
+      history.pushState(null, '', link.hash);
+      target.focus({ preventScroll: true });
+    });
+  }
+</script>
 </Section>

@@ -3,32 +3,31 @@
  * place their colour is decided.
  *
  * The owner's files carry their own fills; the design system allows no hex,
- * so each shape takes the nearest of the sixteen tokens — both within 8/255
- * per channel of the original, which is not a visible change. Recolouring a
- * shape later is a one-line change here.
+ * so each shape takes the nearest token. Recolouring a shape later is a
+ * one-line change here.
  *
  * Class strings rather than colour values, like `header.ts` and `field.ts`:
  * Tailwind v4 scans `.ts` sources, so the utilities are still generated.
  */
 export const ORNAMENTS = {
-  /** `#574490` in the source → violet-600. A card's bottom corners. */
-  'small-corner': { tone: 'text-violet-600' },
+  /** `#574490` in the source → Violeta (v2). A card's bottom corners. */
+  'small-corner': { tone: 'text-violet' },
   /**
-   * `#9383bf` in the source, but violet-600 by the owner's decision of
-   * 2026-09-10 — the same purple as the card corners. The pagination's flanks.
+   * `#9383bf` in the source, but the card corners' purple by the owner's
+   * decision of 2026-09-10 — Violeta since v2. The pagination's flanks.
    */
-  side: { tone: 'text-violet-600' },
+  side: { tone: 'text-violet' },
 } as const;
 
 export type OrnamentName = keyof typeof ORNAMENTS;
 
 /**
  * An ornament laid over a photograph — the `/drops` banner and a drop's main
- * image (spec 04c) — is white instead of its own tone, by the owner's decision
- * of 2026-09-11. Guide §3.4 sanctions white for knockout marks over
- * photography; this is that case and no other.
+ * image (spec 04c) — is the lightest tone instead of its own, by the owner's
+ * decision of 2026-09-11. That was white under guide v1.5; v2 has no white at
+ * all ("nunca blanco puro"), so it is Crema, the palette's lightest (spec 05c).
  */
-export const KNOCKOUT_TONE = 'text-white';
+export const KNOCKOUT_TONE = 'text-cream';
 
 /**
  * Each file is drawn in one orientation — small-corner as bottom-left, side
