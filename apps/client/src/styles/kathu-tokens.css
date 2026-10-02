@@ -1,304 +1,190 @@
 /* ==========================================================================
-   Kathu — brand tokens (canonical)
-   Tailwind v4. Import once from the root layout:  @import "./kathu-tokens.css";
-   v1.1 — Urbanist replaces Ultravision · reduced palette · two radii
-   Self-hosted files expected at /public/fonts/
+   kathu-tokens.css · Guía de estilo v2.0 · Septiembre 2026
+   Fuente única de verdad para color, tipografía, espacio, forma y movimiento.
+   Ningún hex, tamaño o sombra suelto en el código: todo sale de aquí.
    ========================================================================== */
 
-@import "tailwindcss";
-
 /* --------------------------------------------------------------------------
-   Fonts — Urbanist (display) + Lora (everything else). Both SIL OFL.
-   Alternative to self-hosting, one line in <head>:
-   https://fonts.googleapis.com/css2?family=Urbanist:wght@300..700&family=Lora:ital,wght@0,400..700;1,400..600&display=swap
+   Fuentes (SIL Open Font License)
+   Opción A · Google Fonts (añadir en <head>):
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600&family=Urbanist:ital,wght@0,400..700;1,400&display=swap" rel="stylesheet">
+   Opción B · autoalojadas: descomenta y ajusta las rutas.
    -------------------------------------------------------------------------- */
+/*
+@font-face{font-family:"Lora";src:url("/fonts/Lora[wght].woff2") format("woff2-variations");font-weight:400 700;font-style:normal;font-display:swap}
+@font-face{font-family:"Lora";src:url("/fonts/Lora-Italic[wght].woff2") format("woff2-variations");font-weight:400 700;font-style:italic;font-display:swap}
+@font-face{font-family:"Urbanist";src:url("/fonts/Urbanist[wght].woff2") format("woff2-variations");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Urbanist";src:url("/fonts/Urbanist-Italic[wght].woff2") format("woff2-variations");font-weight:100 900;font-style:italic;font-display:swap}
+*/
 
-@font-face {
-  font-family: "Urbanist";
-  src: url("/fonts/urbanist-latin-wght-normal.woff2") format("woff2-variations");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
+:root{
+  /* ------------------------------------------------------------------------
+     1 · COLOR · Paleta base (referencia de diseño)
+     ------------------------------------------------------------------------ */
+  --color-violet:#5A468A;          /* Violeta · acción principal, enlaces, marca, pie */
+  --color-wisteria:#AEA5CC;        /* Glicina · fin del degradado, «hu» del logo. Nunca texto */
+  --color-lavender:#D7CDF0;        /* Lavanda · fondo de sección 1; texto secundario sobre Violeta */
+  --color-stone:#B1ADA1;           /* Piedra · botón secundario (con texto Ink). Nunca texto */
+  --color-cream:#FDF6E2;           /* Crema · fondo de sección 2, cabecera, tarjetas, campos */
+  --color-bone:#F4F3EE;            /* Hueso · inicio del degradado del hero */
+  --color-black:#000000;           /* Solo referencia. En pantalla se usa --color-ink */
+
+  /* ------------------------------------------------------------------------
+     2 · COLOR · Derivados funcionales
+     ------------------------------------------------------------------------ */
+  --color-ink:#1B1726;             /* Titulares y etiquetas · 16,3:1 sobre Crema */
+  --color-graphite:#4A4458;        /* Cuerpo de texto · 6,1:1 sobre Lavanda */
+  --color-slate:#5C556B;           /* Secundario e iconos · AA en Crema, Hueso, Lavanda (no en Panel) */
+  --color-violet-hover:#4A3975;
+  --color-violet-active:#3D2F61;
+  --color-stone-hover:#A29E91;
+  --color-stone-strong:#857F70;    /* Borde de campo · 3,7:1 sobre Crema */
+  --color-border:#D6D0C1;          /* Filete de tarjetas y separadores · decorativo */
+  --color-panel:#CCC1E7;           /* Panel agrupador sobre Lavanda */
+
+  /* ------------------------------------------------------------------------
+     3 · COLOR · Semánticos (siempre con icono + texto)
+     ------------------------------------------------------------------------ */
+  --color-success:#166534;         /* 6,6:1 Crema · 4,7:1 Lavanda */
+  --color-warning:#7A5200;         /* Ámbar oscuro, texto e icono · 6,4:1 Crema · 4,6:1 Lavanda */
+  --color-warning-accent:#E0A106;  /* Ámbar vivo · solo filete decorativo del aviso */
+  --color-error:#A11D12;           /* 7,2:1 Crema · 5,1:1 Lavanda */
+
+  /* ------------------------------------------------------------------------
+     4 · SUPERFICIES Y TEXTO (alias semánticos: usar estos en componentes)
+     ------------------------------------------------------------------------ */
+  --bg-hero:linear-gradient(90deg,var(--color-bone) 0%,var(--color-bone) 30%,var(--color-wisteria) 100%);
+  --bg-section-lavender:var(--color-lavender);
+  --bg-section-cream:var(--color-cream);
+  --bg-header:var(--color-cream);
+  --bg-footer:var(--color-violet);
+  --bg-announcement:var(--color-violet);
+
+  --surface-card:var(--color-cream);
+  --surface-panel:var(--color-panel);
+  --surface-field:var(--color-cream);
+
+  --text-heading:var(--color-ink);
+  --text-body:var(--color-graphite);
+  --text-muted:var(--color-slate);
+  --text-link:var(--color-violet);
+  --text-on-violet:var(--color-cream);
+  --text-on-violet-muted:var(--color-lavender);
+
+  --border-card:var(--color-border);
+  --border-field:var(--color-stone-strong);
+  --border-field-focus:var(--color-violet);
+
+  --focus-ring:var(--color-violet);
+  --focus-ring-on-dark:var(--color-cream);
+  --focus-ring-width:2px;
+  --focus-ring-offset:3px;
+  --field-focus-shadow:0 0 0 3px rgba(90,70,138,.25);
+
+  /* ------------------------------------------------------------------------
+     5 · TIPOGRAFÍA
+     Lora = titulares (600/700). Urbanist = texto, interfaz, precios (400–700).
+     ------------------------------------------------------------------------ */
+  --font-heading:"Lora","Iowan Old Style",Georgia,serif;
+  --font-body:"Urbanist",system-ui,-apple-system,"Segoe UI",sans-serif;
+
+  --fs-display:clamp(2.25rem,1.8rem + 2vw,3rem);        /* 36→48 · Lora 700 */
+  --fs-h2:clamp(1.875rem,1.6rem + 1.2vw,2.5rem);        /* 30→40 · Lora 700 */
+  --fs-h3:clamp(1.25rem,1.2rem + .25vw,1.375rem);       /* 20→22 · Lora 600 */
+  --fs-h4:1.125rem;                                     /* 18    · Lora 600 */
+  --fs-lead:clamp(1.1875rem,1.1rem + .4vw,1.375rem);    /* 19→22 · Urbanist 400 */
+  --fs-body:clamp(1.0625rem,1rem + .25vw,1.125rem);     /* 17→18 · Urbanist 400 */
+  --fs-sm:1rem;                                         /* 16    · Urbanist 400/500 */
+  --fs-xs:.875rem;                                      /* 14    · mínimo absoluto */
+  --fs-price:clamp(2.5rem,2.2rem + 1.2vw,3rem);         /* 40→48 · Urbanist 700 */
+
+  --fw-regular:400;
+  --fw-medium:500;
+  --fw-semibold:600;
+  --fw-bold:700;
+
+  --lh-tight:1.15;   /* display */
+  --lh-heading:1.2;  /* h2 */
+  --lh-snug:1.3;     /* h3, h4 */
+  --lh-ui:1.25;      /* botones, navegación */
+  --lh-lead:1.6;
+  --lh-body:1.7;
+
+  --ls-display:-.01em;
+  --measure:68ch;         /* máximo de línea en texto corrido */
+  --measure-narrow:40ch;  /* tarjetas estrechas */
+
+  /* ------------------------------------------------------------------------
+     6 · ESPACIO (base 4 px, escala cerrada)
+     ------------------------------------------------------------------------ */
+  --space-1:4px;     /* icono ↔ texto */
+  --space-2:8px;     /* etiqueta ↔ campo */
+  --space-3:12px;    /* elementos de lista */
+  --space-4:16px;    /* entre botones */
+  --space-6:24px;    /* padding de tarjeta */
+  --space-8:32px;    /* entre tarjetas, calle de rejilla */
+  --space-12:48px;   /* título ↔ contenido */
+  --space-16:64px;   /* sección en móvil */
+  --space-24:96px;   /* sección en escritorio */
+  --space-32:128px;  /* hero */
+
+  --section-padding:clamp(64px,8vw,96px);
+
+  /* ------------------------------------------------------------------------
+     7 · LAYOUT
+     ------------------------------------------------------------------------ */
+  --container:1200px;
+  --gutter:clamp(20px,4vw,64px);
+  --grid-columns:12;
+  --grid-gap:var(--space-8);
+  /* Puntos de corte de referencia (no usables en @media): 480 · 760 · 1024 · 1280 */
+
+  /* ------------------------------------------------------------------------
+     8 · FORMA
+     Un solo radio de 8 px. Redondo completo para lo circular; 0 para lo que va a sangre.
+     ------------------------------------------------------------------------ */
+  --radius:8px;          /* botones, campos, fotos, tarjetas, paneles, avisos, modales */
+  --radius-full:9999px;  /* avatares, pills, botones de icono */
+  --radius-none:0;       /* bandas a sangre y secciones */
+
+  --border-width:1px;
+  --border-width-strong:2px;   /* campo con error */
+  --notice-accent-width:4px;   /* filete izquierdo de avisos */
+
+  /* ------------------------------------------------------------------------
+     9 · PROFUNDIDAD · dos sombras, teñidas de violeta (nunca gris ni negro)
+     ------------------------------------------------------------------------ */
+  --shadow-sm:0 2px 8px -2px rgba(90,70,138,.12);    /* tarjeta en reposo */
+  --shadow-md:0 10px 28px -10px rgba(90,70,138,.20); /* hover, destacada, desplegables, modales */
+
+  /* ------------------------------------------------------------------------
+     10 · COMPONENTES (medidas compartidas)
+     ------------------------------------------------------------------------ */
+  --control-height:48px;       /* botones y campos */
+  --control-height-sm:40px;
+  --tap-target:44px;           /* mínimo táctil */
+  --button-padding-x:24px;
+  --field-padding-x:14px;
+  --card-padding:24px;
+  --icon-size:20px;
+  --icon-stroke:1.75;
+  --avatar-size:44px;
+  --edge-height:clamp(48px,7vw,100px);   /* bordes botánicos entre secciones */
+
+  /* Bordes botánicos como máscara: se colorean con background-color */
+  --mask-plants:url("../assets/edge-plants.png");
+  --mask-footer:url("../assets/edge-footer.png");
+
+  /* ------------------------------------------------------------------------
+     11 · MOVIMIENTO
+     ------------------------------------------------------------------------ */
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --dur-fast:160ms;   /* color, fondo, borde */
+  --dur-base:240ms;   /* sombra */
 }
 
-@font-face {
-  font-family: "Lora";
-  src: url("/fonts/lora-latin-wght-normal.woff2") format("woff2-variations");
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Lora";
-  src: url("/fonts/lora-latin-wght-italic.woff2") format("woff2-variations");
-  font-weight: 400 700;
-  font-style: italic;
-  font-display: swap;
-}
-
-@theme {
-  /* ---------- Typefaces ---------- */
-  --font-display: "Urbanist", "Futura", "Century Gothic", sans-serif;
-  --font-body: "Lora", "Iowan Old Style", Georgia, serif;
-
-  /* ---------- Colour: violet (violet-900 → violet-300) ----------
-     Overrides Tailwind's default violet scale on purpose. Only these seven exist. */
-  --color-violet-900: #2b2350; /* exceptional dark surface only — footer, hero overlay */
-  --color-violet-800: #3a2f68; /* single use: the footer watermark — 1.22:1 on violet-900 */
-  --color-violet-700: #483c7e; /* Violet Dusk — primary */
-  --color-violet-600: #5a4c96;
-  --color-violet-500: #7166ac;
-  --color-violet-400: #8f85be;
-  --color-violet-300: #aea5cc; /* Wisteria — lightest */
-
-  /* ---------- Colour: oak ---------- */
-  --color-oak-700: #8a6e4c; /* the only oak that carries small text — 4.53:1 on Shell */
-  --color-oak-400: #dbc2a4; /* Pale Oak */
-  --color-oak-200: #f1e7d8;
-
-  /* ---------- Colour: neutrals (violet-tinted, no pure black) ---------- */
-  --color-ink:      #16121f; /* headings that are not Violet Dusk */
-  --color-graphite: #3b3545; /* body text */
-  --color-slate:    #6e6779; /* secondary text, meta, icons, disabled labels */
-  --color-mist:     #bdb7c6; /* borders, dividers, pressed fills, skeletons */
-  --color-cloud:    #edeaf0; /* card surfaces, tint fills, text on dark */
-  --color-shell:    #fbf9f6; /* page background, inputs sitting on Cloud */
-  --color-white:    #ffffff; /* high-contrast exceptions only — see guide §3.4 */
-
-  /* ---------- Colour: semantic ---------- */
-  --color-green:  #15803d; /* success — 4.77:1 on Shell */
-  --color-orange: #ea580c; /* warning — 3.39:1, icons/borders/fills, not body text */
-  --color-red:    #dc2626; /* error, reembolso — 4.60:1 on Shell */
-
-  /* ---------- Type scale ---------- */
-  --text-display: clamp(2.75rem, 1.9rem + 4.2vw, 4.5rem);
-  --text-display--line-height: 1.05;
-  --text-display--letter-spacing: -0.02em;
-  --text-display--font-weight: 300;
-
-  --text-h1: clamp(2.25rem, 1.75rem + 2.4vw, 3.25rem);
-  --text-h1--line-height: 1.1;
-  --text-h1--letter-spacing: -0.01em;
-  --text-h1--font-weight: 400;
-
-  --text-h2: clamp(1.75rem, 1.45rem + 1.5vw, 2.375rem);
-  --text-h2--line-height: 1.15;
-  --text-h2--font-weight: 500;
-
-  --text-h3: 1.5rem;
-  --text-h3--line-height: 1.3;
-  --text-h3--font-weight: 600;
-
-  --text-h4: 1.25rem;
-  --text-h4--line-height: 1.4;
-  --text-h4--font-weight: 600;
-
-  --text-lead: clamp(1.1875rem, 1.1rem + 0.4vw, 1.375rem);
-  --text-lead--line-height: 1.6;
-
-  --text-body: clamp(1.0625rem, 1rem + 0.25vw, 1.125rem);
-  --text-body--line-height: 1.75;
-
-  --text-sm: 1rem;
-  --text-sm--line-height: 1.6;
-
-  --text-xs: 0.875rem;
-  --text-xs--line-height: 1.5;
-
-  /* the wordmark sets in Urbanist Black — already inside the variable file, no extra download */
-  --text-wordmark--font-weight: 900;
-
-  --text-kicker: 0.8125rem;
-  --text-kicker--line-height: 1.2;
-  --text-kicker--letter-spacing: 0.1em;
-  --text-kicker--font-weight: 600;
-
-  /* ---------- Radii — only two ---------- */
-  --radius-sm: 8px;      /* every square-cornered thing: buttons, inputs, cards, images, modals */
-  --radius-full: 9999px; /* avatars, pills, icon buttons */
-
-  /* ---------- Shadows ---------- */
-  --shadow-xs: 0 1px 2px rgba(22, 18, 31, 0.05);
-  --shadow-sm: 0 2px 8px -2px rgba(22, 18, 31, 0.08);
-  --shadow-md: 0 8px 24px -8px rgba(43, 35, 80, 0.12);
-  --shadow-lg: 0 20px 48px -16px rgba(43, 35, 80, 0.16);
-
-  /* ---------- Containers ---------- */
-  --container-prose:   66ch;
-  --container-content: 1120px;
-  --container-wide:    1320px;
-
-  /* ---------- Breakpoints ---------- */
-  --breakpoint-sm:  480px;
-  --breakpoint-md:  768px;
-  --breakpoint-lg:  1024px;
-  --breakpoint-xl:  1280px;
-  --breakpoint-2xl: 1536px;
-
-  /* ---------- Motion ---------- */
-  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --duration-fast: 120ms;
-  --duration-base: 200ms;
-  --duration-slow: 320ms;
-}
-
-/* --------------------------------------------------------------------------
-   Base layer
-   -------------------------------------------------------------------------- */
-
-@layer base {
-  html {
-    background-color: var(--color-shell);
-    color: var(--color-ink);
-    font-family: var(--font-body);
-    font-size: 100%;               /* respect the user's browser setting */
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-
-  body {
-    font-size: var(--text-body);
-    line-height: 1.75;
-    color: var(--color-graphite);
-  }
-
-  h1, h2 {
-    font-family: var(--font-display);
-    color: var(--color-ink);
-    text-wrap: balance;
-  }
-
-  h3, h4, h5, h6 {
-    font-family: var(--font-body);
-    font-weight: 600;
-    color: var(--color-ink);
-    text-wrap: balance;
-  }
-
-  p { max-width: var(--container-prose); }
-
-  a {
-    color: var(--color-violet-700);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.18em;
-    transition: color var(--duration-fast) var(--ease-out-soft);
-  }
-  a:hover {
-    color: var(--color-violet-600);
-    text-decoration-thickness: 2px;
-  }
-
-  :focus-visible {
-    outline: 2px solid var(--color-violet-600);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-
-  ::selection {
-    background-color: var(--color-violet-300);
-    color: var(--color-ink);
-  }
-
-  hr {
-    border: 0;
-    border-top: 1px solid var(--color-mist);
-    margin-block: 2rem;
-  }
-
-  img, video { border-radius: var(--radius-sm); }
-
-  table { font-variant-numeric: tabular-nums; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   Logo lockup — SVG mark + real text. Never an image of the words.
-   Proportions measured from the master artwork: mark height = 1.56 × font-size,
-   gap = 0.28em, wordmark optically centred on the mark.
-
-   <a class="kathu-logo" href="/" style="font-size:26px">
-     <svg aria-hidden="true" focusable="false"><use href="/logo/kathu-mark.svg#..."></use></svg>
-     <span class="kathu-logo__word">kat<span>hu</span></span>
-   </a>
-   -------------------------------------------------------------------------- */
-
-@layer components {
-  .kathu-logo {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.28em;
-    color: var(--color-violet-700);   /* the mark inherits this via currentColor */
-    text-decoration: none;
-    font-size: 26px;                  /* header default — override per placement */
-  }
-
-  .kathu-logo svg,
-  .kathu-logo img {
-    height: 1.56em;
-    width: auto;
-    flex: none;
-  }
-
-  .kathu-logo__word {
-    font-family: var(--font-display);
-    font-weight: 900;
-    font-size: 1em;
-    line-height: 0.75;                /* equals the ascender height — centres the ink */
-    letter-spacing: 0;
-    text-transform: lowercase;        /* the wordmark is never capitalised */
-    color: var(--color-violet-700);
-  }
-
-  .kathu-logo__word > span {          /* the "hu" */
-    color: var(--color-violet-300);
-  }
-
-  /* Light variant — for violet-900 surfaces such as the footer */
-  .kathu-logo--light,
-  .kathu-logo--light .kathu-logo__word {
-    color: var(--color-white);
-  }
-  .kathu-logo--light .kathu-logo__word > span {
-    color: var(--color-violet-300);
-  }
-}
-
-/* --------------------------------------------------------------------------
-   Footer — violet-900 surface with the half wordmark set behind the content.
-   The watermark is decoration: aria-hidden, pointer-events none, z-index -1.
-   isolation:isolate keeps it above the footer's own background but below
-   every in-flow child, so no sibling needs a z-index of its own.
-   -------------------------------------------------------------------------- */
-
-@layer components {
-  .kathu-footer {
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-    background-color: var(--color-violet-900);
-    color: var(--color-cloud);
-    padding-block: 4rem 2.5rem;
-  }
-
-  .kathu-footer__watermark {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    z-index: -1;
-    width: 100%;
-    max-width: var(--container-wide);
-    height: auto;
-    color: var(--color-violet-800);   /* 1.22:1 on violet-900 — barely there, by design */
-    pointer-events: none;
-  }
+@media (prefers-reduced-motion:reduce){
+  :root{ --dur-fast:0ms; --dur-base:0ms; }
 }

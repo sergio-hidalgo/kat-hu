@@ -4,7 +4,7 @@ import { sanityClient } from '../lib/sanity';
  * Testimonials for the landing (spec 05, guide §7.8). The document type is a
  * contract with `apps/studio/schemaTypes/testimonial.ts`.
  *
- * At most three, lowest `order` first. A testimonial without a quote or a
+ * At most twelve, lowest `order` first (more than three become a carousel). A testimonial without a quote or a
  * name is not shown, and Sanity being unreachable shows none — the block
  * then hides itself rather than holding up the page.
  */
@@ -20,7 +20,7 @@ export interface TestimonialItem {
 
 const QUERY = /* groq */ `
   *[_type == $type && defined(quote) && defined(name)]
-    | order(coalesce(order, 1000) asc, _createdAt desc) [0...3] {
+    | order(coalesce(order, 1000) asc, _createdAt desc) [0...12] {
       "id": _id,
       quote,
       name,

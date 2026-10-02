@@ -1,13 +1,27 @@
 ---
 /**
- * `block:how-it-works` (spec 05, 05b): the steps of a session — as many as the
- * owner wrote — numbered by position only because they are a sequence. Their
- * columns follow the count (`stepSpan`), so a row of steps fills the grid. The
- * hero's *Cómo funciona* link lands here, so the band clears the fixed bar when
+ * `block:how-it-works` (spec 05, 05b, 05c): the steps of a session — as many
+ * as the owner wrote — numbered because they are a real sequence. The hero's
+ * *¿Cómo funciona?* link lands here, so the band clears the fixed bar when
  * scrolled to (I-007).
+ *
+ * **Guide §07, *Panel de proceso*.** All the steps sit in one Panel surface
+ * with a Crema border at 70%: the step's picture above each (owner, 2026-10-02;
+ * a Violeta block until it is added in the Studio), the title as an
+ * `h3` at the h4 size with its number (*1. Cuéntanos*), and the description in
+ * **Grafito** — Pizarra is under AA on the Panel. Centred: the guide lets the
+ * steps of the process centre.
+ *
+ * The panel is a **subgrid** of the page grid, so the steps keep the page's
+ * own columns — `stepSpan` still divides them by the count — and nothing here
+ * is a second grid (I-001). Each step carries the inset itself, so the
+ * pictures of every column come out the same width; padding on the panel
+ * would have narrowed the first and last.
  */
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
+import Flora from '../ui/Flora.astro';
+import { imageUrl } from '../../lib/sanity';
 import { SCROLL_MT } from '../site/header';
 import type { LandingCopy } from '../../data/landing';
 import { stepSpan } from './howItWorks';
@@ -18,29 +32,71 @@ interface Props {
 
 const { copy } = Astro.props;
 const span = stepSpan(copy.steps.length);
+
+/** The CDN image at twice the slot's 7:3 width, for dense screens. */
+const IMAGE_PX = { width: 800, height: 343 };
 ---
 
-<Section data-block="how-it-works" id="como-funciona" surface="cloud" class={SCROLL_MT}>
-  <Grid class="gap-y-8">
-    {/* The heading takes a row of its own: at 8 columns it would leave 4
-        free, and the first card would climb up beside it on wide screens. */}
-    <div class="col-span-12">
-      <h2 class="text-h2 text-ink">{copy.headline}</h2>
-      <p class="mt-4 text-lead text-graphite">{copy.lead}</p>
+{/* `tabindex="-1"`: the hero's *¿Cómo funciona?* moves focus here after
+    scrolling (a landing point, not a control — so no ring around the band). */}
+<Section
+  data-block="how-it-works"
+  id="como-funciona"
+  tabindex="-1"
+  edge
+  class:list={[SCROLL_MT, 'isolate overflow-x-clip focus:outline-none']}
+>
+  {/* Línea-fina drawings in the margins (owner, 2026-10-01), from `lg` only,
+      behind everything (`-z-10` in the band's own stacking context): a Violeta
+      leaf at 30% opacity, like the hero's, off the left edge; and two
+      overlapped flowers off the right edge, in the Terapeuta band's tone.
+      Sized and placed in `vw` / % of the band, as drawn on the owner's mock-up,
+      so they scale with the screen. */}
+  <Flora
+    line="leaf"
+    class="absolute top-[46%] -left-[7vw] -z-10 hidden w-[15.2vw] -scale-x-100 text-violet opacity-30 lg:block"
+  />
+  <Flora line="flower" class="absolute top-[6%] left-[87.5vw] -z-10 hidden w-[17.8vw] lg:block" />
+  <Flora line="flower" class="absolute top-[30%] left-[88.5vw] -z-10 hidden w-[12.8vw] lg:block" />
+  <Grid class="gap-y-12">
+    <div class="col-span-12 text-center md:col-span-8 md:col-start-3">
+      <h2 class="text-h2 text-violet">{copy.headline}</h2>
+      <p class="mt-4 max-w-none text-lead text-graphite">{copy.lead}</p>
     </div>
-    {/* `contents`, so each step is placed on the page grid itself (I-001).
-        `role="list"` because Safari drops the list role from an element
-        whose box is `display: contents`. The ordered list already tells a
-        screen reader the number, so the drawn numeral is hidden from it. */}
-    <ol role="list" class="contents">
+    {/* `role="list"` because Safari drops the list role from a list styled
+        as a grid. The ordered list already tells a screen reader the
+        number, so the drawn one is hidden from it. */}
+    <ol
+      role="list"
+      data-panel
+      class="col-span-12 grid grid-cols-subgrid gap-y-12 rounded border border-cream/70 bg-panel py-10 md:py-12"
+    >
       {
         copy.steps.map((step, index) => (
-          <li class={span}>
-            <p aria-hidden="true" class="max-w-none font-display text-h2 text-violet-600">
-              {index + 1}
-            </p>
-            <h3 class="mt-2 text-h3 text-ink">{step.title}</h3>
-            {step.description && <p class="mt-2 text-sm text-graphite">{step.description}</p>}
+          <li class:list={[span, 'flex flex-col items-center px-6 text-center']}>
+            {/* One 7:3 slot per step: the owner's picture cropped to it, or a
+                Violeta block until there is one, so every title starts level
+                (CON-03). */}
+            {step.image ? (
+              <img
+                src={imageUrl(step.image).width(IMAGE_PX.width).height(IMAGE_PX.height).fit('crop').url()}
+                alt={step.image.alt?.trim() ?? ''}
+                width={IMAGE_PX.width}
+                height={IMAGE_PX.height}
+                loading="lazy"
+                decoding="async"
+                class="aspect-[7/3] w-full object-cover"
+              />
+            ) : (
+              <div data-placeholder aria-hidden="true" class="aspect-[7/3] w-full rounded bg-violet" />
+            )}
+            <h3 class="mt-6 text-h4 text-ink">
+              <span aria-hidden="true">{index + 1}. </span>
+              {step.title}
+            </h3>
+            {step.description && (
+              <p class="mt-2 max-w-none text-sm text-graphite">{step.description}</p>
+            )}
           </li>
         ))
       }

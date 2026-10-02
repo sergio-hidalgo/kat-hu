@@ -48,16 +48,21 @@ export const VISIBILITY_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
  *
  * The two teasers start hidden: the blog teaser until `/drops` is finished
  * (spec 08), the shop teaser until there is a shop to tease (spec 11).
+ *
+ * The order is the owner's (2026-09-28, spec 05c): who the florapeuta is and
+ * how a session works first, on Lavanda; then the sessions and what families
+ * say, on Crema. Only the order moved — the ids are database keys and never
+ * change. The closing call to action (`cta`) was removed by the owner on
+ * 2026-09-28; nothing stored its key.
  */
 export const BLOCKS = [
   { id: 'hero', label: 'Portada con la reserva', defaultVisible: true },
-  { id: 'services', label: 'Sesiones y precios', defaultVisible: true },
-  { id: 'how-it-works', label: 'Cómo funciona una sesión', defaultVisible: true },
   { id: 'about-teaser', label: 'Presentación de la florapeuta', defaultVisible: true },
+  { id: 'how-it-works', label: 'Cómo funciona una sesión', defaultVisible: true },
+  { id: 'services', label: 'Sesiones y precios', defaultVisible: true },
   { id: 'testimonials', label: 'Testimonios', defaultVisible: true },
   { id: 'blog-teaser', label: 'Últimos drops', defaultVisible: false },
   { id: 'shop-teaser', label: 'Productos de la tienda', defaultVisible: false },
-  { id: 'cta', label: 'Llamada final a reservar', defaultVisible: true },
 ] as const satisfies readonly VisibilityEntry[];
 
 /** One registered landing block. */

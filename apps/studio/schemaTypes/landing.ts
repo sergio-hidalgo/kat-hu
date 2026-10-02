@@ -12,11 +12,21 @@ import { defineField, defineType } from 'sanity';
  * block, so the editor sees one block at a time.
  *
  * Every field is optional: the site ships Spanish defaults and uses a field
- * only once it has been written. Structure, order, links and button labels
- * are not here — they are code.
+ * only once it has been written. Structure, order and button labels are not
+ * here — they are code. The one link here is the Terapeuta block's link to the
+ * story, which the owner asked to edit (2026-09-28), limited to a path on
+ * this site.
  */
 
 const EMPTY = 'Si lo dejas vacío, la web usa su texto por defecto.';
+
+/**
+ * A path on this site: one leading slash (not two — `//host` is another
+ * site), then only the characters a kathu route uses. The site applies the
+ * same rule before it renders the link, so a value that slips past the
+ * Studio still never becomes a link off the site.
+ */
+const isInternalPath = (value: string) => /^\/(?!\/)[a-z0-9\-/]*$/.test(value.trim());
 
 const line = (name: string, title: string, description = EMPTY) =>
   defineField({ name, title, type: 'string', description });
@@ -40,10 +50,9 @@ export const landing = defineType({
     { name: 'hero', title: 'Cabecera', default: true },
     { name: 'services', title: 'Sesiones' },
     { name: 'howItWorks', title: 'Cómo funciona' },
-    { name: 'aboutTeaser', title: 'Presentación' },
+    { name: 'aboutTeaser', title: 'Terapeuta' },
     { name: 'testimonials', title: 'Testimonios' },
     { name: 'blogTeaser', title: 'Últimos drops' },
-    { name: 'cta', title: 'Llamada final' },
   ],
   fields: [
     block('hero', 'Cabecera', [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')]),
@@ -59,14 +68,35 @@ export const landing = defineType({
       [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')],
       'Los pasos se escriben aparte, en «Paso».',
     ),
-    block('aboutTeaser', 'Presentación', [
-      line('headline', 'Titular'),
+    // Named «Terapeuta» for the owner (2026-09-28); the field names stay
+    // `aboutTeaser.*`, the contract the site reads.
+    block('aboutTeaser', 'Terapeuta', [
+      line('headline', 'Título'),
       paragraph('paragraph', 'Texto'),
+      line(
+        'linkLabel',
+        'Texto del enlace',
+        'Lo que se lee en el enlace a la historia, por ejemplo «Conoce la historia de kathu». ' + EMPTY,
+      ),
+      defineField({
+        name: 'linkHref',
+        title: 'Destino del enlace',
+        type: 'string',
+        description:
+          'Una página de esta web, empezando por «/». Por ejemplo: /sobre-kathu. ' + EMPTY,
+        validation: (rule) =>
+          rule.custom((value) =>
+            value === undefined || value === '' || isInternalPath(value)
+              ? true
+              : 'Escribe una dirección de esta web que empiece por «/», como /sobre-kathu.',
+          ),
+      }),
       defineField({
         name: 'image',
         title: 'Foto',
         type: 'image',
-        description: 'Una foto vertical de la florapeuta. Sin foto, el bloque se muestra solo con texto.',
+        description:
+          'Una foto vertical de la florapeuta. Si la dejas vacía, la web muestra el retrato de Laura que trae de serie.',
         options: { hotspot: true },
         fields: [
           defineField({
@@ -80,9 +110,9 @@ export const landing = defineType({
     ]),
     block('testimonials', 'Testimonios', [
       line('headline', 'Titular', 'Los testimonios se escriben aparte, en «Testimonio». ' + EMPTY),
+      paragraph('lead', 'Frase de entrada'),
     ]),
     block('blogTeaser', 'Últimos drops', [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')]),
-    block('cta', 'Llamada final', [line('headline', 'Frase de cierre')]),
   ],
   preview: {
     prepare: () => ({ title: 'Portada', subtitle: 'Los textos de la página de inicio' }),

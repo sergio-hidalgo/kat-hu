@@ -73,7 +73,7 @@ const columnPlacement = [
 const heroTop = announcement.enabled ? CHROME_PT : BAND_PT;
 
 const arrowClass =
-  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:text-ink disabled:cursor-not-allowed disabled:text-mist disabled:hover:text-mist';
+  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:text-ink disabled:cursor-not-allowed disabled:text-stone disabled:hover:text-stone';
 ---
 
 <BaseLayout
@@ -111,9 +111,9 @@ const arrowClass =
       fetchpriority="high"
       class="absolute inset-0 -z-10 h-full w-full rounded-none object-cover object-[65%_50%] md:object-center"
     />
-    {/* Guide §6: the violet-900 tint, never a lightened image with dark text. */}
+    {/* The banner's dark tint (Ink, the darkest token, since spec 05c), never a lightened image with dark text. */}
     <div
-      class="absolute inset-0 -z-10 bg-linear-to-t from-violet-900/80 to-violet-900/20"
+      class="absolute inset-0 -z-10 bg-linear-to-t from-ink/80 to-ink/20"
     >
     </div>
     <BannerFrame stripe={announcement.enabled} />
@@ -124,8 +124,8 @@ const arrowClass =
         (spec 04b); the words stay on column 1 and the ornaments keep to the margin. */}
     <Grid class:list={[heroTop, 'pb-16 md:pb-14 lg:pb-16']}>
       <div class="col-span-12 pt-14 md:pt-12 lg:col-span-8 lg:pt-16">
-        <h1 class="text-display text-cloud">Mis drops</h1>
-        <p class="mt-4 text-lead text-cloud">
+        <h1 class="text-display text-cream">Mis drops</h1>
+        <p class="mt-4 text-lead text-cream">
           Artículos, trucos, recomendaciones, y más...
         </p>
       </div>
@@ -366,8 +366,8 @@ const arrowClass =
       button.className =
         'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-body text-xs tabular-nums transition-colors duration-fast ' +
         (value === page
-          ? 'border border-mist bg-shell font-semibold text-ink'
-          : 'text-slate hover:bg-cloud hover:text-ink active:bg-mist');
+          ? 'border border-border bg-cream font-semibold text-ink'
+          : 'text-slate hover:bg-bone hover:text-ink active:bg-border');
       if (value === page) button.setAttribute('aria-current', 'page');
       button.setAttribute('aria-label', `Página ${value}`);
       return button;

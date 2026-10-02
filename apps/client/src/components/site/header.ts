@@ -10,7 +10,7 @@
  * exports classes — Tailwind v4 scans `.ts` sources, so the utilities are
  * still generated, and no file has to translate a number into a utility.
  *
- * Sizes supersede guide §7.7 (72/64px) by the owner's decision of 2026-09-08:
+ * Sizes supersede the guide's by the owner's decision of 2026-09-08:
  * the band is 20% taller so the lockup can be real text at a readable size.
  */
 
@@ -58,8 +58,7 @@ export const BAND_SCREEN_MIN_H = 'min-h-[calc(100svh_-_5rem)] md:min-h-[calc(100
 export const SCROLL_MT = 'scroll-mt-20 md:scroll-mt-22';
 
 /**
- * The lockup's `font-size` in the band. 36px ⇒ a 56px mark at `1.56em` —
- * 20% up on the 30px this spec first shipped, by the owner's decision of
- * 2026-09-09, and still clear of the 80px band.
+ * The lockup's `font-size` in the band: 36px, by the owner's decision of
+ * 2026-09-09. Guide v2's mark is `1.4em`, so a 50px mark, clear of the 80px band.
  */
 export const LOGO_SIZE = 36;

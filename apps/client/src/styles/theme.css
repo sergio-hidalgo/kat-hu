@@ -1,0 +1,311 @@
+/* ==========================================================================
+   theme.css — the app's Tailwind wiring for the kathu v2 tokens (spec 05c).
+
+   `kathu-tokens.css` is a byte-for-byte copy of references/ and, since v2, it
+   is plain `:root` custom properties: no Tailwind import, no @theme, no base
+   layer, no logo or footer classes. This file carries that layer instead, and
+   it is the one stylesheet of our own that `ui-kathu` allows.
+
+   Every value below is a `var()` onto the token file. Where a theme variable
+   has the same name as a token (`--color-violet`), Tailwind declares it inside
+   `@layer theme`, and the token file's unlayered `:root` wins the cascade — so
+   the utility always reads the design system's value, never a copy of it.
+   ========================================================================== */
+
+@import "tailwindcss";
+
+/* The three self-hosted variable fonts spec 02 put in public/fonts. The
+   reference ships these rules commented out ("Opción B"); the files are ours. */
+@font-face {
+  font-family: "Urbanist";
+  src: url("/fonts/urbanist-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* No italic Urbanist file exists yet, so the browser synthesises the micro
+   copy's italic from the upright face. Urbanist's italic file would replace it. */
+
+@font-face {
+  font-family: "Lora";
+  src: url("/fonts/lora-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src: url("/fonts/lora-latin-wght-italic.woff2") format("woff2-variations");
+  font-weight: 400 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@theme {
+  /* Only the design system's colours exist: Tailwind's palette is switched
+     off, so a retired or default name (`violet-700`, `white`) generates
+     nothing rather than something off-brand. */
+  --color-*: initial;
+  --color-violet: var(--color-violet);
+  --color-violet-hover: var(--color-violet-hover);
+  --color-violet-active: var(--color-violet-active);
+  --color-wisteria: var(--color-wisteria);
+  --color-lavender: var(--color-lavender);
+  --color-stone: var(--color-stone);
+  --color-stone-hover: var(--color-stone-hover);
+  --color-stone-strong: var(--color-stone-strong);
+  --color-cream: var(--color-cream);
+  --color-bone: var(--color-bone);
+  --color-ink: var(--color-ink);
+  --color-graphite: var(--color-graphite);
+  --color-slate: var(--color-slate);
+  --color-border: var(--color-border);
+  --color-panel: var(--color-panel);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-warning-accent: var(--color-warning-accent);
+  --color-error: var(--color-error);
+
+  --font-*: initial;
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+
+  /* Guide §04. Lora carries display → h4, Urbanist everything else. */
+  --text-*: initial;
+  --text-display: var(--fs-display);
+  --text-display--line-height: var(--lh-tight);
+  --text-display--letter-spacing: var(--ls-display);
+  --text-display--font-weight: var(--fw-bold);
+  --text-h2: var(--fs-h2);
+  --text-h2--line-height: var(--lh-heading);
+  --text-h2--font-weight: var(--fw-bold);
+  --text-h3: var(--fs-h3);
+  --text-h3--line-height: var(--lh-snug);
+  --text-h3--font-weight: var(--fw-semibold);
+  --text-h4: var(--fs-h4);
+  --text-h4--line-height: var(--lh-snug);
+  --text-h4--font-weight: var(--fw-semibold);
+  --text-lead: var(--fs-lead);
+  --text-lead--line-height: var(--lh-lead);
+  /* `base`, not `body`: the token file already owns `--text-body` (and
+     `--text-heading`, `--text-muted`, `--text-link`, `--text-on-violet*`) as
+     colour aliases, and its unlayered value would win over a size here. */
+  --text-base: var(--fs-body);
+  --text-base--line-height: var(--lh-body);
+  --text-sm: var(--fs-sm);
+  --text-sm--line-height: var(--lh-lead);
+  --text-xs: var(--fs-xs);
+  --text-xs--line-height: 1.5;
+  --text-price: var(--fs-price);
+  --text-price--line-height: 1;
+  --text-price--font-weight: var(--fw-bold);
+
+  /* One radius, plus round and square (guide §05). Bare `rounded` is 8px. */
+  --radius-*: initial;
+  --radius: var(--radius);
+  --radius-full: var(--radius-full);
+  --radius-none: var(--radius-none);
+
+  --shadow-*: initial;
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+
+  --ease-*: initial;
+  --ease-soft: var(--ease);
+
+  /* Guide §05's reference points: 480 · 760 · 1024 · 1280. `2xl` keeps
+     Tailwind's 1536 — the guide stops at 1280 and CornerFrame steps once more. */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 30rem;
+  --breakpoint-md: 47.5rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 96rem;
+}
+
+/* `duration-fast` / `duration-base` read the two motion tokens. Registered as
+   utilities because Tailwind has no theme namespace for durations. */
+@utility duration-fast {
+  transition-duration: var(--dur-fast);
+}
+@utility duration-base {
+  transition-duration: var(--dur-base);
+}
+
+/* The hero's surface. Guide §03's `--bg-hero` runs left to right, Hueso for
+   the first 30%; the owner asked (2026-09-27) for it to run from Hueso in the
+   top-left corner to Glicina in the bottom-right, with Glicina taking the
+   larger share, and then for Hueso to hold solid a little further before the
+   blend starts. Same two tokens, a different direction and split — the
+   words stay on the light side, so their contrast is checked in the browser
+   (spec 05c). A gradient is not a colour, so this cannot be a `bg-*` utility. */
+@utility bg-hero {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--color-bone) 0%,
+    var(--color-bone) 15%,
+    var(--color-wisteria) 72%
+  );
+}
+
+@layer base {
+  html {
+    background-color: var(--color-cream);
+    color: var(--text-body);
+    font-family: var(--font-body);
+    font-size: 100%;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-body);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    color: var(--text-heading);
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: var(--fs-display);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-tight);
+    letter-spacing: var(--ls-display);
+  }
+
+  h2 {
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-heading);
+  }
+
+  h3,
+  h4 {
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-snug);
+  }
+
+  /* Guide §04: 45–75 characters. Applied here, never as a `max-w-*` (I-001). */
+  p {
+    max-width: var(--measure);
+  }
+
+  a {
+    color: var(--text-link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  a:hover {
+    color: var(--color-violet-hover);
+    text-decoration-thickness: 2px;
+  }
+
+  /* Guide §08: 2px Violeta, 3px apart; Crema on violet surfaces. */
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: var(--radius);
+  }
+  .on-violet :focus-visible {
+    outline-color: var(--focus-ring-on-dark);
+  }
+
+  ::selection {
+    background-color: var(--color-lavender);
+    color: var(--color-ink);
+  }
+
+  hr {
+    border: 0;
+    border-top: var(--border-width) solid var(--border-card);
+    margin-block: 2rem;
+  }
+
+  img,
+  video {
+    border-radius: var(--radius);
+  }
+
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Logo lockup (guide §02) — SVG mark + real lowercase text, sized off one
+   font-size: the mark is 1.4em, the gap 0.22em, the word Urbanist 800.
+   *kat* and the mark in Violeta, *hu* in Glicina. The inverted version, for
+   the Violeta footer, turns *kat* and the mark Crema and keeps *hu* Glicina
+   (3.38:1 — valid for a logo only).
+   -------------------------------------------------------------------------- */
+@layer components {
+  .kathu-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22em;
+    color: var(--color-violet);
+    text-decoration: none;
+  }
+
+  .kathu-logo:hover {
+    color: var(--color-violet);
+  }
+
+  .kathu-logo svg {
+    height: 1.4em;
+    width: auto;
+    flex: none;
+  }
+
+  .kathu-logo__word {
+    font-family: var(--font-body);
+    font-weight: 800;
+    font-size: 1em;
+    line-height: 0.75;
+    text-transform: lowercase;
+    color: var(--color-violet);
+  }
+
+  .kathu-logo__word > span {
+    color: var(--color-wisteria);
+  }
+
+  .kathu-logo--light,
+  .kathu-logo--light:hover,
+  .kathu-logo--light .kathu-logo__word {
+    color: var(--color-cream);
+  }
+
+  .kathu-logo--light .kathu-logo__word > span {
+    color: var(--color-wisteria);
+  }
+
+  /* The footer band: Violeta, Crema text. No watermark (owner, 2026-09-27). */
+  .kathu-footer {
+    position: relative;
+    background-color: var(--bg-footer);
+    color: var(--text-on-violet);
+    padding-block: 4rem 2.5rem;
+  }
+}

@@ -29,22 +29,45 @@ export const service = defineType({
     }),
     defineField({
       name: 'description',
-      title: 'Descripción',
-      type: 'text',
-      rows: 3,
-      description: 'Dos líneas como mucho.',
+      title: 'Subtítulo',
+      type: 'string',
+      description: 'Una línea corta que cuenta qué es la sesión, por ejemplo «Para toda la familia».',
     }),
     defineField({
-      name: 'duration',
-      title: 'Duración',
-      type: 'string',
-      description: 'Por ejemplo: 60 min.',
+      name: 'features',
+      title: 'Qué incluye',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'Hasta tres líneas cortas, cada una con su marca. Por ejemplo: «Análisis y primer diagnóstico».',
+      validation: (rule) => rule.max(3).error('Tres líneas como mucho.'),
     }),
     defineField({
-      name: 'modality',
-      title: 'Modalidad',
+      name: 'buttonLabel',
+      title: 'Texto del botón',
       type: 'string',
-      description: 'Por ejemplo: Online. Si lo dejas vacío, no se muestra.',
+      description:
+        'Lo que se lee en el botón de reservar de esta sesión, por ejemplo «Reserva tu sesión inicial». Si lo dejas vacío, dice «Reservar esta sesión».',
+      validation: (rule) => rule.max(40).warning('Un texto corto cabe mejor en el botón.'),
+    }),
+    defineField({
+      name: 'preferred',
+      title: 'Sesión preferida',
+      type: 'boolean',
+      description:
+        'Se muestra con la etiqueta «Preferido» y su botón en violeta. Marca solo una: si hay varias, todas se destacan.',
+      initialValue: false,
+      validation: (rule) =>
+        rule
+          .custom(async (value, context) => {
+            if (value !== true) return true;
+            const others = await context
+              .getClient({ apiVersion: '2025-01-01' })
+              .fetch<number>('count(*[_type == "service" && preferred == true && !(_id in [$id, "drafts." + $id])])', {
+                id: (context.document?._id ?? '').replace(/^drafts\./, ''),
+              });
+            return others > 0 ? 'Ya hay otra sesión preferida. Quita la marca de la otra primero.' : true;
+          })
+          .warning(),
     }),
     defineField({
       name: 'price',
@@ -58,12 +81,27 @@ export const service = defineType({
           )
           .warning(),
     }),
+    // Written before «Qué incluye» existed. Hidden, not removed: a session that
+    // has them keeps its values, and the site falls back to them until the list
+    // is filled.
+    defineField({
+      name: 'duration',
+      title: 'Duración (antiguo)',
+      type: 'string',
+      hidden: true,
+    }),
+    defineField({
+      name: 'modality',
+      title: 'Modalidad (antiguo)',
+      type: 'string',
+      hidden: true,
+    }),
     defineField({
       name: 'image',
       title: 'Imagen',
       type: 'image',
       description:
-        'La acuarela de la sesión. Se muestra pequeña (160×160) y entera, sin recortar. Sin imagen, la web pone un dibujo sencillo.',
+        'La imagen de la parte de arriba de la tarjeta. Se recorta en un rectángulo apaisado (13:6), así que deja lo importante en el centro. Sin imagen, la web muestra un bloque gris.',
       options: { hotspot: true },
       fields: [
         defineField({
@@ -82,12 +120,23 @@ export const service = defineType({
         'Los números más bajos salen primero. Van de diez en diez (10, 20, 30) para poder meter una sesión entre dos.',
     }),
   ],
-  orderings: [{ title: 'Orden', name: 'orderAsc', by: [{ field: 'order', direction: 'asc' }] }],
+  orderings: [
+    {
+      title: 'Orden',
+      name: 'orderAsc',
+      by: [{ field: 'order', direction: 'asc' }],
+    },
+  ],
   preview: {
-    select: { title: 'title', duration: 'duration', price: 'price', media: 'image' },
-    prepare: ({ title, duration, price, media }) => ({
+    select: {
+      title: 'title',
+      price: 'price',
+      preferred: 'preferred',
+      media: 'image',
+    },
+    prepare: ({ title, price, preferred, media }) => ({
       title,
-      subtitle: [duration, price].filter(Boolean).join(' • '),
+      subtitle: [preferred && 'Preferida', price].filter(Boolean).join(' • '),
       media,
     }),
   },

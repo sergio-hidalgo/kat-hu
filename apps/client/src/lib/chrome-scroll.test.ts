@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   AT_TOP,
+  hideLineFor,
   nextAnchor,
   nextChromeState,
   REVEAL_PX,
@@ -54,6 +55,35 @@ describe('nextChromeState', () => {
 
   it('hides the band past one viewport, going down', () => {
     expect(scroll([100, 400, VIEWPORT + 1]).band).toBe('hidden');
+  });
+
+  it('with a page line, hides below it and shows above it, by position alone (owner, 2026-09-28)', () => {
+    const LINE = 712;
+    const step = (scrollY: number, lastY: number, band: 'glass' | 'hidden') =>
+      nextChromeState({ scrollY, viewportHeight: VIEWPORT, previous: { band, topButton: band === 'hidden' }, lastY, hideAfter: LINE }).band;
+
+    // Going down: shown until the band's bottom passes the edge's bottom.
+    expect(step(LINE, LINE - 10, 'glass')).toBe('glass');
+    expect(step(LINE + 1, LINE, 'glass')).toBe('hidden');
+    // Going back up deep in the page: stays hidden, however far it travels…
+    expect(step(3000, 3400, 'hidden')).toBe('hidden');
+    expect(step(LINE + 1, 2000, 'hidden')).toBe('hidden');
+    // …and returns only once the edge is back at the top of the screen.
+    expect(step(LINE, LINE + 1, 'hidden')).toBe('glass');
+    // The top threshold still wins.
+    expect(step(20, 30, 'hidden')).toBe('top');
+  });
+
+  it('without a page line, keeps the one-viewport rule and the 80px way back', () => {
+    expect(scroll([100, 400, VIEWPORT + 1]).band).toBe('hidden');
+    expect(scroll([100, 400, VIEWPORT + 1, 2000, 2000 - REVEAL_PX]).band).toBe('glass');
+  });
+
+  it('never lets a page’s line hide the band later than a viewport, or inside the top threshold', () => {
+    expect(hideLineFor(VIEWPORT, 5000)).toBe(VIEWPORT);
+    expect(hideLineFor(VIEWPORT, 10)).toBe(TOP_THRESHOLD_PX);
+    expect(hideLineFor(VIEWPORT, Number.NaN)).toBe(VIEWPORT);
+    expect(hideLineFor(VIEWPORT)).toBe(VIEWPORT);
   });
 
   it('does not hide the band when the reader is going up', () => {

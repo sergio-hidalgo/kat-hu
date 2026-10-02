@@ -1,0 +1,63 @@
+---
+/**
+ * The botanical border between two bands (guide §06): a silhouette of plants
+ * in the colour of the band it **starts**, drawn over the foot of the band
+ * above. It belongs to the lower band and sits on that band's top edge,
+ * reaching up by `--edge-height` and down by **one pixel**, so it lies over
+ * both bands and no hairline can open between them (owner, 2026-09-28). The
+ * band above keeps that height free in its bottom padding.
+ *
+ * It must belong to the lower band: bands paint in document order, so a
+ * border owned by the upper band would be painted over by the lower one
+ * wherever it reached into it.
+ *
+ * `variant="footer"` is the closing border: the animals and their plants in
+ * the middle, the band's plants on either side — used once, by the footer.
+ *
+ * **A faint, crisp Ink shadow along the silhouette's top** (owner, 2026-09-27,
+ * made sharper and Ink on 2026-09-28) separates it from the band it is drawn
+ * on. It is a `drop-shadow` filter on
+ * this wrapper, not on the masked shape inside: a filter runs before a mask,
+ * so on the masked element itself the mask would cut the shadow away. On the
+ * wrapper it follows the silhouette's outline, leaves and all.
+ *
+ * Decoration only: hidden from assistive tech and never a target.
+ */
+import plants from '../../assets/brand/edge-plants.svg?url';
+import footer from '../../assets/brand/edge-footer.svg?url';
+import { footerMaskStyle, plantsMaskStyle } from './edge';
+
+interface Props {
+  variant?: 'plants' | 'footer';
+  /** A `text-*` colour token and placement. Defaults to Lavanda. */
+  class?: string;
+}
+
+const { variant = 'plants', class: className } = Astro.props;
+
+const style = variant === 'footer' ? footerMaskStyle(footer, plants) : plantsMaskStyle(plants);
+
+/**
+ * Upward, a 2px blur, Ink at a fifth: enough to lift the outline off the band
+ * behind without softening it. The clip keeps it to the top — a blur spreads
+ * every way — and a clip-path applies after the filter, so it trims the
+ * shadow, never the drawing.
+ */
+const SHADOW =
+  'drop-shadow-[0_-1px_2px_color-mix(in_srgb,var(--color-ink)_20%,transparent)] [clip-path:inset(-12px_0_0_0)]';
+---
+
+<div
+  aria-hidden="true"
+  data-edge={variant}
+  class:list={[
+    'pointer-events-none absolute inset-x-0 bottom-[calc(100%-1px)] h-[calc(var(--edge-height)+1px)]',
+    SHADOW,
+    className ?? 'text-lavender',
+  ]}
+>
+  {/* One pixel past the bottom: a mask's last row is anti-aliased, and on
+      the edge's own last row it let the band behind show through as a
+      hairline. The extra row falls outside the wrapper and is clipped. */}
+  <div class="absolute inset-x-0 top-0 -bottom-px bg-current" style={style}></div>
+</div>

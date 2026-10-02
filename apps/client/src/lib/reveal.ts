@@ -68,14 +68,15 @@ export interface RevealOptions {
 /** How far a card travels. Small enough to read as settling, not as sliding. */
 const RISE_PX = 10;
 /**
- * An entrance runs at twice `--duration-slow`.
+ * An entrance runs at twice `--dur-base` — 480ms with guide v2's tokens.
  *
- * The token scale tops out at 320ms because it is sized for *state changes* —
- * a hover, a border, a background — where anything longer feels unresponsive.
- * An entrance is not a state change: nobody is waiting on it, and at 320ms it
+ * The token scale tops out at 240ms because it is sized for *state changes* —
+ * a colour, a shadow — where anything longer feels unresponsive (guide §08).
+ * An entrance is not a state change: nobody is waiting on it, and at 240ms it
  * reads as a flick rather than as something settling into place. Derived from
- * the token rather than written as 640ms, so the two still move together if
- * the design system's pace ever changes.
+ * the token rather than written as 480ms, so the two still move together if
+ * the design system's pace ever changes. (Under v1.5 this was twice
+ * `--duration-slow`, 640ms; v2 has no slow step — spec 05c.)
  */
 const DURATION_FACTOR = 2;
 /** Cards arriving together are dealt out this far apart… */
@@ -85,11 +86,11 @@ const MAX_STAGGER_STEPS = 3;
 
 /**
  * Used only when the tokens cannot be read (a detached document in a test).
- * They are the values of `--duration-slow` and `--ease-out-soft`; the real
+ * They are the values of `--dur-base` and `--ease`; the real
  * numbers are read from `:root` below so the two cannot drift apart. The
  * duration is then multiplied — see `DURATION_FACTOR`.
  */
-const FALLBACK_DURATION_MS = 320;
+const FALLBACK_DURATION_MS = 240;
 const FALLBACK_EASING = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
@@ -116,8 +117,8 @@ function millis(value: string): number | undefined {
  */
 function motionFromTokens(view: RevealView): { duration: number; easing: string } {
   const styles = view.getComputedStyle(view.document.documentElement);
-  const duration = millis(styles.getPropertyValue('--duration-slow'));
-  const easing = styles.getPropertyValue('--ease-out-soft').trim();
+  const duration = millis(styles.getPropertyValue('--dur-base'));
+  const easing = styles.getPropertyValue('--ease').trim();
 
   return {
     duration: (duration ?? FALLBACK_DURATION_MS) * DURATION_FACTOR,

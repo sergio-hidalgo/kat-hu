@@ -1,0 +1,39 @@
+---
+/**
+ * A *flor prensada* (guide §06): a photograph of a real pressed flower, in its
+ * natural colour — the palette's one deliberate exception, and the one flower
+ * that stays a raster, because tracing a photograph would lose it. For the
+ * corners and edges of a band, cropped by the screen edge; never behind a
+ * paragraph.
+ *
+ * Decoration: `alt=""` and `aria-hidden`. No rounding (the base layer rounds
+ * every image; a cut-out must keep its edges) and no shadow. The caller gives
+ * the width and the placement.
+ */
+import { Image } from 'astro:assets';
+import lilac from '../../assets/brand/pressed-lilac.png';
+import yellow from '../../assets/brand/pressed-yellow.png';
+
+interface Props {
+  name: 'lilac' | 'yellow';
+  /** The rendered width, for the browser to pick a file; defaults to the usual 160–240px. */
+  sizes?: string;
+  class?: string;
+}
+
+const SOURCES = { lilac, yellow } as const;
+
+const { name, sizes = '(min-width: 1024px) 240px, 160px', class: className } = Astro.props;
+---
+
+<Image
+  src={SOURCES[name]}
+  alt=""
+  aria-hidden="true"
+  data-flora={`pressed-${name}`}
+  widths={[240, 480, 720]}
+  {sizes}
+  loading="lazy"
+  decoding="async"
+  class:list={['pointer-events-none h-auto rounded-none select-none', className]}
+/>

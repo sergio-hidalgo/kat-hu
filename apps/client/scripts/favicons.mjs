@@ -20,7 +20,7 @@
  * | :--------------------- | :--------- | :-------------------------------------- |
  * | `favicon.svg` / `.ico` | none       | reads on a dark tab strip and a light one |
  * | `icon-192` / `icon-512`| none       | the same drawing; launchers supply their own |
- * | `apple-touch-icon`     | violet-900 | iOS composites transparency onto **black**, so the icon has to bring its own surface — and violet-900 is the manifest's `theme_color` |
+ * | `apple-touch-icon`     | Crema      | iOS composites transparency onto **black**, so the icon has to bring its own surface — Crema, the page's, because the mark's purple is too close to v2's Violeta (≈1.03:1) to sit on it (spec 05c) |
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -34,8 +34,10 @@ const out = join(root, 'public');
 
 /** The purple of `references/kathu_favicon.png`, sampled from the file. */
 const PURPLE = '#574490';
-/** guide §3: the exceptional dark surface, and the manifest's `theme_color`. */
-const VIOLET_900 = '#2b2350';
+/** Guide v2 §03: Violeta, the brand colour — the manifest's `theme_color`. */
+const VIOLET = '#5A468A';
+/** Guide v2 §03: Crema, the page's surface — the manifest's `background_color`. */
+const CREAM = '#FDF6E2';
 
 /** The mark's own box, from its `viewBox`. */
 const ART = { width: 174, height: 255 };
@@ -72,7 +74,7 @@ ${background ? `  <rect width="${CANVAS}" height="${CANVAS}" fill="${background}
 }
 
 const tabIcon = square(TAB_FILL, null);
-const appleIcon = square(APPLE_FILL, VIOLET_900);
+const appleIcon = square(APPLE_FILL, CREAM);
 
 /** `density` rasterises the vector at the target size instead of scaling a
     96dpi bitmap up. */
@@ -112,8 +114,8 @@ await writeFile(
       lang: 'es',
       start_url: '/',
       display: 'standalone',
-      background_color: '#fbf9f6',
-      theme_color: '#2b2350',
+      background_color: CREAM,
+      theme_color: VIOLET,
       icons: [
         { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
         { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },

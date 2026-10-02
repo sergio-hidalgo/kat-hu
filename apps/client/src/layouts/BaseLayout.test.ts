@@ -19,6 +19,12 @@ async function renderLayout() {
 }
 
 describe('BaseLayout', () => {
+  it('keeps room at the foot of main so the footer’s edge never covers the last content (spec 05c)', async () => {
+    const html = await renderLayout();
+
+    expect(html).toMatch(/<main id="main" class="[^"]*\bpb-\(--edge-height\)/);
+  });
+
   it('offers the tab icon as a vector first, with the .ico as the fallback', async () => {
     const html = await renderLayout();
 

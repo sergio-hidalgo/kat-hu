@@ -2,7 +2,6 @@ import type { BlockId } from '@kat-hu/contracts';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import AboutTeaser from './AboutTeaser.astro';
 import BlogTeaser from './BlogTeaser.astro';
-import Cta from './Cta.astro';
 import Hero from './Hero.astro';
 import HowItWorks from './HowItWorks.astro';
 import Services from './Services.astro';
@@ -26,7 +25,6 @@ export const BLOCK_COMPONENTS: Record<BlockId, AstroComponentFactory> = {
   testimonials: Testimonials,
   'blog-teaser': BlogTeaser,
   'shop-teaser': ShopTeaser,
-  cta: Cta,
 };
 
 /** `how-it-works` → `HowItWorks.astro`: the file a block id must live in. */

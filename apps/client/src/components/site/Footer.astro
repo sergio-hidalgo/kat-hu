@@ -1,39 +1,21 @@
 ---
 /**
- * Guide §7.9. violet-900 is routine here and almost nowhere else: Cloud text,
- * oak-200 on link hover, 64px top / 40px bottom, the knockout lockup, and the
- * cropped wordmark set behind everything as a watermark.
+ * Guide §07, *Pie*: the closing botanical edge — the plants with the dog and
+ * the cat — then the Violeta band: the inverted lockup, a descriptive line in
+ * Lavanda, column titles in Urbanist 700 Crema, links in Lavanda (5.18:1) that
+ * turn Crema and underlined on hover, and the legal line.
  *
- * **The surface, the padding and the watermark's placement are the design
- * system's**, not this file's: `.kathu-footer` and `.kathu-footer__watermark`
- * ship in `kathu-tokens.css` with `isolation: isolate`, `overflow: hidden`,
- * `z-index: -1`, violet-800 and `pointer-events: none` already set. Never
- * re-derive them as utilities and never set the violet twice — `Section` is
- * here for the band and nothing else.
+ * The edge is drawn by the `<footer>` wrapper, above the band, over the bottom
+ * of whatever comes before it — every page keeps room for it at the foot of
+ * `<main>`, or in its last band's padding on the landing.
  *
- * The watermark is inlined rather than an `<img>` because it takes its colour
- * from CSS, and `aria-hidden` because it is decoration: 1.22:1 on violet-900
- * is meant to register as a change in the surface, never as something to
- * read. Content overlapping it is the intent.
+ * **The band's surface and padding are `.kathu-footer`** in `styles/theme.css`.
+ * Never re-derive them as utilities. The band carries no watermark: the owner
+ * removed the half wordmark behind the content on 2026-09-27.
  */
-import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import Logo from './Logo.astro';
-import watermark from '../../assets/brand/kathu-wordmark-half.svg?raw';
-
-/**
- * The design system caps the watermark at `--container-wide` (1320px). The
- * owner wants it to run the full width of the footer on any screen
- * (2026-09-09), so the cap is removed here — `max-w-none` removes a width, it
- * never chooses one, which is why it is the one width utility the grid rule
- * allows (I-001). Everything else about the watermark still comes from
- * `.kathu-footer__watermark`. If this should be the design system's rule
- * rather than this footer's, the change belongs in `references/` first.
- */
-const fullWidthWatermark = watermark.replace(
-  'class="kathu-footer__watermark"',
-  'class="kathu-footer__watermark max-w-none"',
-);
+import SectionEdge from '../ui/SectionEdge.astro';
 
 /**
  * Where each column sits, at all three arrangements. Every value is a column
@@ -80,8 +62,9 @@ const columns = [
 const year = new Date().getFullYear();
 ---
 
-<Section as="footer" surface="none" padding="none" class="kathu-footer">
-  <Fragment set:html={fullWidthWatermark} />
+<footer class="on-violet relative w-full">
+  <SectionEdge variant="footer" class="text-violet" />
+  <div class="kathu-footer">
 
   <Grid class="gap-y-10">
     {/* Four columns only from lg: at 768 the brand blurb in a quarter of the
@@ -97,7 +80,7 @@ const year = new Date().getFullYear();
       {/* 29px: the guide's 24px plus the 20% the owner asked for on
           2026-09-09, the same increase the band's lockup took. */}
       <Logo variant="dark" size={29} />
-      <p class="mt-4 max-w-none text-sm text-cloud">
+      <p class="mt-4 max-w-none text-sm text-lavender">
         Terapia floral holística para familias multiespecie.
       </p>
     </div>
@@ -108,10 +91,10 @@ const year = new Date().getFullYear();
           class:list={['text-center lg:text-left', place]}
           aria-labelledby={`footer-${heading.toLowerCase()}`}
         >
-          {/* Lora, not Urbanist: the guide forbids the display face below 20px. */}
+          {/* Guide §07: column titles in Urbanist 700, Crema. */}
           <h2
             id={`footer-${heading.toLowerCase()}`}
-            class="font-body text-xs font-semibold text-mist"
+            class="font-body text-xs font-bold text-cream"
           >
             {heading}
           </h2>
@@ -128,7 +111,7 @@ const year = new Date().getFullYear();
               <li>
                 <a
                   href={href}
-                  class="inline-flex min-h-11 items-center font-body text-sm text-cloud no-underline transition-colors duration-fast hover:text-oak-200 hover:underline"
+                  class="inline-flex min-h-11 items-center font-body text-sm text-lavender no-underline transition-colors duration-fast hover:text-cream hover:underline"
                 >
                   {label}
                 </a>
@@ -139,17 +122,18 @@ const year = new Date().getFullYear();
       ))
     }
 
-    {/* §7.9: legal fine print below 14px goes in White rather than Cloud.
-        Centred, unlike the columns above: it closes the page rather than
-        belonging to any one of them. */}
+    {/* The legal line, in Lavanda (5.18:1 at 14px). Centred, unlike the
+        columns above: it closes the page rather than belonging to any one
+        of them. */}
     <div class="col-span-12 text-center">
-      <p class="max-w-none text-xs text-white">
+      <p class="max-w-none text-xs text-lavender">
         © {year} kathu. Todos los derechos reservados.
       </p>
-      <p class="mt-2 max-w-none text-xs text-white">
+      <p class="mt-2 max-w-none text-xs text-lavender">
         kathu no sustituye la atención veterinaria. Consulta siempre con tu
         veterinaria de referencia.
       </p>
     </div>
   </Grid>
-</Section>
+  </div>
+</footer>

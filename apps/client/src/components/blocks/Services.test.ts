@@ -11,8 +11,8 @@ const sessions = (count: number): ServiceItem[] =>
     id: `sesion-${index + 1}`,
     title: `Sesión número ${index + 1}`,
     description: 'Para ti y para Mochi.',
-    duration: '45 min',
-    modality: 'Online',
+    features: ['Sesión de 45 minutos', 'Online'],
+    preferred: false,
     price: '40 €',
   }));
 
@@ -43,34 +43,53 @@ describe('Services', () => {
     for (const item of items) expect(html).toContain(`href="/reservar?servicio=${item.id}"`);
   });
 
-  it('shows duration • modality and the price with the euro sign after it (guide §7.4)', async () => {
+  it('shows the price large, euro sign after it, and what the session includes as checks (guide §07)', async () => {
     const html = await render();
 
     for (const item of defaults.items) {
-      expect(html).toContain(item.price);
-      expect(html).toContain(`${item.duration}<span class="text-mist"> • </span>${item.modality}`);
+      expect(html).toMatch(new RegExp(`data-price[^>]*text-price[^>]*>\\s*${item.price}\\s*<`));
+      expect(item.price).toMatch(/^\d+ €$/);
+      for (const line of item.features) expect(html).toContain(line);
     }
   });
 
-  it('keeps every card button outlined — the page’s one filled action is the hero’s (HIE-01)', async () => {
-    const html = await render({ ...defaults, items: sessions(5) });
+  it('gives the preferred session the badge and the one filled button; the rest stay Piedra', async () => {
+    const items = sessions(5).map((item, index) => ({
+      ...item,
+      preferred: index === 1,
+    }));
+    const html = await render({ ...defaults, items });
 
-    expect(html).not.toContain('bg-violet-700 text-cloud');
-    expect(html.match(/border border-violet-700 text-violet-700/g)).toHaveLength(5);
+    expect(html.match(/data-badge/g)).toHaveLength(1);
+    expect(html.match(/bg-violet text-cream hover/g)).toHaveLength(1);
+    expect(html.match(/bg-stone text-ink/g)).toHaveLength(4);
   });
 
-  it('cycles the stand-ins by position, so the default three look as they did', async () => {
-    const html = await render({ ...defaults, items: sessions(4) });
+  it('leans one línea-fina daisy in from the margin, on desktop only (guide §06)', async () => {
+    const html = await render();
+    const daisy = html.match(/<div[^>]*data-flora="line-daisy"[^>]*>/)?.[0] ?? '';
 
-    expect([...html.matchAll(/data-spot="([a-z]+)"/g)].map(([, name]) => name)).toEqual([
-      'flower',
-      'cat',
-      'sprout',
-      'flower',
-    ]);
+    expect(daisy).toContain('aria-hidden="true"');
+    expect(daisy).toMatch(/\bhidden\b[^"]*\blg:block\b/);
+    expect(daisy).toContain('-z-10');
   });
 
-  it('shows the owner’s image from the CDN within twice the slot, uncropped, with its alt, instead of the stand-in', async () => {
+  it('words each button as the owner wrote it, and falls back to the default', async () => {
+    const [first, second] = sessions(2);
+    const html = await render({ ...defaults, items: [{ ...first, buttonLabel: 'Reserva tu sesión inicial' }, second] });
+
+    expect(html).toContain('Reserva tu sesión inicial');
+    expect(html).toContain('Reservar esta sesión');
+  });
+
+  it('shows a Piedra placeholder at the top of a card with no image', async () => {
+    const html = await render({ ...defaults, items: sessions(2) });
+
+    expect(html.match(/data-placeholder/g)).toHaveLength(2);
+    expect(html).not.toContain('<img');
+  });
+
+  it('shows the owner’s image from the CDN, cropped to the card’s slot, with its alt, instead of the placeholder', async () => {
     const [first, second] = sessions(2);
     const html = await render({
       ...defaults,
@@ -79,7 +98,10 @@ describe('Services', () => {
           ...first,
           image: {
             _type: 'image',
-            asset: { _ref: 'image-Tb9Ew8CXIwaY6R1kjMvI0uRR-600x600-png', _type: 'reference' },
+            asset: {
+              _ref: 'image-Tb9Ew8CXIwaY6R1kjMvI0uRR-600x600-png',
+              _type: 'reference',
+            },
             alt: ' Lavanda en acuarela ',
           },
         },
@@ -92,18 +114,18 @@ describe('Services', () => {
     const params = new URL(src).searchParams;
 
     expect(src).toMatch(/^https:\/\/cdn\.sanity\.io\/images\//);
-    expect(params.get('w')).toBe('320');
-    // A width and a height together make the URL builder crop to that aspect.
-    expect(params.has('h')).toBe(false);
-    expect(params.has('rect')).toBe(false);
+    // Twice the slot's width for dense screens, at the slot's 13:6.
+    expect(params.get('w')).toBe('800');
+    expect(params.get('h')).toBe('369');
     expect(img).toContain('alt="Lavanda en acuarela"');
-    expect(html.match(/data-spot=/g)).toHaveLength(1);
+    expect(html.match(/data-placeholder/g)).toHaveLength(1);
   });
 
   it('puts its heading on a row of its own, so no card climbs up beside it', async () => {
     const html = await render();
     const heading = html.match(/<div class="([^"]*)">\s*<h2/)?.[1];
 
-    expect(heading).toBe('col-span-12');
+    // A full row on a phone; centred on the middle eight columns from md.
+    expect(heading).toBe('col-span-12 text-center md:col-span-8 md:col-start-3');
   });
 });

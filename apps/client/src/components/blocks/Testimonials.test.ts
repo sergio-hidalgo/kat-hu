@@ -6,6 +6,7 @@ vi.mock('../../data/testimonials', () => ({ getTestimonials: vi.fn() }));
 import Testimonials from './Testimonials.astro';
 import { LANDING_DEFAULTS } from '../../data/landing';
 import { getTestimonials } from '../../data/testimonials';
+import { testimonialPlace } from './testimonials';
 
 const copy = LANDING_DEFAULTS.testimonials;
 
@@ -26,6 +27,7 @@ describe('Testimonials', () => {
     const html = await render();
 
     expect(html).toContain(copy.headline);
+    expect(html).toContain(copy.lead);
     expect(html.match(/<figure\b/g)).toHaveLength(2);
     expect(html).toContain('Mochi vuelve a dormir tranquilo.');
     expect(html).toContain('Ana García');
@@ -36,5 +38,16 @@ describe('Testimonials', () => {
     vi.mocked(getTestimonials).mockResolvedValueOnce([]);
 
     expect((await render()).trim()).toBe('');
+  });
+});
+
+describe('testimonialPlace', () => {
+  it('centres one card, pairs two about the centre line, and fills a row with three', () => {
+    expect(testimonialPlace(1, 0)).toBe('col-span-12 md:col-span-6 lg:col-span-4 md:col-start-4 lg:col-start-5');
+    expect([0, 1].map((i) => testimonialPlace(2, i))).toEqual([
+      'col-span-12 md:col-span-6 lg:col-span-4 lg:col-start-3',
+      'col-span-12 md:col-span-6 lg:col-span-4 lg:col-start-7',
+    ]);
+    expect(testimonialPlace(3, 2)).toBe('col-span-12 md:col-span-6 lg:col-span-4');
   });
 });

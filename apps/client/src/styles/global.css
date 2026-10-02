@@ -1,5 +1,5 @@
-/* The token file is a byte-for-byte copy of references/kathu-tokens.css and
-   already pulls Tailwind in itself (`@import "tailwindcss"` at its top), so
-   importing the framework again here would emit it twice. This file exists to
-   give the layout one stable import path, and to hold nothing else. */
+/* The token file is a byte-for-byte copy of references/kathu-tokens.css —
+   plain custom properties since v2. theme.css wires Tailwind onto them. Tokens
+   first, unlayered, so they win over any theme variable of the same name. */
 @import "./kathu-tokens.css";
+@import "./theme.css";

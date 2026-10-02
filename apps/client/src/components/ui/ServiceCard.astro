@@ -1,93 +1,106 @@
 ---
 /**
- * Guide §7.4, the service / reserva card (spec 05): left-aligned, spot
- * illustration, `text-h3` title, two lines, duration • modality in Slate with
- * a Mist dot, the price in `text-h4` violet-700 with the euro sign after it.
+ * Guide §07, *Tarjeta de servicio* (spec 05, 05b, 05c; redone 2026-10-02 as the
+ * owner's mix of the mock-up and the Figma): the session's picture across the
+ * top, the `h3` title, a Pizarra subtitle, the price large in Urbanist, a list
+ * of up to three things the session includes, each with a check, and a
+ * full-width button at the bottom.
  *
- * The sessions are the owner's own (spec 05b), so every line under the title
- * is optional. A line the owner left empty is left out — never filled with
- * default text — and what remains keeps its order (CON-03). The slot is always
- * 160×160: the owner's watercolour shown whole (`object-contain`, never
- * cropped, and `rounded-none` against the base layer's 8px image radius, so its
- * soft edges survive), or the Lucide stand-in until there is one.
+ * The sessions are the owner's own (spec 05b), so every line is optional. A
+ * line the owner left empty is left out — never filled with default text — and
+ * what remains keeps its order (CON-03). The picture slot is always one shape
+ * (13:6): the owner's image cropped to it, or a Piedra block until there is
+ * one, so the cards of a row start level.
  *
- * The button is **outlined**, not the guide's primary: the landing has exactly
- * one filled violet-700 action, the hero's (HIE-01). Full width on a phone,
- * its own width from `md`. The price and the button sit at the bottom, so
- * cards in one row line up however long their descriptions are — with or
- * without a price.
+ * **The preferred session** is the owner's pick: a *Preferido* badge centred on
+ * the card's top border and the page's one filled Violeta button (a deliberate
+ * exception to HIE-01, asked for by the owner); every other card keeps the
+ * secondary Piedra. The button sits at the bottom, so the buttons of a row
+ * line up however long the cards above are.
  */
-import type { ComponentProps } from 'astro/types';
 import Button from './Button.astro';
 import Card from './Card.astro';
-import SpotIllustration from './SpotIllustration.astro';
+import { Check } from '@lucide/astro';
 
 interface Props {
   title: string;
   description?: string;
-  duration?: string;
-  modality?: string;
   price?: string;
+  /** What the session includes, one line each; the caller keeps it to three. */
+  features?: string[];
   href: string;
   actionLabel: string;
-  /** The owner's image, already sized for the slot; `alt` is `""` when it is decoration. */
+  preferred?: boolean;
+  /** The owner's image, already cropped to the slot; `alt` is `""` when it is decoration. */
   image?: { src: string; alt: string };
-  /** The stand-in drawn while there is no `image`. */
-  illustration: ComponentProps<typeof SpotIllustration>['name'];
   class?: string;
 }
 
 const {
   title,
   description,
-  duration,
-  modality,
   price,
+  features = [],
   href,
   actionLabel,
+  preferred = false,
   image,
-  illustration,
   class: className,
 } = Astro.props;
 
-/** The slot's side in px, guide §7.4. */
-const SLOT = 160;
+/** The slot's shape, shared by the image and its stand-in. */
+const SLOT = 'aspect-[13/6] w-full';
 ---
 
-<Card class:list={['flex h-full flex-col', className]}>
+<Card class:list={['relative flex h-full flex-col', className]} data-preferred={preferred ? '' : undefined}>
+  {
+    preferred && (
+      <span
+        data-badge
+        class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet px-4 py-1 text-xs font-medium whitespace-nowrap text-cream"
+      >
+        Preferido
+      </span>
+    )
+  }
   {
     image ? (
       <img
         src={image.src}
         alt={image.alt}
-        width={SLOT}
-        height={SLOT}
+        width={520}
+        height={240}
         loading="lazy"
         decoding="async"
-        class="size-40 shrink-0 rounded-none object-contain"
+        class:list={[SLOT, 'shrink-0 object-cover']}
       />
     ) : (
-      <SpotIllustration name={illustration} />
+      <div data-placeholder aria-hidden="true" class:list={[SLOT, 'shrink-0 rounded bg-stone']}></div>
     )
   }
-  <h3 class="mt-6 text-h3 text-ink">{title}</h3>
-  {description && <p class="mt-2 max-w-none text-sm text-graphite">{description}</p>}
+  <h3 class="mt-4 text-h3 text-ink">{title}</h3>
+  {description && <p class="mt-1 max-w-none text-sm text-slate">{description}</p>}
   {
-    (duration || modality) && (
-      <p class="mt-4 max-w-none text-xs text-slate">
-        {duration}
-        {duration && modality && <span class="text-mist"> • </span>}
-        {modality}
+    price && (
+      <p data-price class="mt-3 max-w-none font-body text-price text-ink tabular-nums">
+        {price}
       </p>
     )
   }
-  <div class="mt-auto flex flex-col pt-4">
-    {price && <p class="max-w-none text-h4 text-violet-700">{price}</p>}
-    <Button
-      href={href}
-      variant="secondary"
-      class={price ? 'mt-6 w-full md:w-auto md:self-start' : 'w-full md:w-auto md:self-start'}
-    >
+  {
+    features.length > 0 && (
+      <ul class="mt-3 flex list-none flex-col gap-2 p-0" aria-label="Incluye">
+        {features.map((line) => (
+          <li class="flex items-center gap-2 text-sm text-graphite">
+            <Check size={20} stroke-width={1.75} class="shrink-0 text-violet" aria-hidden="true" />
+            {line}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  <div class="mt-auto flex flex-col pt-5">
+    <Button href={href} variant={preferred ? 'primary' : 'secondary'} class="w-full">
       {actionLabel}
     </Button>
   </div>

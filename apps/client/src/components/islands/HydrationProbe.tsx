@@ -30,7 +30,7 @@ export default function HydrationProbe() {
       <button
         type="button"
         onClick={() => setCount((value) => value + 1)}
-        className="inline-flex h-13 items-center justify-center rounded-sm bg-violet-700 px-6 font-body text-sm font-semibold text-cloud transition-colors duration-fast hover:bg-violet-600 active:bg-violet-700 md:h-12"
+        className="inline-flex h-12 items-center justify-center rounded bg-violet px-6 font-body text-sm font-medium text-cream transition-colors duration-fast hover:bg-violet-hover active:bg-violet-active"
       >
         {count === 0
           ? 'Púlsame'

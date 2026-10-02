@@ -9,11 +9,18 @@
  *
  * Put a `<Grid>` inside for content. A full-bleed image is a direct child,
  * outside the Grid, because it is meant to reach the screen edges.
+ *
+ * `edge` makes the band part of guide §06's botanical rhythm: it can draw its
+ * own silhouette over the foot of the band above (see `SectionEdge`). Whether
+ * the silhouette shows, its colour, and whether a band keeps room at its foot
+ * for the next band's silhouette are decided by the page from the bands that
+ * actually render — on the landing, `blocks/rhythm.ts`.
  */
 import type { HTMLTag } from 'astro/types';
+import SectionEdge from '../ui/SectionEdge.astro';
 
 type Padding = 'none' | 'sm' | 'lg';
-type Surface = 'none' | 'shell' | 'cloud' | 'violet';
+type Surface = 'none' | 'cream' | 'lavender' | 'violet';
 
 interface Props {
   /* Quoted: `as` unquoted trips the Astro compiler's props scanner, which then
@@ -21,6 +28,8 @@ interface Props {
   'as'?: HTMLTag;
   padding?: Padding;
   surface?: Surface;
+  /** A botanical edge over the band above, and room for the next (guide §06). */
+  edge?: boolean;
   /** Vertical placement and surface only. Never a width. */
   class?: string;
   [key: string]: unknown;
@@ -30,6 +39,7 @@ const {
   as: Tag = 'section',
   padding = 'lg',
   surface = 'none',
+  edge = false,
   class: className,
   ...rest
 } = Astro.props;
@@ -42,15 +52,22 @@ const paddings: Record<Padding, string> = {
 
 const surfaces: Record<Surface, string> = {
   none: '',
-  shell: 'bg-shell text-graphite',
-  cloud: 'bg-cloud text-graphite',
-  violet: 'bg-violet-900 text-cloud',
+  cream: 'bg-cream text-graphite',
+  lavender: 'bg-lavender text-graphite',
+  violet: 'on-violet bg-violet text-cream',
 };
 ---
 
 <Tag
-  class:list={['w-full', surfaces[surface], paddings[padding], className]}
+  class:list={[
+    'w-full',
+    surfaces[surface],
+    paddings[padding],
+    edge && 'relative',
+    className,
+  ]}
   {...rest}
 >
   <slot />
+  {edge && <SectionEdge />}
 </Tag>

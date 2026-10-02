@@ -94,11 +94,11 @@ describe('PostCard', () => {
     }
   });
 
-  it('sets the title in Violet Dusk', async () => {
+  it('sets the title in Violeta', async () => {
     const html = await render({ ...post, mainImage });
     const titleClass = html.match(/<h3 class="([^"]*)"/)?.[1] ?? '';
 
-    expect(titleClass).toContain('text-violet-700');
+    expect(titleClass.split(' ')).toContain('text-violet');
     expect(titleClass).not.toContain('text-ink');
   });
 

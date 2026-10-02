@@ -28,12 +28,12 @@ describe('getTestimonials', () => {
     ]);
   });
 
-  it('asks for at most three, lowest order first, by parameter', async () => {
+  it('asks for at most twelve, lowest order first, by parameter', async () => {
     fetch.mockResolvedValueOnce([]);
     await getTestimonials();
 
     const [query, params] = fetch.mock.calls[0];
-    expect(query).toContain('[0...3]');
+    expect(query).toContain('[0...12]');
     expect(query).toContain('order(coalesce(order, 1000) asc');
     expect(params).toEqual({ type: 'testimonial' });
   });

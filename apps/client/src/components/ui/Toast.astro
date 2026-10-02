@@ -1,11 +1,18 @@
 ---
 /**
- * Guide §7.10. Cloud fill with a coloured border and matching icon — never
- * colour alone, so the icon and the wording carry the state too.
+ * Guide §07, *Avisos*: Crema, a 1px border, a 4px accent on the left, 8px
+ * radius, a 20px icon and Ink text — never colour alone, so the icon and the
+ * wording carry the state too. The warning's accent is the bright amber, which
+ * never carries text or an icon; its icon is the dark amber.
+ *
+ * Every notice is a live region: an error interrupts (`alert`), the rest wait
+ * their turn (`status`). The guide's table gives info and warning no role, but
+ * a notice inserted after load with no role is never announced — so they keep
+ * `status`, as the warning had before spec 05c.
  */
-import { CircleCheck, TriangleAlert, CircleX } from '@lucide/astro';
+import { CircleAlert, CircleCheck, Info, TriangleAlert } from '@lucide/astro';
 
-type State = 'success' | 'warning' | 'error';
+type State = 'success' | 'info' | 'warning' | 'error';
 
 interface Props {
   state?: State;
@@ -15,22 +22,32 @@ interface Props {
 const { state = 'success', class: className } = Astro.props;
 
 const states = {
-  success: { icon: CircleCheck, border: 'border-green', tint: 'text-green', text: 'text-ink' },
-  warning: { icon: TriangleAlert, border: 'border-orange', tint: 'text-orange', text: 'text-ink' },
-  error: { icon: CircleX, border: 'border-red', tint: 'text-red', text: 'text-red' },
-} satisfies Record<State, { icon: typeof CircleCheck; border: string; tint: string; text: string }>;
+  success: { icon: CircleCheck, accent: 'border-l-success', tint: 'text-success', role: 'status' },
+  info: { icon: Info, accent: 'border-l-violet', tint: 'text-violet', role: 'status' },
+  warning: {
+    icon: TriangleAlert,
+    accent: 'border-l-warning-accent',
+    tint: 'text-warning',
+    role: 'status',
+  },
+  error: { icon: CircleAlert, accent: 'border-l-error', tint: 'text-error', role: 'alert' },
+} satisfies Record<
+  State,
+  { icon: typeof CircleCheck; accent: string; tint: string; role: 'status' | 'alert' }
+>;
 
-const { icon: Icon, border, tint, text } = states[state];
+const { icon: Icon, accent, tint, role } = states[state];
 ---
 
 <div
-  role={state === 'error' ? 'alert' : 'status'}
+  role={role}
+  data-state={state}
   class:list={[
-    'flex items-start gap-3 rounded-sm border bg-cloud p-4',
-    border,
+    'flex items-start gap-3 rounded border border-l-4 border-border bg-cream p-4',
+    accent,
     className,
   ]}
 >
-  <Icon size={20} stroke-width={1.5} class:list={['shrink-0', tint]} />
-  <p class:list={['max-w-none text-sm', text]}><slot /></p>
+  <Icon size={20} stroke-width={1.75} class:list={['shrink-0', tint]} />
+  <p class="max-w-none text-sm text-ink"><slot /></p>
 </div>

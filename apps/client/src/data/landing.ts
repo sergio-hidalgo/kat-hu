@@ -37,31 +37,50 @@ export interface ServiceItem {
   /** The document's slug — `/reservar?servicio=<id>`, which spec 06 reads. */
   id: string;
   title: string;
+  /** The card's subtitle: one short line saying what the session is. */
   description?: string;
-  duration?: string;
-  modality?: string;
   /** As shown, euro sign after the number: `55 €`. */
   price?: string;
-  /** The owner's watercolour for the card's 160×160 slot. */
+  /** What the session includes: up to three short lines, each with a check. */
+  features: string[];
+  /** The booking button's words; the block's own default when the owner left it empty. */
+  buttonLabel?: string;
+  /** The owner's pick: a badge over the card and the one filled button. */
+  preferred: boolean;
+  /** The picture at the top of the card; a placeholder block without it. */
   image?: SanityImage;
 }
+
+/** A card lists three things at most (guide §07). */
+export const MAX_FEATURES = 3;
 
 export interface StepItem {
   title: string;
   description?: string;
+  /** The picture over the step; a violet placeholder block without it. */
+  image?: SanityImage;
 }
 
 export interface LandingCopy {
   hero: { headline: string; lead: string };
   services: { headline: string; lead: string; items: ServiceItem[] };
   'how-it-works': { headline: string; lead: string; steps: StepItem[] };
-  /** `image` is the owner's second photo of Laura; the block works without it. */
-  'about-teaser': { headline: string; paragraph: string; image?: SanityImage };
-  testimonials: { headline: string };
+  /**
+   * The Studio's «Terapeuta» tab. `image` is the owner's photo of Laura (the
+   * block shows the brand portrait without it); `linkHref` is always a path
+   * on this site — `getLandingCopy` enforces it.
+   */
+  'about-teaser': {
+    headline: string;
+    paragraph: string;
+    linkLabel: string;
+    linkHref: string;
+    image?: SanityImage;
+  };
+  testimonials: { headline: string; lead: string };
   'blog-teaser': { headline: string; lead: string };
   /** Spec 11 gives the shop teaser its words. */
   'shop-teaser': Record<string, never>;
-  cta: { headline: string };
 }
 
 /** Compile-time check that every registered block has an entry. */
@@ -82,26 +101,24 @@ export const LANDING_DEFAULTS: LandingCopy = {
         title: 'Sesión online individual',
         description:
           'Para ti y tu gato. Entendemos qué le está pasando y eliges con la florapeuta las esencias que le ayudan.',
-        duration: '60 min',
-        modality: 'Online',
+        features: ['Sesión de 60 minutos', 'Online', 'Esencias a medida'],
+        preferred: true,
         price: '55 €',
       },
       {
         id: 'familia',
         title: 'Sesión para la familia multiespecie',
-        description:
-          'Para cuando en casa conviven varios gatos, personas u otros animales y la armonía se ha roto.',
-        duration: '90 min',
-        modality: 'Online',
+        description: 'Para cuando en casa conviven varios gatos, personas u otros animales y la armonía se ha roto.',
+        features: ['Sesión de 90 minutos', 'Online', 'Plan para toda la casa'],
+        preferred: false,
         price: '75 €',
       },
       {
         id: 'seguimiento',
         title: 'Seguimiento',
-        description:
-          'Revisamos cómo ha respondido tu gato y ajustamos las esencias para que el cambio se quede.',
-        duration: '30 min',
-        modality: 'Online',
+        description: 'Revisamos cómo ha respondido tu gato y ajustamos las esencias para que el cambio se quede.',
+        features: ['Sesión de 30 minutos', 'Online', 'Ajuste de las esencias'],
+        preferred: false,
         price: '30 €',
       },
     ],
@@ -113,8 +130,7 @@ export const LANDING_DEFAULTS: LandingCopy = {
     steps: [
       {
         title: 'Cuéntanos',
-        description:
-          'Haces tu reserva y nos cuentas qué está pasando en casa, desde cuándo y quién vive con tu gato.',
+        description: 'Haces tu reserva y nos cuentas qué está pasando en casa, desde cuándo y quién vive con tu gato.',
       },
       {
         title: 'Sesión',
@@ -132,18 +148,18 @@ export const LANDING_DEFAULTS: LandingCopy = {
     headline: 'Una florapeuta que entiende a los gatos',
     paragraph:
       'Soy Laura. Acompaño a familias multiespecie con terapia floral para que la convivencia sea más tranquila y el vínculo con tu gato, más fuerte.',
+    linkLabel: 'Conoce la historia de kathu',
+    linkHref: '/sobre-kathu',
   },
   testimonials: {
     headline: 'Lo que cuentan las familias',
+    lead: 'Familias multiespecie que ya han pasado por una sesión con kathu.',
   },
   'blog-teaser': {
     headline: 'Últimos drops',
     lead: 'Ideas prácticas para entender mejor a tu gato, sin esperar a la próxima sesión.',
   },
   'shop-teaser': {},
-  cta: {
-    headline: 'Empieza hoy a entender qué necesita tu gato.',
-  },
 };
 
 /**
@@ -179,6 +195,17 @@ const uploaded = (value: unknown): SanityImage | undefined =>
 const rowsOf = (value: unknown): Record<string, unknown>[] =>
   Array.isArray(value) ? value.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object') : [];
 
+/**
+ * The lines a card lists: the owner's `features`, trimmed, blanks dropped, at
+ * most three. A session written before the list existed has none, and falls
+ * back to the duration and modality it did have, so its card does not go bare.
+ */
+function featuresOf(row: Record<string, unknown>): string[] {
+  const listed = (Array.isArray(row.features) ? row.features : []).map(written);
+  const lines = listed.some(Boolean) ? listed : [written(row.duration), written(row.modality)];
+  return lines.filter((line): line is string => Boolean(line)).slice(0, MAX_FEATURES);
+}
+
 /** The CMS sessions that can be shown: a title and a slug, after trimming. */
 function toServiceItems(value: unknown): ServiceItem[] {
   return rowsOf(value).flatMap((row) => {
@@ -190,9 +217,10 @@ function toServiceItems(value: unknown): ServiceItem[] {
         id,
         title,
         description: written(row.description),
-        duration: written(row.duration),
-        modality: written(row.modality),
         price: written(row.price),
+        features: featuresOf(row),
+        buttonLabel: written(row.buttonLabel),
+        preferred: row.preferred === true,
         image: uploaded(row.image),
       },
     ];
@@ -203,8 +231,21 @@ function toServiceItems(value: unknown): ServiceItem[] {
 function toStepItems(value: unknown): StepItem[] {
   return rowsOf(value).flatMap((row) => {
     const title = written(row.title);
-    return title ? [{ title, description: written(row.description) }] : [];
+    return title ? [{ title, description: written(row.description), image: uploaded(row.image) }] : [];
   });
+}
+
+/**
+ * A path on this site, or nothing: one leading slash (not two — `//host` is
+ * another site) and only the characters a kathu route uses. An editor's link
+ * becomes an `href`, so anything else — `https://…`, `javascript:…` — is
+ * refused here and the default link is used instead. The Studio applies the
+ * same rule (`apps/studio/schemaTypes/landing.ts`); this is the one that
+ * holds even if a value gets past it.
+ */
+export function internalPath(value: string): string | undefined {
+  const path = value.trim();
+  return /^\/(?!\/)[a-z0-9\-/]*$/.test(path) ? path : undefined;
 }
 
 /** Whole from the CMS, or whole from the defaults — never a mix. */
@@ -221,14 +262,16 @@ const LANDING_QUERY = /* groq */ `{
     "how-it-works": howItWorks { headline, lead },
     "about-teaser": aboutTeaser,
     testimonials,
-    "blog-teaser": blogTeaser,
-    cta
+    "blog-teaser": blogTeaser
   },
   "services": *[_type == $serviceType && defined(title) && defined(slug.current)]
     | order(coalesce(order, 1000) asc, _createdAt asc) {
       "id": slug.current,
       title,
       description,
+      features,
+      buttonLabel,
+      preferred,
       duration,
       modality,
       price,
@@ -237,7 +280,8 @@ const LANDING_QUERY = /* groq */ `{
   "steps": *[_type == $stepType && defined(title)]
     | order(coalesce(order, 1000) asc, _createdAt asc) {
       title,
-      description
+      description,
+      image
     }
 }`;
 
@@ -264,6 +308,10 @@ export async function getLandingCopy(): Promise<LandingCopy> {
 
   const copy = mergeCopy(LANDING_DEFAULTS, raw?.landing);
   const image = uploaded((raw?.landing?.['about-teaser'] as { image?: unknown } | null | undefined)?.image);
+  const about = {
+    ...copy['about-teaser'],
+    linkHref: internalPath(copy['about-teaser'].linkHref) ?? LANDING_DEFAULTS['about-teaser'].linkHref,
+  };
 
   return {
     ...copy,
@@ -275,6 +323,6 @@ export async function getLandingCopy(): Promise<LandingCopy> {
       ...copy['how-it-works'],
       steps: wholeOrDefault(toStepItems(raw?.steps), LANDING_DEFAULTS['how-it-works'].steps),
     },
-    'about-teaser': image ? { ...copy['about-teaser'], image } : copy['about-teaser'],
+    'about-teaser': image ? { ...about, image } : about,
   };
 }

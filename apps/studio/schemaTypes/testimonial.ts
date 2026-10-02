@@ -3,7 +3,7 @@ import { defineField, defineType } from 'sanity';
 /**
  * A testimonial for the landing (spec 05, guide §7.8). Field *names* are a
  * contract with `apps/client/src/data/testimonials.ts`. The site shows at
- * most three, lowest `order` first; with none, the block hides itself.
+ * most twelve, lowest `order` first (more than three slide as a carousel); with none, the block hides itself.
  */
 export const testimonial = defineType({
   name: 'testimonial',
@@ -33,7 +33,7 @@ export const testimonial = defineType({
       name: 'order',
       title: 'Orden',
       type: 'number',
-      description: 'Los números más bajos salen primero. En la portada se ven tres como mucho.',
+      description: 'Los números más bajos salen primero. En la portada, a partir de cuatro, se muestran como un carrusel que avanza solo.',
     }),
   ],
   preview: {
