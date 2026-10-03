@@ -680,7 +680,7 @@ closes.
 | 05  | Landing page blocks                                                       | done     |
 | 05b | Improve blocks format                                                     | done     |
 | 05c | Redesign system (guide v2: tokens, landing rebuild, vector flowers)       | done     |
-| 05d | Drops restyle (v2, flowers, drop types and filter)                        | in progress |
+| 05d | Drops restyle (v2, flowers, drop types and filter)                        | done     |
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |
 | 07  | About page                                                                | todo     |
