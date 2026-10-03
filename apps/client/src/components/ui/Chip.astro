@@ -1,29 +1,47 @@
 ---
 /**
- * A pill (guide §05: round corners are for pills and avatars). Two tones:
- * `price` in Lavanda with Ink (11.6:1), and `status` — *Agotado* and friends —
+ * A pill (guide §05: round corners are for pills and avatars). Three tones:
+ * `price` in Lavanda with Ink (11.6:1), `type` — a drop's kind — Ink text on a
+ * surface per kind (Lavanda, Piedra, Glicina, Hueso), and `status` — *Agotado* and friends —
  * on Hueso with a border and Pizarra (6.4:1). Neither is ever the only way a
  * state is told: the words say it.
  */
-type Tone = 'price' | 'status';
+type Tone = 'price' | 'type' | 'status';
+
+/** A drop's kind, for the `type` tone (spec 05d). */
+type Kind = 'post' | 'curiosidad' | 'consejo' | 'truco';
 
 interface Props {
   tone?: Tone;
+  /** The `type` tone's colour: one surface per kind, all with Ink text. */
+  kind?: Kind;
   class?: string;
+  [key: string]: unknown;
 }
 
-const { tone = 'price', class: className } = Astro.props;
+const { tone = 'price', kind = 'post', class: className, ...rest } = Astro.props;
 
 const tones: Record<Tone, string> = {
   price: 'bg-lavender text-ink font-semibold',
+  type: 'border text-ink font-medium',
   status: 'border border-border bg-bone text-slate',
+};
+
+/** Written out in full so Tailwind sees every class. Ink on each is 7:1 or better; Hueso takes a border to read on a Crema card. */
+const kinds: Record<Kind, string> = {
+  post: 'border-wisteria bg-lavender',
+  curiosidad: 'border-stone bg-stone',
+  consejo: 'border-wisteria bg-wisteria',
+  truco: 'border-border bg-bone',
 };
 ---
 
 <span
+  {...rest}
   class:list={[
     'inline-flex items-center rounded-full px-3 py-0.5 font-body text-sm',
     tones[tone],
+    tone === 'type' && kinds[kind],
     className,
   ]}
 >

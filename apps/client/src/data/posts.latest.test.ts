@@ -46,3 +46,29 @@ describe('getLatestPosts', () => {
     await expect(getLatestPosts()).resolves.toEqual([]);
   });
 });
+
+describe('dropType', () => {
+  const raw = (dropType?: string) => ({
+    id: 'p',
+    slug: 'p',
+    title: 'P',
+    excerpt: 'x',
+    date: '2026-09-02',
+    dropType,
+    body: [],
+  });
+
+  it('reads a known type as it is, and anything else as post', async () => {
+    fetch.mockResolvedValueOnce([raw('curiosidad'), raw('truko'), raw(undefined)]);
+    const posts = await getLatestPosts();
+
+    expect(posts.map((post) => post.dropType)).toEqual(['curiosidad', 'post', 'post']);
+  });
+
+  it('is selected with a fallback in the query', async () => {
+    fetch.mockResolvedValueOnce([]);
+    await getLatestPosts();
+
+    expect(fetch.mock.calls[0][0]).toContain('dropType');
+  });
+});

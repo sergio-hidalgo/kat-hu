@@ -423,6 +423,7 @@ other silently empties the section — the two files are a contract.
 | :------------ | :----------------- | :------- | :-------------------------------------- |
 | `title`       | `string`           | yes      | Card + page heading, `<title>`          |
 | `slug`        | `slug`             | yes      | URL: `/drops/<slug>/`                   |
+| `dropType`    | `string` (radio)   | yes      | Post · Curiosidad · Consejo · Truco: the badge and the filter on `/drops`; a missing or unknown value reads as `post` |
 | `excerpt`     | `text`             | no       | Card summary; falls back to body start  |
 | `publishedAt` | `datetime`         | no       | Ordering + date; falls back to created  |
 | `mainImage`   | `image` (hotspot)  | no       | Card thumbnail + page hero              |
@@ -436,6 +437,11 @@ The landing reads four more types, defined in `apps/studio/schemaTypes/landing.t
 `service.ts`, `step.ts` and `testimonial.ts`, and read by `src/data/landing.ts`
 and `testimonials.ts`.
 
+**`dropsPage`** — one document (*Drops*), pinned like the landing: `banner.title`,
+`banner.subtitle`, `featured.title` and `recent.title`, the words on `/drops`
+(`schemaTypes/dropsPage.ts`, read by `src/data/drops-page.ts`). All optional;
+the Spanish defaults ship in code. The drops themselves stay in *Entradas*.
+
 **`landing`** — one document (*Portada*), pinned in the Studio so there is
 never a second, with one tab per block. It holds only what each block says
 once; what repeats is its own type below. Every field is optional; an empty
@@ -448,7 +454,7 @@ one uses the site's default.
 | `howItWorks`  | `headline`, `lead` — the steps are `step` documents                                         |
 | `aboutTeaser` | The Studio's **Terapeuta** tab: `headline`, `paragraph`, `linkLabel`, `linkHref` (a path on this site, e.g. `/sobre-kathu` — anything else falls back to it), `image` (with `alt`) — without a photo the block shows Laura's brand portrait |
 | `testimonials`| `headline`                                                                                  |
-| `blogTeaser`  | `headline`, `lead`                                                                          |
+| `blogTeaser`  | no longer in the Studio (2026-10-03): the landing's *Últimos drops* heading and lead use the site's defaults (`LANDING_DEFAULTS`); any value already published is ignored by the Studio |
 
 **`service`** (*Sesión*) — one session card each: `title` (required), `slug`
 (required; the `?servicio=` in its booking link), `description` (the subtitle),
@@ -554,38 +560,34 @@ the image rather than the viewport (`(max-width: 1066px) 1210px, 114vw`),
 because an `object-cover` band lays the photograph out up to 3.2× wider than
 the screen; `100vw` would hand a phone a 750px file to fill 1210px.
 
-### The ornaments
+### Drop types, the filter and the flowers
 
-`/drops` wears a classical frame, by the owner's decision of 2026-09-10 — a
-deliberate exception, on `/drops` and its drops only, to the style guide's "no ornament"
-principle (the landing hero wore the corners too until spec 05c gave it a
-botanical edge instead). Two drawings, each mirrored into the positions it needs:
+Spec 05d put `/drops` and a drop on the v2 language. The classical corner
+ornaments are gone (spec 04b/04c's banner frame, card corners, framed image
+and pagination flanks); what decorates the pages now is the landing's own
+vocabulary — botanical edges between bands and the línea-fina flower drawings.
 
-- **the banner** — `small-corner` in its four corners, in Crema (spec 04c
-  replaced the heavier `big-corner`). The frame starts below the fixed chrome, so the
-  top ornaments are visible at scroll 0, and the corners step down in size so
-  they stay in the page margin and never sit on the heading;
-- **a drop's main image** — the same four Crema corners, inside the image's
-  edges, over a very faint violet tint at the photo's top and bottom (clear in
-  the middle), so the corners always have a darker ground even on a light photo;
-- **every card** — `small-corner` bottom-left and bottom-right, in Violeta,
-  with the title in Violeta;
-- **the pagination** — `side` on each flank, in Violeta, at every width;
-  on a very narrow phone the flanks shrink before the page buttons do.
-
-The files are `src/assets/brand/ornament-*.svg`: sanitised copies of the
-owner's SVGs with the same geometry, taking their colour from CSS. The colours
-are the design-system tokens nearest to the owner's originals, and Crema over a
-photograph (v2 has no white), set in one place (`src/components/ui/ornament.ts`). The primitive is
-`src/components/ui/Ornament.astro`, shown on `/estilo`; the four-corner frame
-is `src/components/ui/CornerFrame.astro`, which
-`src/components/drops/BannerFrame.astro` places below the chrome on `/drops`. All of it is `aria-hidden`
-decoration.
+- **Types.** Every drop has a type — *Post*, *Curiosidad*, *Consejo* or
+  *Truco* — chosen in the Studio (*Entradas* → *Tipo de drop*). It shows as a
+  badge at the foot of each card and in a drop's header, Ink on a surface per
+  type (Lavanda, Piedra, Glicina, Hueso).
+- **Filter.** Above *También puedes leer…* a centred row of pills narrows that
+  block by type, in the page, with no reload; it keeps the featured drops as
+  they are, recounts the pages, and mirrors the choice to `?tipo=`. A type
+  with no drops has no pill, and without JavaScript the row is absent and
+  every card shows. The logic is `src/lib/drop-filter.ts`.
+- **Flowers.** Five línea-fina drawings in Piedra at 50% opacity sit behind the
+  cards from `lg` — two in the featured band, three in the regular one — and
+  the same five, spread down the article, on every drop. None is a target.
+- **Bands.** The banner closes into the featured band with a botanical edge;
+  the featured and regular bands share Crema, so there is none between them.
+- **Page copy.** The banner title and subtitle and the two headings are edited
+  in the Studio under *Drops* (`dropsPage`).
 
 ### How the cards look and arrive
 
 A card is capped at **two lines of title and five lines of summary** (plus its
-16:9 image and the row its corner ornaments sit in), clamped visually with
+16:9 image and its type badge), clamped visually with
 `line-clamp` — the whole text stays in the
 markup, so search engines and screen readers get the full sentence and only
 the box is capped. Cards with less text stay shorter, which is what keeps the
@@ -643,8 +645,6 @@ Deliberately not built yet. Listed roughly in the order they would pay off.
 - **The about teaser's photo** can be replaced in the Studio: Portada →
   Terapeuta → Foto. Until one is set it shows Laura's portrait from the
   brand assets (spec 05c).
-- **The `/drops` pages in guide v2.** Spec 05c moved them onto the v2 tokens
-  without redesigning them; a follow-up spec gives them the v2 language.
 - **Session prices and durations to confirm.** The defaults (55 € / 60 min,
   75 € / 90 min, 30 € / 30 min) are placeholders; set the real ones per
   session in Studio → Sesiones.
@@ -676,14 +676,15 @@ closes.
 |     | `packages/contracts`, Nest config/auth scaffold, migrations in repo)      | done     |
 | 04b | Drops page oldie (classical ornaments: banner frame, card corners,        |          |
 |     | pagination flanks)                                                        | done     |
-| 04c | Drops white corners (lighter banner frame, framed drop image)             | done     |
+| 04c | Drops white corners (lighter banner frame, framed drop image)             | retired  |
 | 05  | Landing page blocks                                                       | done     |
 | 05b | Improve blocks format                                                     | done     |
 | 05c | Redesign system (guide v2: tokens, landing rebuild, vector flowers)       | done     |
+| 05d | Drops restyle (v2, flowers, drop types and filter)                        | done     |
 | 06  | Booking request form (*reserva*)                                          | todo     |
 | 06b | Booking email notifications                                               | deferred |
 | 07  | About page                                                                | todo     |
-| 08  | Blog `/drops` completion (kind, topics, toasts)                           | todo     |
+| 08  | Blog `/drops` completion (topics, toasts)                                 | todo     |
 | 09  | Auth with Supabase (profiles, roles, sessions)                            | todo     |
 | 10  | Admin visibility area (`/admin`)                                          | todo     |
 | 11  | Shop `/tienda` with Shopify                                               | todo     |
@@ -765,6 +766,7 @@ shape that crosses the boundary between the client and the API:
 | :----- | :--------- |
 | `bookingRequestSchema` | the *reserva* payload (a placeholder until spec 06) |
 | `apiErrorSchema`, `API_ERROR_CODES` | the one error shape the API returns |
+| `DROP_TYPES`, `DROP_TYPE_LABELS`, `isDropType()` | the four kinds of drop, shared by the Studio and the client |
 | `BLOCKS`, `PAGES`, `visibilityKey()` | what `/admin` can switch off, and the key `site_visibility` stores it under |
 | `Database` | types generated from the live schema |
 

@@ -1,3 +1,4 @@
+import { DEFAULT_DROP_TYPE, isDropType, type DropType } from '@kat-hu/contracts';
 import {
   sanityClient,
   type PortableTextNode,
@@ -19,6 +20,8 @@ export interface Post {
   /** URL segment under /drops — from the Studio's `slug` field. */
   slug: string;
   title: string;
+  /** The kind of drop; `post` when the Studio has none or an unknown one. */
+  dropType: DropType;
   /** Editor-written summary; falls back to the opening of `body`. */
   excerpt: string;
   /** ISO date, used for ordering and <time datetime>. */
@@ -32,6 +35,7 @@ const POST_FIELDS = /* groq */ `
   "id": _id,
   "slug": slug.current,
   title,
+  dropType,
   excerpt,
   "date": coalesce(publishedAt, _createdAt),
   mainImage,
@@ -74,6 +78,7 @@ export function deriveExcerpt(body: PortableTextNode[] = [], limit = 160): strin
 function normalise(raw: Post): Post {
   return {
     ...raw,
+    dropType: isDropType(raw.dropType) ? raw.dropType : DEFAULT_DROP_TYPE,
     excerpt: raw.excerpt?.trim() || deriveExcerpt(raw.body),
     body: raw.body ?? [],
   };

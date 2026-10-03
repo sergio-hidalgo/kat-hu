@@ -1,10 +1,8 @@
 /**
  * The owner's flower drawings as vectors (spec 05c), traced from the PNGs in
  * `references/` so they can be recoloured by token rather than shipped once
- * per colour. Two of guide §06's three botanical languages:
+ * per colour. One of guide §06's botanical languages:
  *
- * - **Siluetas planas** — `process-1..3`: one flat violet silhouette each, the
- *   large icons of the process steps. Small (≈5 KB), so they are inlined.
  * - **Línea fina** — `line-*`: a line drawing over a faint wash of the same
  *   colour (the wash is the silhouette at 22% opacity), for the margins of a
  *   band. 38–96 KB each, so each is a cached file used as a CSS mask over
@@ -13,7 +11,7 @@
  *   where these are `hidden` — never downloads them. (An `<svg><use>` would
  *   have been fetched even when hidden: 214 KB on a phone, spec 05c.)
  *
- * The third language, the *flor prensada*, is a photograph of a real pressed
+ * The other language, the *flor prensada*, is a photograph of a real pressed
  * flower — the palette's one exception — and stays a raster.
  *
  * Every drawing is decoration: `aria-hidden`, never a target, and never
@@ -48,13 +46,3 @@ export function aspectRatio(viewBox: string): string {
 
 /** Guide §06: the línea fina is drawn in Glicina. */
 export const LINE_TONE = 'text-wisteria';
-
-/** Guide §07, *Panel de proceso*: the step silhouettes are violet on the Panel. */
-export const PROCESS_TONE = 'text-violet';
-
-/** The process drawings, cycled by step position. */
-export const PROCESS_COUNT = 3;
-
-export function processIndex(position: number): 1 | 2 | 3 {
-  return ((position % PROCESS_COUNT) + 1) as 1 | 2 | 3;
-}

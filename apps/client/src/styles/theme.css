@@ -116,7 +116,7 @@
   --ease-soft: var(--ease);
 
   /* Guide §05's reference points: 480 · 760 · 1024 · 1280. `2xl` keeps
-     Tailwind's 1536 — the guide stops at 1280 and CornerFrame steps once more. */
+     Tailwind's 1536 — the guide stops at 1280. */
   --breakpoint-*: initial;
   --breakpoint-sm: 30rem;
   --breakpoint-md: 47.5rem;

@@ -4,7 +4,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import Flora from './Flora.astro';
 import SectionEdge from './SectionEdge.astro';
-import { LINE_STUDIES, aspectRatio, processIndex } from './flora';
+import { LINE_STUDIES, aspectRatio } from './flora';
 import sharp from 'sharp';
 import { FOOTER_ASPECT, FOOTER_LAYER, GROUND_LAYER, PLANTS_LAYER, footerMaskStyle, maskStyle, plantsMaskStyle, sidesOnly } from './edge';
 
@@ -63,9 +63,6 @@ async function render(component: Parameters<AstroContainer['renderToString']>[0]
 describe('vector assets', () => {
   const files = [
     ...Object.keys(EDGES),
-    'flora-process-1.svg',
-    'flora-process-2.svg',
-    'flora-process-3.svg',
     ...Object.keys(LINE_STUDIES).map((name) => `flora-line-${name}.svg`),
   ];
 
@@ -80,13 +77,6 @@ describe('vector assets', () => {
     expect(svg).not.toContain('<?xml');
     expect(svg).not.toContain('<metadata');
   });
-
-  it.each(['flora-process-1.svg', 'flora-process-2.svg', 'flora-process-3.svg'])(
-    '%s is inlined, so it has no id to collide with the page’s',
-    (file) => {
-      expect(readFileSync(brand(file), 'utf8')).not.toMatch(/\sid="/);
-    },
-  );
 
   it.each(Object.keys(LINE_STUDIES))('line study %s is one drawing, a line over a faint wash', (name) => {
     const svg = readFileSync(brand(`flora-line-${name}.svg`), 'utf8');
@@ -123,16 +113,6 @@ describe('vector assets', () => {
 });
 
 describe('Flora', () => {
-  it('inlines a process silhouette as hidden decoration, violet by default', async () => {
-    const html = await render(Flora, { process: 2, class: 'w-24' });
-
-    expect(html).toContain('aria-hidden="true"');
-    expect(html).toContain('data-flora="process-2"');
-    expect(html).toContain('text-violet');
-    expect(html).toContain('<svg');
-    expect(html).not.toMatch(HEX);
-  });
-
   it('paints a line study through its file as a mask, Glicina by default, at its own aspect', async () => {
     const html = decode(await render(Flora, { line: 'leaf', class: 'w-24' }));
 
@@ -154,10 +134,6 @@ describe('Flora', () => {
 
     expect(html).toContain('text-violet');
     expect(html).not.toContain('text-wisteria');
-  });
-
-  it('cycles the three process drawings by position', () => {
-    expect([0, 1, 2, 3, 4].map(processIndex)).toEqual([1, 2, 3, 1, 2]);
   });
 });
 

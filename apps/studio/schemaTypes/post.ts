@@ -1,3 +1,4 @@
+import { DROP_TYPES, DROP_TYPE_LABELS } from '@kat-hu/contracts';
 import { defineArrayMember, defineField, defineType } from 'sanity';
 
 /**
@@ -15,6 +16,18 @@ export const post = defineType({
       title: 'Título',
       type: 'string',
       validation: (rule) => rule.required().error('El título es obligatorio.'),
+    }),
+    defineField({
+      name: 'dropType',
+      title: 'Tipo de drop',
+      type: 'string',
+      description: 'Aparece como etiqueta en el listado y en la entrada, y permite filtrar.',
+      options: {
+        list: DROP_TYPES.map((value) => ({ value, title: DROP_TYPE_LABELS[value] })),
+        layout: 'radio',
+      },
+      initialValue: 'post',
+      validation: (rule) => rule.required().error('Elige el tipo de drop.'),
     }),
     defineField({
       name: 'slug',
@@ -78,18 +91,20 @@ export const post = defineType({
     }),
   ],
   preview: {
-    select: { title: 'title', subtitle: 'publishedAt', media: 'mainImage' },
-    prepare({ title, subtitle, media }) {
+    select: { title: 'title', subtitle: 'publishedAt', media: 'mainImage', dropType: 'dropType' },
+    prepare({ title, subtitle, media, dropType }) {
+      const date = subtitle
+        ? new Date(subtitle).toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : 'Sin fecha';
+      const label = DROP_TYPES.find((type) => type === dropType);
       return {
         title,
         media,
-        subtitle: subtitle
-          ? new Date(subtitle).toLocaleDateString('es-ES', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })
-          : 'Sin fecha',
+        subtitle: label ? `${DROP_TYPE_LABELS[label]} · ${date}` : date,
       };
     },
   },

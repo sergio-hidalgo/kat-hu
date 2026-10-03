@@ -22,7 +22,7 @@ import PressedFlower from '../../components/ui/PressedFlower.astro';
 import SectionEdge from '../../components/ui/SectionEdge.astro';
 import Testimonial from '../../components/ui/Testimonial.astro';
 import Toast from '../../components/ui/Toast.astro';
-import Ornament from '../../components/ui/Ornament.astro';
+import FilterChip from '../../components/ui/FilterChip.astro';
 import ServiceCard from '../../components/ui/ServiceCard.astro';
 import SpotIllustration from '../../components/ui/SpotIllustration.astro';
 import { TEXT_LINK, TEXT_LINK_ON_VIOLET } from '../../components/ui/link';
@@ -262,14 +262,7 @@ const bands = [
   <Section padding="sm" surface="lavender">
     <Grid class="gap-y-8">
       <h2 class="col-span-12 text-h2">Flores</h2>
-      <div class="col-span-12 flex flex-wrap items-end gap-8 rounded bg-panel p-6 md:col-span-6">
-        <Flora process={1} class="w-20" />
-        <Flora process={2} class="w-20" />
-        <Flora process={3} class="w-20" />
-        <Flora process={1} class="w-20 text-graphite" />
-        <p class="max-w-none text-xs text-graphite">Siluetas planas: violeta sobre el Panel (y en Grafito)</p>
-      </div>
-      <div class="col-span-12 flex flex-wrap items-end gap-6 md:col-span-6">
+      <div class="col-span-12 flex flex-wrap items-end gap-6">
         <Flora line="flower" class="w-28" />
         <Flora line="leaf" class="w-24" />
         <Flora line="daisy" class="w-24 text-violet" />
@@ -298,30 +291,19 @@ const bands = [
 
   <Section padding="sm">
     <Grid class="gap-y-8">
-      <h2 class="col-span-12 text-h2">Ornamentos de /drops</h2>
-      <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6">
-        <Ornament name="small-corner" class="w-10" />
-        <Ornament name="small-corner" flip="x" class="w-10" />
-        <p class="max-w-none text-xs text-slate">small-corner: esquinas de tarjeta</p>
+      <h2 class="col-span-12 text-h2">Tipos de drop</h2>
+      <div class="col-span-12 flex flex-wrap items-center gap-3">
+        <Chip tone="type" kind="post">Post</Chip>
+        <Chip tone="type" kind="curiosidad">Curiosidad</Chip>
+        <Chip tone="type" kind="consejo">Consejo</Chip>
+        <Chip tone="type" kind="truco">Truco</Chip>
+        <p class="max-w-none text-xs text-slate">Etiqueta de tipo: en la tarjeta y en la cabecera de un drop</p>
       </div>
-      <div class="col-span-12 flex flex-wrap items-center gap-8 md:col-span-6">
-        <Ornament name="side" class="w-9" />
-        <Ornament name="side" flip="x" class="w-9" />
-        <p class="max-w-none text-xs text-slate">side: flancos de paginación</p>
-      </div>
-    </Grid>
-  </Section>
-
-  <Section padding="sm" surface="violet">
-    <Grid class="gap-y-8">
-      <div class="col-span-12 flex flex-wrap items-center gap-8">
-        <Ornament name="small-corner" knockout flip="y" class="w-12" />
-        <Ornament name="small-corner" knockout flip="both" class="w-12" />
-        <Ornament name="small-corner" knockout class="w-12" />
-        <Ornament name="small-corner" knockout flip="x" class="w-12" />
-        <p class="max-w-none text-xs text-lavender">
-          small-corner en Crema: marco del banner y de la imagen de un drop
-        </p>
+      <div class="col-span-12 flex flex-wrap items-center gap-2">
+        <FilterChip label="Todos" value="all" pressed />
+        <FilterChip label="Post" value="post" />
+        <FilterChip label="Curiosidad" value="curiosidad" />
+        <p class="max-w-none text-xs text-slate">Filtro: reposo, pulsado (con check), hover y foco con el teclado</p>
       </div>
     </Grid>
   </Section>
