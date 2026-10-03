@@ -28,6 +28,14 @@ export {
   type ApiErrorCode,
 } from './errors.js';
 
+export {
+  DEFAULT_DROP_TYPE,
+  DROP_TYPES,
+  DROP_TYPE_LABELS,
+  isDropType,
+  type DropType,
+} from './drops.js';
+
 export { bookingRequestSchema, type BookingRequest } from './booking.js';
 
 export type {

@@ -4,9 +4,6 @@
  * `PostCard`s `/drops` shows, and the way to all of them. Hidden by default
  * until spec 08 finishes `/drops`.
  *
- * The cards bring their two corner ornaments with them — they are the card's
- * own, so the ornament rule follows `PostCard` wherever it is placed.
- *
  * With no posts, or Sanity unreachable, it renders nothing rather than an
  * empty heading, and never takes the page down with it.
  */
@@ -52,6 +49,7 @@ const [posts, counts] = await Promise.all([
               excerpt={post.excerpt}
               date={post.date}
               mainImage={post.mainImage}
+              dropType={post.dropType}
               likes={counts[post.id] ?? 0}
             />
           </div>

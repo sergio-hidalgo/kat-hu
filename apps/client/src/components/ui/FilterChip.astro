@@ -1,0 +1,35 @@
+---
+/**
+ * A pill you press to filter (spec 05d). Unlike `Chip`, which only labels, this
+ * is a `<button aria-pressed>` with a 44px target. The pressed state is told by
+ * colour, weight *and* a check, never colour alone (COL-04). The page script
+ * flips `aria-pressed`; the classes for both states are on the element, keyed
+ * to that attribute, so there is one source of the look.
+ */
+import { Check } from '@lucide/astro';
+
+interface Props {
+  label: string;
+  /** What the script reads back: a drop type's id, or `all`. */
+  value: string;
+  pressed?: boolean;
+  class?: string;
+}
+
+const { label, value, pressed = false, class: className } = Astro.props;
+---
+
+<button
+  type="button"
+  data-filter={value}
+  aria-pressed={pressed ? 'true' : 'false'}
+  class:list={[
+    'group inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-cream px-4 font-body text-sm text-ink transition-colors duration-fast',
+    'hover:border-stone-strong active:bg-border',
+    'aria-pressed:border-violet aria-pressed:bg-lavender aria-pressed:font-semibold',
+    className,
+  ]}
+>
+  <Check size={16} stroke-width={2} aria-hidden="true" class="hidden group-aria-pressed:block" />
+  {label}
+</button>

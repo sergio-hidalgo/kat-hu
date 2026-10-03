@@ -24,6 +24,7 @@ const post = {
   title,
   excerpt,
   date: '2026-09-02',
+  dropType: 'post',
   likes: 4,
 };
 
@@ -79,18 +80,43 @@ describe('PostCard', () => {
     expect(html).toContain('line-clamp-5');
   });
 
-  it('wears two small corners, the right one mirrored, with or without an image', async () => {
+  it('wears no corner ornaments', async () => {
     for (const props of [{ ...post, mainImage }, post]) {
       const html = await render(props);
-      const corners = [...html.matchAll(/data-ornament="small-corner" class="([^"]*)"/g)].map(
-        ([, classes]) => classes,
-      );
 
-      // Spec 04b: bottom-left as drawn, bottom-right as its mirror.
-      expect(corners).toHaveLength(2);
-      expect(corners[0]).not.toContain('-scale-x-100');
-      expect(corners[1]).toContain('-scale-x-100');
-      expect(html.match(/aria-hidden="true" data-ornament/g)).toHaveLength(2);
+      expect(html).not.toContain('data-ornament');
+    }
+  });
+
+  it('closes with the type badge, a label and not a link', async () => {
+    const labels = { post: 'Post', curiosidad: 'Curiosidad', consejo: 'Consejo', truco: 'Truco' };
+
+    for (const [dropType, label] of Object.entries(labels)) {
+      const html = await render({ ...post, mainImage, dropType });
+      const badge = html.match(/<span[^>]*data-drop-badge[^>]*>\s*([^<]*?)\s*<\/span>/);
+
+      expect(badge?.[1]).toBe(label);
+      expect(html).toContain(`data-drop-type="${dropType}"`);
+      // The badge is the last thing in the card: nothing but closing tags after it.
+      expect(html.slice(html.indexOf('data-drop-badge'))).not.toMatch(/<(a|h3|time)\b/);
+    }
+  });
+
+  it('colours the badge by type: Lavanda, Piedra, Glicina, Hueso', async () => {
+    const surfaces = {
+      post: 'bg-lavender',
+      curiosidad: 'bg-stone',
+      consejo: 'bg-wisteria',
+      truco: 'bg-bone',
+    };
+
+    for (const [dropType, surface] of Object.entries(surfaces)) {
+      const html = await render({ ...post, mainImage, dropType });
+      const classes = html.match(/<span[^>]*class="([^"]*)"[^>]*data-drop-badge|<span[^>]*data-drop-badge[^>]*class="([^"]*)"/);
+      const badge = (classes?.[1] ?? classes?.[2] ?? '').split(' ');
+
+      expect(badge).toContain(surface);
+      expect(badge).toContain('text-ink');
     }
   });
 

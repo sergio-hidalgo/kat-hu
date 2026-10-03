@@ -5,15 +5,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
 import PostCard from '../../components/drops/PostCard.astro';
-import BannerFrame from '../../components/drops/BannerFrame.astro';
-import Ornament from '../../components/ui/Ornament.astro';
-import { BAND_PT, CHROME_PT, SCROLL_MT } from '../../components/site/header';
+import FilterChip from '../../components/ui/FilterChip.astro';
+import Flora from '../../components/ui/Flora.astro';
+import { DROP_TYPE_LABELS } from '@kat-hu/contracts';
+import { offeredTypes } from '../../lib/drop-filter';
+import { BAND_PT, CHROME_PT } from '../../components/site/header';
 import { announcement } from '../../data/announcement';
 import { getAllPosts } from '../../data/posts';
+import { getDropsPageCopy } from '../../data/drops-page';
 import { getLikeCounts, rankPosts } from '../../lib/likes';
 import banner from '../../assets/brand/banner_drops.jpg';
 
 const posts = await getAllPosts();
+const copy = await getDropsPageCopy();
 const counts = await getLikeCounts();
 
 /**
@@ -28,6 +32,9 @@ const ranked = rankPosts(
   posts.map((post) => ({ ...post, likes: counts[post.id] ?? 0 })),
   COLUMNS,
 );
+
+/** Every chip any layout could need; the script shows the ones the block it renders holds. */
+const typeChips = offeredTypes(posts);
 
 const deal = <T,>(items: T[]) =>
   Array.from({ length: COLUMNS }, (_, column) =>
@@ -116,17 +123,16 @@ const arrowClass =
       class="absolute inset-0 -z-10 bg-linear-to-t from-ink/80 to-ink/20"
     >
     </div>
-    <BannerFrame stripe={announcement.enabled} />
 
     {/* Display type is hero-only and once per page (guide §2.4); this is that
         one. No action in the band — the primary action on a reading page is a
-        card (HIE-01). The top and bottom padding clear the frame's corners
-        (spec 04b); the words stay on column 1 and the ornaments keep to the margin. */}
-    <Grid class:list={[heroTop, 'pb-16 md:pb-14 lg:pb-16']}>
+        card (HIE-01). The foot keeps the next band's botanical edge clear of the
+        words (spec 05d); they stay on column 1. */}
+    <Grid class:list={[heroTop, 'pb-[calc(4rem+var(--edge-height))]']}>
       <div class="col-span-12 pt-14 md:pt-12 lg:col-span-8 lg:pt-16">
-        <h1 class="text-display text-cream">Mis drops</h1>
+        <h1 class="text-display text-cream">{copy.banner.title}</h1>
         <p class="mt-4 text-lead text-cream">
-          Artículos, trucos, recomendaciones, y más...
+          {copy.banner.subtitle}
         </p>
       </div>
     </Grid>
@@ -143,9 +149,22 @@ const arrowClass =
       </Section>
     ) : (
       <>
-        <Section id="featured" padding="sm">
+        {/* Crema, with the silhouette over the banner's foot, filled in the band's
+            own colour (the edge reads `text-*` from its band, as on the landing).
+            The recent block shares this colour, so there is no edge between the
+            two. The flowers sit behind the cards, in Piedra at half opacity:
+            a daisy at the top right (75% on screen) and a flipped sprig low on the left. */}
+        <Section
+          id="featured"
+          padding="sm"
+          edge
+          surface="cream"
+          class="isolate overflow-x-clip text-ink [&_[data-edge]]:text-cream"
+        >
+          <Flora line="daisy" class="absolute top-[2%] -right-[3.5vw] -z-10 hidden w-[14vw] text-stone opacity-50 lg:block" />
+          <Flora line="sprig" class="absolute top-[61%] -left-[5.2vw] -z-10 hidden w-[21vw] -rotate-5 -scale-x-100 text-stone opacity-50 lg:block" />
           <Grid class={cardGap}>
-            <h2 class="col-span-12 text-h2">Los drops que más gustan</h2>
+            <h2 class="col-span-12 text-h2 text-violet">{copy.featured.title}</h2>
             {
               deal(ranked.featured).map((column, index) => (
                 <div class={columnClass} data-featured-column={index}>
@@ -158,23 +177,70 @@ const arrowClass =
           </Grid>
         </Section>
 
-        {/* `SCROLL_MT` is the header's own height, imported rather than
-            retyped, so paging aligns this section below the fixed band
-            instead of behind it; the section's `py-10 md:py-12` then gives
-            the space above the heading (issues I-007, spec 03d). */}
+        {/* Paging scrolls this section's top to the top of the screen, so the
+            section's own top padding is the clearance under the chrome: it is
+            the band's height (`BAND_PT`), read from `header.ts` rather than
+            retyped, and there is no scroll margin on top of it — one made the
+            featured cards' foot show above the filters (spec 05d, I-007). */}
+        {/* No surface of its own: the page is already Crema, and a band that
+            painted it again would cover the featured band's sprig where it runs
+            on past the join. The band's content still paints over the sprig. */}
         <Section
           id="recent"
           padding="sm"
-          class={SCROLL_MT}
+          class:list={[BAND_PT, 'relative isolate overflow-x-clip text-graphite']}
           hidden={ranked.rest.length === 0}
         >
+          {/* Piedra at half opacity, above the page and below the cards, sized and
+              placed from the owner's markup of 2026-10-02 (in vw so they scale
+              with the grid): a leaf past the top-right edge, and two flowers
+              at the foot, the second over the first. */}
+          <Flora line="leaf" class="absolute top-[7.4vw] -right-[3.7vw] -z-10 hidden w-[21vw] -rotate-15 text-stone opacity-50 lg:block" />
+          <Flora line="flower" class="absolute -bottom-[0.7vw] -left-[7.7vw] -z-10 hidden w-[17.7vw] text-stone opacity-50 lg:block" />
+          <Flora line="flower" class="absolute bottom-[6.3vw] left-[4.1vw] -z-10 hidden w-[10.6vw] text-stone opacity-50 lg:block" />
+          {/* The type filter heads the whole block, centred, above its title and
+              cards (owner, 2026-10-02). Hidden until the script has narrowed it
+              to the types the block holds — without JS there is nothing to
+              filter with. */}
+          <Grid class="mb-10 md:mb-12">
+            <div class="col-span-12 flex flex-col items-center gap-4 text-center">
+              {
+                typeChips.length > 0 && (
+                  <div
+                    id="recent-filter"
+                    role="group"
+                    aria-label="Filtrar por tipo"
+                    class="hidden flex-wrap justify-center gap-2"
+                  >
+                    <FilterChip label="Todos" value="all" pressed />
+                    {typeChips.map((type) => (
+                      <FilterChip label={DROP_TYPE_LABELS[type]} value={type} />
+                    ))}
+                  </div>
+                )
+              }
+              <span id="recent-filter-status" class="sr-only" aria-live="polite"></span>
+              {/* A stale `?tipo=` link can name a type with no drops left to show:
+                  say so and offer the way out (PAT-07). */}
+              <div id="recent-empty" hidden>
+                <p class="max-w-none text-graphite">Todavía no hay drops de este tipo.</p>
+                <button
+                  type="button"
+                  data-filter-reset
+                  class="mt-2 inline-flex h-11 items-center text-violet underline underline-offset-4 hover:text-violet-hover"
+                >
+                  Ver todos
+                </button>
+              </div>
+            </div>
+          </Grid>
           {/* The same row gap as the featured section, so both headings sit
               the same distance above their cards — and the same unit as every
               other gap on the page (issue I-005). */}
           <Grid class={cardGap}>
-            <h2 class="col-span-12 text-h2 md:col-span-6 md:row-start-1 lg:col-span-4">
-              También puedes leer...
-            </h2>
+            <div class="col-span-12 md:col-span-6 md:row-start-1 lg:col-span-4">
+              <h2 class="text-h2 text-violet">{copy.recent.title}</h2>
+            </div>
             {
               deal(ranked.rest).map((column, index) => (
                 <div
@@ -197,9 +263,6 @@ const arrowClass =
               class="col-span-12 hidden items-center justify-center gap-2 md:row-start-3"
               aria-label="Paginación"
             >
-              {/* 28px on phones, 36px from `sm`. On a very narrow screen the flanks give
-                  way first (`shrink-100`, `min-w-0`), so the 44px targets never do (spec 04b). */}
-              <Ornament name="side" class="w-7 min-w-0 shrink-100 sm:w-9" />
               <button type="button" class={arrowClass} data-page-step="-1" aria-label="Página anterior">
                 <ChevronLeft size={20} stroke-width={1.5} />
               </button>
@@ -207,7 +270,6 @@ const arrowClass =
               <button type="button" class={arrowClass} data-page-step="1" aria-label="Página siguiente">
                 <ChevronRight size={20} stroke-width={1.5} />
               </button>
-              <Ornament name="side" flip="x" class="w-7 min-w-0 shrink-100 sm:w-9" />
               <span id="recent-page-status" class="sr-only" aria-live="polite"></span>
             </nav>
           </Grid>
@@ -220,8 +282,21 @@ const arrowClass =
 <script>
   import { getLikeCounts, rankPosts, likesEnabled } from '../../lib/likes';
   import { createReveal, type Reveal } from '../../lib/reveal';
+  import { DROP_TYPE_LABELS, isDropType, type DropType } from '@kat-hu/contracts';
+  import {
+    filterByType,
+    offeredTypes,
+    parseTypeParam,
+    type DropFilter,
+  } from '../../lib/drop-filter';
 
-  type Item = { node: HTMLElement; id: string; date: string; likes: number };
+  type Item = {
+    node: HTMLElement;
+    id: string;
+    date: string;
+    likes: number;
+    dropType: DropType;
+  };
 
   const featuredColumns = Array.from(
     document.querySelectorAll<HTMLElement>('[data-featured-column]'),
@@ -232,6 +307,9 @@ const arrowClass =
   const nav = document.getElementById('recent-pages');
   const numbers = document.getElementById('recent-page-numbers');
   const status = document.getElementById('recent-page-status');
+  const filterBar = document.getElementById('recent-filter');
+  const filterStatus = document.getElementById('recent-filter-status');
+  const empty = document.getElementById('recent-empty');
 
   /** Matches the `md:` and `lg:` breakpoints the column classes are written to. */
   const columnCount = () => {
@@ -269,7 +347,29 @@ const arrowClass =
       id: node.dataset.postId ?? '',
       date: node.dataset.date ?? '',
       likes: Number(node.dataset.likes ?? 0),
+      dropType: isDropType(node.dataset.dropType) ? node.dataset.dropType : 'post',
     }));
+
+  /**
+   * The reader's type filter (spec 05d), from `?tipo=` on load and mirrored
+   * back with `replaceState`, so a filtered list can be shared without a
+   * history entry per click. It narrows only the recent block: the featured
+   * drops are chosen from every drop first.
+   */
+  let filter: DropFilter = parseTypeParam(new URLSearchParams(location.search).get('tipo'));
+  /** Set by the reader's own click, so the first paint stays silent. */
+  let announce = false;
+
+  const setFilter = (next: DropFilter) => {
+    filter = next;
+    announce = true;
+    const url = new URL(location.href);
+    if (next === 'all') url.searchParams.delete('tipo');
+    else url.searchParams.set('tipo', next);
+    history.replaceState(null, '', url);
+    page = 1;
+    paint({ settle: true });
+  };
 
   /** Created after the first paint; null under reduced motion (spec 03c). */
   let reveal: Reveal | null = null;
@@ -306,9 +406,38 @@ const arrowClass =
     });
   }
 
+  /**
+   * Shows the chips for the types the block holds, marks the pressed one, and
+   * — only after the reader's own click — says what is now listed. The bar is
+   * hidden when there is nothing to choose between.
+   */
+  function paintFilter(everyRest: Item[], shown: Item[]) {
+    if (!filterBar) return;
+
+    const offered = offeredTypes(everyRest);
+    filterBar.classList.toggle('hidden', offered.length === 0);
+    filterBar.classList.toggle('flex', offered.length > 0);
+
+    for (const chip of filterBar.querySelectorAll<HTMLButtonElement>('[data-filter]')) {
+      const value = chip.dataset.filter ?? 'all';
+      chip.hidden = value !== 'all' && !offered.some((type) => type === value);
+      chip.setAttribute('aria-pressed', String(value === filter));
+    }
+
+    if (announce && filterStatus) {
+      filterStatus.textContent =
+        filter === 'all'
+          ? `Mostrando todos los drops`
+          : `${shown.length} ${shown.length === 1 ? 'drop' : 'drops'} de tipo ${DROP_TYPE_LABELS[filter]}`;
+    }
+  }
+
   function paint({ settle = false } = {}) {
     const columns = columnCount();
-    const { featured, rest } = rankPosts(items, featuredCount(columns));
+    const { featured, rest: everyRest } = rankPosts(items, featuredCount(columns));
+    const rest = filterByType(everyRest, filter);
+
+    paintFilter(everyRest, rest);
 
     const size = pageSize(columns);
     const pages = Math.max(1, Math.ceil(rest.length / size));
@@ -317,8 +446,11 @@ const arrowClass =
     fill(featuredColumns, columns, featured);
     fill(recentColumns, columns, rest.slice((page - 1) * size, page * size), settle);
 
+    // The block is hidden only when there is nothing to filter at all; a
+    // filter that matches nothing keeps it, with its way back.
     const recent = document.getElementById('recent');
-    if (recent) recent.hidden = rest.length === 0;
+    if (recent) recent.hidden = everyRest.length === 0;
+    if (empty) empty.hidden = !(everyRest.length > 0 && rest.length === 0);
 
     if (!nav || !numbers || !status) return;
 
@@ -367,7 +499,7 @@ const arrowClass =
         'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-body text-xs tabular-nums transition-colors duration-fast ' +
         (value === page
           ? 'border border-border bg-cream font-semibold text-ink'
-          : 'text-slate hover:bg-bone hover:text-ink active:bg-border');
+          : 'text-slate hover:bg-lavender hover:text-ink active:bg-border');
       if (value === page) button.setAttribute('aria-current', 'page');
       button.setAttribute('aria-label', `Página ${value}`);
       return button;
@@ -395,6 +527,12 @@ const arrowClass =
 
     status.textContent = `Página ${page} de ${pages}`;
   }
+
+  filterBar?.addEventListener('click', (event) => {
+    const chip = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-filter]');
+    if (chip) setFilter(parseTypeParam(chip.dataset.filter));
+  });
+  empty?.querySelector('[data-filter-reset]')?.addEventListener('click', () => setFilter('all'));
 
   nav?.addEventListener('click', (event) => {
     const target = (event.target as HTMLElement | null)?.closest('button');

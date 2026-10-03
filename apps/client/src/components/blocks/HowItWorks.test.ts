@@ -79,7 +79,6 @@ describe('HowItWorks', () => {
       html.match(/data-placeholder aria-hidden="true" class="[^"]*\baspect-\[7\/3\][^"]*\bbg-violet\b/g),
     ).toHaveLength(3);
     expect(html).not.toContain('<img');
-    expect(html).not.toContain('data-flora="process');
   });
 
   it('shows the owner’s picture from the CDN, cropped to the slot, with its alt, instead of the placeholder', async () => {

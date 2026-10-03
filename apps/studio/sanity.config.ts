@@ -24,7 +24,7 @@ const dataset = process.env.SANITY_STUDIO_DATASET || 'production';
  * fixed id, left out of "new document", and stripped of duplicate and delete,
  * so the editor can never make a second (`content-sanity`).
  */
-const SINGLETONS = new Set(['landing']);
+const SINGLETONS = new Set(['landing', 'dropsPage']);
 
 /**
  * The landing's lists (spec 05b), right under *Portada* and each sorted by its
@@ -54,6 +54,10 @@ export default defineConfig({
               .title('Portada')
               .id('landing')
               .child(S.document().schemaType('landing').documentId('landing')),
+            S.listItem()
+              .title('Drops')
+              .id('dropsPage')
+              .child(S.document().schemaType('dropsPage').documentId('dropsPage')),
             ...ORDERED_LISTS.map(({ type, title }) =>
               S.listItem()
                 .title(title)

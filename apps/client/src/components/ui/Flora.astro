@@ -2,51 +2,30 @@
 /**
  * One of the owner's flower drawings, coloured from CSS (see `flora.ts`).
  *
- * `process` draws a flat step silhouette inline; `line` paints a línea-fina
- * study through its cached file as a mask. The caller gives a **width** (`w-24`) and any
- * placement; the height follows the drawing. A `text-*` class replaces the
+ * Paints a línea-fina study through its cached file as a mask. The caller
+ * gives a **width** (`w-24`) and any placement; the height follows the drawing. A `text-*` class replaces the
  * default tone — the drawings take any token, which is why they are vectors.
  */
-import process1 from '../../assets/brand/flora-process-1.svg?raw';
-import process2 from '../../assets/brand/flora-process-2.svg?raw';
-import process3 from '../../assets/brand/flora-process-3.svg?raw';
-import { LINE_LAYER, LINE_STUDIES, LINE_TONE, PROCESS_TONE, aspectRatio, type LineStudy } from './flora';
+import { LINE_LAYER, LINE_STUDIES, LINE_TONE, aspectRatio, type LineStudy } from './flora';
 import { maskStyle } from './edge';
 
-type Props =
-  | { process: 1 | 2 | 3; line?: never; class?: string }
-  | { line: LineStudy; process?: never; class?: string };
+interface Props {
+  line: LineStudy;
+  class?: string;
+}
 
 const props = Astro.props;
-const PROCESS = { 1: process1, 2: process2, 3: process3 } as const;
 
 const hasTone = /\btext-/.test(props.class ?? '');
 
-const study = props.line ? LINE_STUDIES[props.line] : undefined;
-const lineStyle =
-  study && `${maskStyle([[study.url, LINE_LAYER]])} aspect-ratio: ${aspectRatio(study.viewBox)};`;
+const study = LINE_STUDIES[props.line];
+const lineStyle = `${maskStyle([[study.url, LINE_LAYER]])} aspect-ratio: ${aspectRatio(study.viewBox)};`;
 ---
 
-{
-  props.process ? (
-    <span
-      aria-hidden="true"
-      data-flora={`process-${props.process}`}
-      class:list={[
-        'pointer-events-none select-none [&>svg]:block [&>svg]:h-auto [&>svg]:w-full',
-        !hasTone && PROCESS_TONE,
-        props.class,
-      ]}
-    >
-      <Fragment set:html={PROCESS[props.process]} />
-    </span>
-  ) : (
-    <div
-      aria-hidden="true"
-      data-flora={`line-${props.line}`}
-      class:list={['pointer-events-none bg-current select-none', !hasTone && LINE_TONE, props.class]}
-      style={lineStyle}
-    >
-    </div>
-  )
-}
+<div
+  aria-hidden="true"
+  data-flora={`line-${props.line}`}
+  class:list={['pointer-events-none bg-current select-none', !hasTone && LINE_TONE, props.class]}
+  style={lineStyle}
+>
+</div>

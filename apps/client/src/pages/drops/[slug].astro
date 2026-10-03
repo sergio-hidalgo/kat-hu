@@ -3,7 +3,9 @@ import { Heart } from '@lucide/astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
-import FramedImage from '../../components/drops/FramedImage.astro';
+import Chip from '../../components/ui/Chip.astro';
+import Flora from '../../components/ui/Flora.astro';
+import { DROP_TYPE_LABELS } from '@kat-hu/contracts';
 import { getPostBySlug, formatDate } from '../../data/posts';
 import { imageUrl, portableTextToHtml } from '../../lib/sanity';
 import { likesEnabled } from '../../lib/likes';
@@ -30,8 +32,8 @@ const bodyHtml = portableTextToHtml(post.body);
  */
 const proseBody = [
   '[&_p]:mb-4',
-  '[&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:text-h2 [&_h2]:font-heading [&_h2]:text-ink',
-  '[&_h3]:mt-10 [&_h3]:mb-4 [&_h3]:text-h3 [&_h3]:font-body [&_h3]:font-semibold [&_h3]:text-ink',
+  '[&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:text-h2 [&_h2]:font-heading [&_h2]:text-violet',
+  '[&_h3]:mt-10 [&_h3]:mb-4 [&_h3]:text-h3 [&_h3]:font-body [&_h3]:font-semibold [&_h3]:text-violet',
   '[&_h4]:mt-8 [&_h4]:mb-4 [&_h4]:text-h4 [&_h4]:font-body [&_h4]:font-semibold [&_h4]:text-ink',
   '[&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6',
   '[&_li]:mb-1 [&_strong]:font-semibold',
@@ -49,7 +51,7 @@ const proseBody = [
 const backButton = [
   'inline-flex h-11 shrink-0 items-center rounded-full border border-border bg-cream px-4',
   'font-body text-xs text-slate no-underline transition-colors duration-fast',
-  'hover:bg-bone hover:text-ink active:bg-border',
+  'hover:border-stone-strong hover:text-ink active:bg-border',
 ].join(' ');
 ---
 
@@ -58,23 +60,37 @@ const backButton = [
       is not a second grid: the token file's base layer already caps every `p`
       at `max-width: 66ch`, so article paragraphs must never carry
       `max-w-none` (issue I-001). */}
-  <Section padding="sm">
+  {/* Decoration (spec 05d): the same five line drawings as the `/drops` list, in
+      the same sizes, colour (Piedra at half opacity) and layer (above the page,
+      below the content), from `lg`. They keep the list's horizontal places, and
+      since an article's height varies, the vertical ones follow the band's
+      height: the daisy at the top right and the sprig low on the left as in the
+      featured band, the leaf on the right and the two flowers at the foot as in
+      the regular band. The article takes columns 3–10, so all five sit in the
+      margins and clear its text. */}
+  <Section padding="sm" class="relative isolate overflow-x-clip">
+    <Flora line="daisy" class="absolute top-[2%] -right-[3.5vw] -z-10 hidden w-[14vw] text-stone opacity-50 lg:block" />
+    <Flora line="sprig" class="absolute top-[28%] -left-[5.2vw] -z-10 hidden w-[21vw] -rotate-5 -scale-x-100 text-stone opacity-50 lg:block" />
+    <Flora line="leaf" class="absolute top-[45%] -right-[3.7vw] -z-10 hidden w-[21vw] -rotate-15 text-stone opacity-50 lg:block" />
+    <Flora line="flower" class="absolute -bottom-[0.7vw] -left-[7.7vw] -z-10 hidden w-[17.7vw] text-stone opacity-50 lg:block" />
+    <Flora line="flower" class="absolute bottom-[6.3vw] left-[4.1vw] -z-10 hidden w-[10.6vw] text-stone opacity-50 lg:block" />
     <Grid>
       <article class="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-8 lg:col-start-3">
-        <h1 class="text-display">{post.title}</h1>
+        <h1 class="text-display text-violet">{post.title}</h1>
 
         {/* A real control, not the count badge the cards wear: no border, no
             total — the totals belong on /drops, where they are compared. 44px
             target (guide §9), 24px icon because it stands alone (§6). */}
         <div class="mt-1 mb-8 flex items-center gap-2">
-          <p class="max-w-none text-xs text-slate">
+          <p class="flex max-w-none items-center gap-3 text-xs text-slate">
             <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
+            <Chip tone="type" kind={post.dropType} data-drop-badge>{DROP_TYPE_LABELS[post.dropType]}</Chip>
           </p>
           {
             likesEnabled && (
               <button
                 type="button"
-                class="like-button relative inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:bg-bone hover:text-ink active:bg-border disabled:cursor-progress"
+                class="like-button relative inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:bg-lavender hover:text-ink active:bg-border disabled:cursor-progress"
                 data-post-id={post.id}
                 aria-pressed="false"
                 aria-label="Me gusta"
@@ -86,19 +102,17 @@ const backButton = [
           <a href="/drops/" class:list={[backButton, 'ml-auto']}>← Volver</a>
         </div>
 
-        {/* The banner's four white corners, over a faint tint that keeps them
-            off a light photograph (spec 04c). No image, no frame. */}
+        {/* Guide §06's photograph: 8px radius and the small shadow, no overlay.
+            No image, no block. */}
         {
           post.mainImage && (
-            <FramedImage class="mb-8">
-              <img
-                src={imageUrl(post.mainImage).width(1600).url()}
-                alt={post.mainImage.alt ?? ''}
-                loading="eager"
-                decoding="async"
-                class="h-auto w-full"
-              />
-            </FramedImage>
+            <img
+              src={imageUrl(post.mainImage).width(1600).url()}
+              alt={post.mainImage.alt ?? ''}
+              loading="eager"
+              decoding="async"
+              class="mb-8 h-auto w-full rounded shadow-sm"
+            />
           )
         }
 

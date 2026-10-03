@@ -132,6 +132,9 @@ importers:
 
   apps/studio:
     dependencies:
+      '@kat-hu/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@sanity/vision':
         specifier: ^6.12.0
         version: 6.12.0(afaf0b2910cf9b5d9764d6d95455e792)

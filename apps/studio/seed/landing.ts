@@ -7,7 +7,7 @@ import { getCliClient } from 'sanity/cli';
  *
  *   pnpm --filter studio seed
  *
- * It writes seven **published** documents with fixed ids to the project and
+ * It writes **published** documents (the landing, the `/drops` page copy, the sessions and the steps) with fixed ids to the project and
  * dataset `sanity.cli.ts` resolves, and it is safe to run again: each one is
  * `createIfNotExists`, so a document the owner has edited is never touched.
  * No testimonials — invented ones published as real would be fabricated
@@ -50,10 +50,16 @@ const DOCUMENTS: SeedDocument[] = [
       headline: 'Lo que cuentan las familias',
       lead: 'Familias multiespecie que ya han pasado por una sesión con kathu.',
     },
-    blogTeaser: {
-      headline: 'Últimos drops',
-      lead: 'Ideas prácticas para entender mejor a tu gato, sin esperar a la próxima sesión.',
+  },
+  {
+    _id: 'dropsPage',
+    _type: 'dropsPage',
+    banner: {
+      title: 'Mis drops',
+      subtitle: 'Artículos, trucos, recomendaciones, y más...',
     },
+    featured: { title: 'Los drops que más gustan' },
+    recent: { title: 'También puedes leer...' },
   },
   {
     _id: 'service-individual',

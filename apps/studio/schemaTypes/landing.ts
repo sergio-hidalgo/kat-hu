@@ -48,26 +48,13 @@ export const landing = defineType({
   type: 'document',
   groups: [
     { name: 'hero', title: 'Cabecera', default: true },
-    { name: 'services', title: 'Sesiones' },
-    { name: 'howItWorks', title: 'Cómo funciona' },
     { name: 'aboutTeaser', title: 'Terapeuta' },
+    { name: 'howItWorks', title: 'Cómo funciona' },
+    { name: 'services', title: 'Sesiones' },
     { name: 'testimonials', title: 'Testimonios' },
-    { name: 'blogTeaser', title: 'Últimos drops' },
   ],
   fields: [
     block('hero', 'Cabecera', [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')]),
-    block(
-      'services',
-      'Sesiones',
-      [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')],
-      'Las sesiones se escriben aparte, en «Sesión».',
-    ),
-    block(
-      'howItWorks',
-      'Cómo funciona',
-      [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')],
-      'Los pasos se escriben aparte, en «Paso».',
-    ),
     // Named «Terapeuta» for the owner (2026-09-28); the field names stay
     // `aboutTeaser.*`, the contract the site reads.
     block('aboutTeaser', 'Terapeuta', [
@@ -108,11 +95,22 @@ export const landing = defineType({
         ],
       }),
     ]),
+    block(
+      'howItWorks',
+      'Cómo funciona',
+      [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')],
+      'Los pasos se escriben aparte, en «Paso».',
+    ),
+    block(
+      'services',
+      'Sesiones',
+      [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')],
+      'Las sesiones se escriben aparte, en «Sesión».',
+    ),
     block('testimonials', 'Testimonios', [
       line('headline', 'Titular', 'Los testimonios se escriben aparte, en «Testimonio». ' + EMPTY),
       paragraph('lead', 'Frase de entrada'),
     ]),
-    block('blogTeaser', 'Últimos drops', [line('headline', 'Titular'), paragraph('lead', 'Frase de entrada')]),
   ],
   preview: {
     prepare: () => ({ title: 'Portada', subtitle: 'Los textos de la página de inicio' }),

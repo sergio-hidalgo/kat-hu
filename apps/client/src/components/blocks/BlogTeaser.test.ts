@@ -19,6 +19,7 @@ const post = (n: number): Post => ({
   title: `Drop número ${n}`,
   excerpt: 'Una idea práctica para entender mejor a tu gato.',
   date: `2026-09-0${n}`,
+  dropType: 'post',
   body: [],
 });
 
