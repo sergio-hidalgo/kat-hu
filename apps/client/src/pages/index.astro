@@ -36,4 +36,8 @@ const copy = await getLandingCopy();
       })
     }
   </div>
+  {/* After the wrapper, never inside it: a script between two bands breaks the rhythm's selectors. */}
+  <script>
+    import '../lib/carousel-boot';
+  </script>
 </BaseLayout>

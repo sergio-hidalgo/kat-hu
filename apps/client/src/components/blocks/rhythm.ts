@@ -48,6 +48,8 @@ export const RHYTHM = [
   // …and only where the colour changes: after the hero, and between groups.
   '[&>section_[data-edge]]:hidden',
   '[&>[data-block=hero]+section_[data-edge]]:block',
+  // Portrait phones from 380px and portrait tablets have every edge 50% taller
+  // through `--edge-height` itself (`theme.css`, owner, 2026-10-06 and 07).
   '[&>:is([data-block=about-teaser],[data-block=how-it-works])+:is([data-block=services],[data-block=testimonials],[data-block=blog-teaser],[data-block=shop-teaser])_[data-edge]]:block',
   '[&>:is([data-block=services],[data-block=testimonials],[data-block=blog-teaser],[data-block=shop-teaser])+:is([data-block=about-teaser],[data-block=how-it-works])_[data-edge]]:block',
 

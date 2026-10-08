@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import { ChevronLeft, ChevronRight } from '@lucide/astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/layout/Section.astro';
@@ -13,12 +13,14 @@ import { BAND_PT, CHROME_PT } from '../../components/site/header';
 import { announcement } from '../../data/announcement';
 import { getAllPosts } from '../../data/posts';
 import { getDropsPageCopy } from '../../data/drops-page';
-import { getLikeCounts, rankPosts } from '../../lib/likes';
+import { rankPosts } from '../../lib/likes';
+import { getLikeCountsCached } from '../../lib/likes-cache';
 import banner from '../../assets/brand/banner_drops.jpg';
+import bannerSm from '../../assets/brand/banner_drops_sm.jpg';
 
 const posts = await getAllPosts();
 const copy = await getDropsPageCopy();
-const counts = await getLikeCounts();
+const counts = await getLikeCountsCached();
 
 /**
  * Rendered for the widest layout — three featured, the rest dealt across three
@@ -81,6 +83,13 @@ const heroTop = announcement.enabled ? CHROME_PT : BAND_PT;
 
 const arrowClass =
   'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:text-ink disabled:cursor-not-allowed disabled:text-stone disabled:hover:text-stone';
+
+/* The phone's crop of the banner (`scripts/banner-mobile.mjs`): 900 of the
+   photograph's 1584 pixels, which is all a window under `md` ever shows. One
+   rendition at its native width — the cover scale lays it out wider than any
+   phone, so a smaller file would only be stretched. */
+const bannerPhone = await getImage({ src: bannerSm, width: 900, format: 'webp', quality: 72 });
+
 ---
 
 <BaseLayout
@@ -109,15 +118,19 @@ const arrowClass =
         centre 62.6%), so anchoring the crop at 65% puts the drop just right of
         centre at every width under `md` and takes the trim off the left. From
         `md` the crop is wide enough to hold it centred. */}
-    <Image
-      src={banner}
-      alt=""
-      widths={[750, 1188, 1584]}
-      sizes="(max-width: 1066px) 1210px, 114vw"
-      loading="eager"
-      fetchpriority="high"
-      class="absolute inset-0 -z-10 h-full w-full rounded-none object-cover object-[65%_50%] md:object-center"
-    />
+    <picture>
+      <source media="(max-width: 47.4999rem)" srcset={bannerPhone.src} width={bannerPhone.attributes.width} height={bannerPhone.attributes.height} />
+      <Image
+        src={banner}
+        alt=""
+        widths={[750, 1188, 1584]}
+        quality={72}
+        sizes="(max-width: 1066px) 1210px, 114vw"
+        loading="eager"
+        fetchpriority="high"
+        class="absolute inset-0 -z-10 h-full w-full rounded-none object-cover object-[65%_50%] md:object-center"
+      />
+    </picture>
     {/* The banner's dark tint (Ink, the darkest token, since spec 05c), never a lightened image with dark text. */}
     <div
       class="absolute inset-0 -z-10 bg-linear-to-t from-ink/80 to-ink/20"
@@ -129,9 +142,9 @@ const arrowClass =
         card (HIE-01). The foot keeps the next band's botanical edge clear of the
         words (spec 05d); they stay on column 1. */}
     <Grid class:list={[heroTop, 'pb-[calc(4rem+var(--edge-height))]']}>
-      <div class="col-span-12 pt-14 md:pt-12 lg:col-span-8 lg:pt-16">
+      <div class="col-span-12 pt-14 text-center md:pt-12 lg:col-span-8 lg:pt-16 lg:text-left">
         <h1 class="text-display text-cream">{copy.banner.title}</h1>
-        <p class="mt-4 text-lead text-cream">
+        <p class="mt-4 text-lead text-cream max-lg:max-w-none">
           {copy.banner.subtitle}
         </p>
       </div>
@@ -161,10 +174,10 @@ const arrowClass =
           surface="cream"
           class="isolate overflow-x-clip text-ink [&_[data-edge]]:text-cream"
         >
-          <Flora line="daisy" class="absolute top-[2%] -right-[3.5vw] -z-10 hidden w-[14vw] text-stone opacity-50 lg:block" />
-          <Flora line="sprig" class="absolute top-[61%] -left-[5.2vw] -z-10 hidden w-[21vw] -rotate-5 -scale-x-100 text-stone opacity-50 lg:block" />
+          <Flora line="daisy" class="absolute top-[2%] -right-[3.5vw] -z-10 hidden w-[14vw] text-stone opacity-50 phone:-right-[6.5vw] phone:w-[26vw] tablet:-right-[5.1vw] tablet:w-[20.4vw] handheld:block lg:block" />
+          <Flora line="sprig" class="absolute top-[61%] -left-[5.2vw] -z-10 hidden w-[21vw] -rotate-5 -scale-x-100 text-stone opacity-50 phone:-left-[9.7vw] phone:w-[39.1vw] tablet:-left-[7.6vw] tablet:w-[30.7vw] handheld:block lg:block" />
           <Grid class={cardGap}>
-            <h2 class="col-span-12 text-h2 text-violet">{copy.featured.title}</h2>
+            <h2 class="col-span-12 text-center text-h2 text-violet md:text-left">{copy.featured.title}</h2>
             {
               deal(ranked.featured).map((column, index) => (
                 <div class={columnClass} data-featured-column={index}>
@@ -195,9 +208,9 @@ const arrowClass =
               placed from the owner's markup of 2026-10-02 (in vw so they scale
               with the grid): a leaf past the top-right edge, and two flowers
               at the foot, the second over the first. */}
-          <Flora line="leaf" class="absolute top-[7.4vw] -right-[3.7vw] -z-10 hidden w-[21vw] -rotate-15 text-stone opacity-50 lg:block" />
-          <Flora line="flower" class="absolute -bottom-[0.7vw] -left-[7.7vw] -z-10 hidden w-[17.7vw] text-stone opacity-50 lg:block" />
-          <Flora line="flower" class="absolute bottom-[6.3vw] left-[4.1vw] -z-10 hidden w-[10.6vw] text-stone opacity-50 lg:block" />
+          <Flora line="leaf" class="absolute top-[7.4vw] -right-[3.7vw] -z-10 hidden w-[21vw] -rotate-15 text-stone opacity-50 phone:top-[13.8vw] phone:-right-[6.9vw] phone:w-[39.1vw] tablet:top-[10.8vw] tablet:-right-[5.4vw] tablet:w-[30.7vw] handheld:block lg:block" />
+          <Flora line="flower" class="absolute -bottom-[0.7vw] -left-[7.7vw] -z-10 hidden w-[17.7vw] text-stone opacity-50 phone:-bottom-[1.3vw] phone:-left-[14.3vw] phone:w-[32.9vw] tablet:-bottom-[1vw] tablet:-left-[11.2vw] tablet:w-[25.8vw] handheld:block lg:block" />
+          <Flora line="flower" class="absolute bottom-[6.3vw] left-[4.1vw] -z-10 hidden w-[10.6vw] text-stone opacity-50 phone:bottom-[11.7vw] phone:left-[7.6vw] phone:w-[19.7vw] tablet:bottom-[9.2vw] tablet:left-[6vw] tablet:w-[15.5vw] handheld:block lg:block" />
           {/* The type filter heads the whole block, centred, above its title and
               cards (owner, 2026-10-02). Hidden until the script has narrowed it
               to the types the block holds — without JS there is nothing to
@@ -238,7 +251,7 @@ const arrowClass =
               the same distance above their cards — and the same unit as every
               other gap on the page (issue I-005). */}
           <Grid class={cardGap}>
-            <div class="col-span-12 md:col-span-6 md:row-start-1 lg:col-span-4">
+            <div class="col-span-12 text-center md:col-span-6 md:row-start-1 md:text-left lg:col-span-4">
               <h2 class="text-h2 text-violet">{copy.recent.title}</h2>
             </div>
             {

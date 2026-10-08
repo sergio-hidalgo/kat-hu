@@ -4,15 +4,21 @@ import { cardsPerView, currentPage, nextPage, pageCount } from './carousel';
 export const SLIDE_EVERY_MS = 20_000;
 
 /**
- * Brings the testimonials carousel to life: the track slides a page to the
- * right every 20 seconds and, after the last, back round to the first; the
- * dots below jump to a page. Dragging or scrolling the track works as well
- * (scroll snap), and every way of moving restarts the clock.
+ * Brings a carousel (`ui/Carousel.astro`, spec 05e) to life: the dots below
+ * jump to a page, the arrow keys move the focused track one page, and
+ * dragging or scrolling the track works as well (scroll snap).
  *
- * Without JavaScript the track is still a row to scroll by hand. It does not
- * advance while the pointer or focus is inside it, while the tab is hidden, or
- * for a reader who asked for reduced motion, who gets the dots and no autoplay.
- * With one page — every card in view — the dots stay hidden and nothing moves.
+ * **It only slides on its own when the root says `data-autoplay`** — the
+ * testimonials: every 20 seconds a page to the right and, after the last, back
+ * round to the first. Sessions, steps and drops are things a reader compares
+ * and acts on, so they never move by themselves (WCAG 2.2.2). Autoplay does
+ * not run while the pointer or focus is inside, while the tab is hidden, or for
+ * a reader who asked for reduced motion, who gets the dots and no autoplay.
+ *
+ * Without JavaScript the track is still a row to scroll by hand. With one page
+ * — every card in view, or a track that does not scroll, as on a desktop row —
+ * the dots stay hidden and nothing moves. Each card is announced as a slide,
+ * *N de M*.
  */
 export function initCarousel(root: HTMLElement): void {
   const track = root.querySelector<HTMLElement>('[data-track]');
@@ -21,6 +27,17 @@ export function initCarousel(root: HTMLElement): void {
   if (!track || !dots || !dotTemplate || track.children.length < 2) return;
 
   const cards = Array.from(track.children) as HTMLElement[];
+  const autoplay = root.hasAttribute('data-autoplay');
+  cards.forEach((card, index) => {
+    // Only a plain `div` takes the group role. A list item keeps its own (an
+    // `ol`'s children must be `li`s, and the list already says "n de M"), and a
+    // `figure` may not have one (Lighthouse's aria-allowed-role).
+    if (card.tagName === 'DIV') {
+      card.setAttribute('role', 'group');
+      card.setAttribute('aria-roledescription', 'slide');
+    }
+    card.setAttribute('aria-label', `${index + 1} de ${cards.length}`);
+  });
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let step = 0;
   let pages = 1;
@@ -35,7 +52,8 @@ export function initCarousel(root: HTMLElement): void {
       pitch,
     });
     step = pitch * perView;
-    pages = pageCount(cards.length, perView);
+    // A track that does not scroll (the cards sit in a row from `lg`) has one page.
+    pages = maxScroll() <= 1 ? 1 : pageCount(cards.length, perView);
   };
   const maxScroll = () => track.scrollWidth - track.clientWidth;
   const page = () =>
@@ -55,7 +73,7 @@ export function initCarousel(root: HTMLElement): void {
 
   const schedule = () => {
     window.clearTimeout(timer);
-    if (pages <= 1 || reduced.matches || held) return;
+    if (!autoplay || pages <= 1 || reduced.matches || held) return;
     timer = window.setTimeout(() => {
       if (!document.hidden) show(nextPage(page(), pages));
       schedule();
@@ -85,6 +103,16 @@ export function initCarousel(root: HTMLElement): void {
     mark();
     schedule();
   };
+
+  track.addEventListener('keydown', (event) => {
+    const delta = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    if (!delta || pages <= 1) return;
+    const target = page() + delta;
+    if (target < 0 || target >= pages) return;
+    event.preventDefault();
+    show(target);
+    schedule();
+  });
 
   let frame = 0;
   track.addEventListener('scroll', () => {

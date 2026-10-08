@@ -4,9 +4,11 @@
  * service cards, however many there are, each booking its own
  * (`/reservar?servicio=<id>`, the session's slug, which spec 06 reads).
  *
- * Every card is three across from `lg`, two and one below it, **whatever the
- * count**: a fourth card starts a new row, left-aligned, rather than squeezing
- * a row narrower than its 160px slot (ALN-02).
+ * Every card is three across from `lg`, **whatever the count**: a fourth card
+ * starts a new row, left-aligned, rather than squeezing a row narrower than its
+ * 160px slot (ALN-02). Below `lg` the cards are the slides of a carousel, one
+ * visible at a time (spec 05e), so a phone does not scroll past three tall
+ * cards.
  *
  * The heading and lead are centred on the middle eight columns — guide §04
  * lets a section heading and a short lead centre, and the span, not a width
@@ -16,11 +18,12 @@
  */
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
+import Carousel from '../ui/Carousel.astro';
 import ServiceCard from '../ui/ServiceCard.astro';
 import Flora from '../ui/Flora.astro';
 import { SCROLL_MT } from '../site/header';
 import type { LandingCopy } from '../../data/landing';
-import { imageUrl } from '../../lib/sanity';
+import { imageSet } from '../../lib/sanity';
 
 interface Props {
   copy: LandingCopy['services'];
@@ -36,7 +39,11 @@ const { copy } = Astro.props;
 /** The button's words when the owner wrote none for that session. */
 const DEFAULT_ACTION = 'Reservar esta sesión';
 
-const IMAGE_PX = { width: 800, height: 369 };
+const IMAGE_WIDTHS = [320, 480, 640, 800] as const;
+const IMAGE_RATIO = 800 / 369;
+
+/** A card is a whole slide below `lg` (92vw of the screen) and 7 of the grid's 25 units from it; its picture is that less the card's 24px padding each side. */
+const IMAGE_SIZES = '(min-width: 1024px) calc(28vw - 48px), calc(92vw - 48px)';
 ---
 
 <Section
@@ -47,7 +54,7 @@ const IMAGE_PX = { width: 800, height: 369 };
 >
   <Flora
     line="daisy"
-    class="absolute top-24 -left-24 -z-10 hidden w-56 -rotate-12 text-warning opacity-35 lg:block"
+    class="absolute top-24 -left-24 -z-10 hidden w-56 -rotate-12 text-warning opacity-35 phone-xl:-left-[20vw] phone-xl:block phone-xl:w-[60vw] phone-md:-left-[20vw] phone-md:block phone-md:w-[60vw] tablet:-left-[10vw] tablet:block tablet:w-[30vw] lg:block"
   />
   <Grid class="gap-y-8">
     {/* The heading takes a row of its own: at 8 columns it would leave 4
@@ -56,26 +63,32 @@ const IMAGE_PX = { width: 800, height: 369 };
       <h2 class="text-h2 text-violet">{copy.headline}</h2>
       <p class="mt-4 max-w-none text-lead text-graphite">{copy.lead}</p>
     </div>
-    {
-      copy.items.map((item) => (
-        <div class="col-span-12 md:col-span-6 lg:col-span-4">
-          <ServiceCard
-            title={item.title}
-            description={item.description}
-            price={item.price}
-            features={item.features}
-            preferred={item.preferred}
-            href={`/reservar?servicio=${item.id}`}
-            actionLabel={item.buttonLabel ?? DEFAULT_ACTION}
-            image={
-              item.image && {
-                src: imageUrl(item.image).width(IMAGE_PX.width).height(IMAGE_PX.height).fit('crop').url(),
-                alt: item.image.alt?.trim() ?? '',
+    {/* Below `lg` a carousel of one session (spec 05e); from `lg` three across,
+        a fourth starting a new row. The extra top padding is room for the
+        *Preferido* badge that straddles a card's top border. */}
+    <Carousel label="Sesiones" trackAs="ul" trackClass="max-lg:pt-6 lg:grid lg:grid-cols-12 lg:gap-x-[calc(100%/23)] lg:gap-y-8">
+      {
+        copy.items.map((item) => (
+          <li class="snap-start lg:col-span-4">
+            <ServiceCard
+              title={item.title}
+              description={item.description}
+              price={item.price}
+              features={item.features}
+              preferred={item.preferred}
+              href={`/reservar?servicio=${item.id}`}
+              actionLabel={item.buttonLabel ?? DEFAULT_ACTION}
+              image={
+                item.image && {
+                  ...imageSet(item.image, { widths: IMAGE_WIDTHS, ratio: IMAGE_RATIO }),
+                  sizes: IMAGE_SIZES,
+                  alt: item.image.alt?.trim() ?? '',
+                }
               }
-            }
-          />
-        </div>
-      ))
-    }
+            />
+          </li>
+        ))
+      }
+    </Carousel>
   </Grid>
 </Section>

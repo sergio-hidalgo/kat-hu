@@ -7,7 +7,6 @@
  * default tone — the drawings take any token, which is why they are vectors.
  */
 import { LINE_LAYER, LINE_STUDIES, LINE_TONE, aspectRatio, type LineStudy } from './flora';
-import { maskStyle } from './edge';
 
 interface Props {
   line: LineStudy;
@@ -19,12 +18,16 @@ const props = Astro.props;
 const hasTone = /\btext-/.test(props.class ?? '');
 
 const study = LINE_STUDIES[props.line];
-const lineStyle = `${maskStyle([[study.url, LINE_LAYER]])} aspect-ratio: ${aspectRatio(study.viewBox)};`;
+// The mask is a custom property, not yet a `mask`: a `url()` is only fetched
+// when a property uses it, and `lib/flora-boot.ts` switches `data-mask-on` on
+// after the page has loaded and the drawing is near the screen.
+const lineStyle = `--flora-mask: url("${study.url}") ${LINE_LAYER}; aspect-ratio: ${aspectRatio(study.viewBox)};`;
 ---
 
 <div
   aria-hidden="true"
   data-flora={`line-${props.line}`}
+  data-mask-defer
   class:list={['pointer-events-none bg-current select-none', !hasTone && LINE_TONE, props.class]}
   style={lineStyle}
 >

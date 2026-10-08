@@ -128,4 +128,12 @@ describe('Footer', () => {
     // From sm the three columns still sit side by side.
     expect((html.match(/sm:col-span-4/g) ?? []).length).toBe(3);
   });
+
+  it('marks up Contacto as a section with an address, not as navigation', async () => {
+    const html = await render();
+
+    expect(html.match(/<nav\b/g)).toHaveLength(2);
+    expect(html).toMatch(/<section[^>]*aria-labelledby="footer-contacto"/);
+    expect(html).toMatch(/<address class="mt-3 not-italic">[\s\S]*mailto:hola@kat-hu\.com/);
+  });
 });

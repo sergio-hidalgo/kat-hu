@@ -72,6 +72,24 @@ describe('PostCard', () => {
     expect(html).toContain(`alt="${mainImage.alt}"`);
   });
 
+  it('offers the 16:9 crop in four widths, so a 360px slot is not handed 800px', async () => {
+    const html = await render({ ...post, mainImage });
+    const srcset = html.match(/srcset="([^"]+)"/)?.[1] ?? '';
+
+    expect(srcset.split(', ').map((entry) => entry.split(' ')[1])).toEqual(['320w', '480w', '640w', '800w']);
+    // Every width keeps the crop: height is width over 16:9.
+    expect(srcset).toMatch(/w=320&amp;h=180/);
+    expect(srcset).toMatch(/w=800&amp;h=450/);
+    // The column widths of /drops: 92vw under md, 44vw to lg, 28vw from it.
+    expect(html).toContain('sizes="(min-width: 1024px) 28vw, (min-width: 760px) 44vw, 92vw"');
+  });
+
+  it('takes the sizes of the block it sits in', async () => {
+    const html = await render({ ...post, mainImage, sizes: '(min-width: 1024px) 28vw, 92vw' });
+
+    expect(html).toContain('sizes="(min-width: 1024px) 28vw, 92vw"');
+  });
+
   it('clamps the same way on a card with no image', async () => {
     const html = await render(post);
 

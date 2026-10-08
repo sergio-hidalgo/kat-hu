@@ -34,6 +34,37 @@ describe('Testimonials', () => {
     expect(html).toContain('Mochi');
   });
 
+  it('is a carousel below lg from two quotes up, with autoplay, and none for a single quote (spec 05e)', async () => {
+    const quote = (n: number) => ({ id: `t${n}`, quote: `Cita ${n}`, name: `Persona ${n}` });
+    vi.mocked(getTestimonials).mockResolvedValueOnce([quote(1), quote(2)]);
+    const two = await render();
+
+    expect(two).toContain('data-carousel');
+    expect(two).toContain('data-autoplay');
+    expect(two).toContain('max-lg:overflow-x-auto');
+    // From lg: the row it was, on the page grid's own columns.
+    expect(two).toContain('lg:grid-cols-12');
+    expect(two).toContain('lg:col-span-4 lg:col-start-3');
+
+    vi.mocked(getTestimonials).mockResolvedValueOnce([quote(1)]);
+    const one = await render();
+
+    expect(one).not.toContain('data-carousel');
+    expect(one).toContain('Cita 1');
+  });
+
+  it('keeps the scroll track on a desktop too past three quotes', async () => {
+    vi.mocked(getTestimonials).mockResolvedValueOnce(
+      [1, 2, 3, 4].map((n) => ({ id: `t${n}`, quote: `Cita ${n}`, name: `P${n}` })),
+    );
+
+    const html = await render();
+
+    expect(html).toContain('lg:auto-cols-[calc(100%*7/23)]');
+    expect(html).not.toContain('max-lg:overflow-x-auto');
+    expect(html).not.toContain('lg:hidden');
+  });
+
   it('renders nothing at all with zero testimonials — the recorded exception to PAT-07', async () => {
     vi.mocked(getTestimonials).mockResolvedValueOnce([]);
 
@@ -45,9 +76,9 @@ describe('testimonialPlace', () => {
   it('centres one card, pairs two about the centre line, and fills a row with three', () => {
     expect(testimonialPlace(1, 0)).toBe('col-span-12 md:col-span-6 lg:col-span-4 md:col-start-4 lg:col-start-5');
     expect([0, 1].map((i) => testimonialPlace(2, i))).toEqual([
-      'col-span-12 md:col-span-6 lg:col-span-4 lg:col-start-3',
-      'col-span-12 md:col-span-6 lg:col-span-4 lg:col-start-7',
+      'lg:col-span-4 lg:col-start-3',
+      'lg:col-span-4 lg:col-start-7',
     ]);
-    expect(testimonialPlace(3, 2)).toBe('col-span-12 md:col-span-6 lg:col-span-4');
+    expect(testimonialPlace(3, 2)).toBe('lg:col-span-4');
   });
 });

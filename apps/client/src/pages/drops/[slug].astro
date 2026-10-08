@@ -7,7 +7,7 @@ import Chip from '../../components/ui/Chip.astro';
 import Flora from '../../components/ui/Flora.astro';
 import { DROP_TYPE_LABELS } from '@kat-hu/contracts';
 import { getPostBySlug, formatDate } from '../../data/posts';
-import { imageUrl, portableTextToHtml } from '../../lib/sanity';
+import { imageSet, portableTextToHtml } from '../../lib/sanity';
 import { likesEnabled } from '../../lib/likes';
 
 /**
@@ -22,6 +22,10 @@ const post = slug ? await getPostBySlug(slug) : null;
 if (!post) return Astro.rewrite('/404');
 
 const bodyHtml = portableTextToHtml(post.body);
+/* The drop's own picture, uncropped, in four widths: 92vw under `md`, 76vw (10 of
+   12 columns) to `lg`, 60vw (8) from it. It is the page's largest contentful
+   paint, hence `fetchpriority="high"` below. */
+const heroImage = post.mainImage && imageSet(post.mainImage, { widths: [480, 640, 800, 960, 1280, 1600] });
 
 /**
  * Portable Text arrives as an HTML string, so its elements cannot carry
@@ -76,40 +80,45 @@ const backButton = [
     <Flora line="flower" class="absolute bottom-[6.3vw] left-[4.1vw] -z-10 hidden w-[10.6vw] text-stone opacity-50 lg:block" />
     <Grid>
       <article class="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-8 lg:col-start-3">
-        <h1 class="text-display text-violet">{post.title}</h1>
+        <header>
+          <h1 class="text-center text-display text-violet md:text-left">{post.title}</h1>
 
-        {/* A real control, not the count badge the cards wear: no border, no
-            total — the totals belong on /drops, where they are compared. 44px
-            target (guide §9), 24px icon because it stands alone (§6). */}
-        <div class="mt-1 mb-8 flex items-center gap-2">
-          <p class="flex max-w-none items-center gap-3 text-xs text-slate">
-            <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
-            <Chip tone="type" kind={post.dropType} data-drop-badge>{DROP_TYPE_LABELS[post.dropType]}</Chip>
-          </p>
-          {
-            likesEnabled && (
-              <button
-                type="button"
-                class="like-button relative inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:bg-lavender hover:text-ink active:bg-border disabled:cursor-progress"
-                data-post-id={post.id}
-                aria-pressed="false"
-                aria-label="Me gusta"
-              >
-                <Heart class="heart" size={24} stroke-width={1.5} />
-              </button>
-            )
-          }
-          <a href="/drops/" class:list={[backButton, 'ml-auto']}>← Volver</a>
-        </div>
+          {/* A real control, not the count badge the cards wear: no border, no
+              total — the totals belong on /drops, where they are compared. 44px
+              target (guide §9), 24px icon because it stands alone (§6). */}
+          <div class="mt-1 mb-8 flex items-center justify-center gap-2 md:justify-start">
+            <p class="flex max-w-none items-center gap-3 text-xs text-slate">
+              <time datetime={post.date}>{formatDate(post.date, 'es-ES')}</time>
+              <Chip tone="type" kind={post.dropType} data-drop-badge>{DROP_TYPE_LABELS[post.dropType]}</Chip>
+            </p>
+            {
+              likesEnabled && (
+                <button
+                  type="button"
+                  class="like-button relative inline-flex h-11 w-11 items-center justify-center rounded-full text-slate transition-colors duration-fast hover:bg-lavender hover:text-ink active:bg-border disabled:cursor-progress"
+                  data-post-id={post.id}
+                  aria-pressed="false"
+                  aria-label="Me gusta"
+                >
+                  <Heart class="heart" size={24} stroke-width={1.5} />
+                </button>
+              )
+            }
+            <a href="/drops/" class:list={[backButton, 'ml-auto']}>← Volver</a>
+          </div>
+        </header>
 
         {/* Guide §06's photograph: 8px radius and the small shadow, no overlay.
             No image, no block. */}
         {
           post.mainImage && (
             <img
-              src={imageUrl(post.mainImage).width(1600).url()}
+              src={heroImage!.src}
+              srcset={heroImage!.srcset}
+              sizes="(min-width: 1024px) 60vw, (min-width: 760px) 76vw, 92vw"
               alt={post.mainImage.alt ?? ''}
               loading="eager"
+              fetchpriority="high"
               decoding="async"
               class="mb-8 h-auto w-full rounded shadow-sm"
             />

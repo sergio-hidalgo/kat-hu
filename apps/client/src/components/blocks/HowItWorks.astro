@@ -20,8 +20,9 @@
  */
 import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
+import Carousel from '../ui/Carousel.astro';
 import Flora from '../ui/Flora.astro';
-import { imageUrl } from '../../lib/sanity';
+import { imageSet } from '../../lib/sanity';
 import { SCROLL_MT } from '../site/header';
 import type { LandingCopy } from '../../data/landing';
 import { stepSpan } from './howItWorks';
@@ -33,8 +34,18 @@ interface Props {
 const { copy } = Astro.props;
 const span = stepSpan(copy.steps.length);
 
-/** The CDN image at twice the slot's 7:3 width, for dense screens. */
-const IMAGE_PX = { width: 800, height: 343 };
+/** The CDN image in the slot's 7:3 shape, at several widths for the browser to pick from. */
+const IMAGE_WIDTHS = [320, 480, 640, 800] as const;
+const IMAGE_RATIO = 7 / 3;
+
+/* A step's picture: under `md` a whole slide of the Panel less the step's 24px
+   padding; from `md` the slide with 20% either side (60% of 92vw); from `lg` a
+   share of the Panel — one, two, three or four across — less that padding. */
+const perRow = Math.min(Math.max(copy.steps.length, 1), 4);
+const IMAGE_SIZES = `(min-width: 1024px) calc(92vw / ${perRow} - 48px), (min-width: 760px) 55vw, calc(92vw - 48px)`;
+const images = copy.steps.map((step) =>
+  step.image ? imageSet(step.image, { widths: IMAGE_WIDTHS, ratio: IMAGE_RATIO }) : null,
+);
 ---
 
 {/* `tabindex="-1"`: the hero's *¿Cómo funciona?* moves focus here after
@@ -54,7 +65,7 @@ const IMAGE_PX = { width: 800, height: 343 };
       so they scale with the screen. */}
   <Flora
     line="leaf"
-    class="absolute top-[46%] -left-[7vw] -z-10 hidden w-[15.2vw] -scale-x-100 text-violet opacity-30 lg:block"
+    class="absolute top-[44%] -left-[10.5vw] -z-10 hidden w-[22.8vw] -scale-x-100 text-violet opacity-30 phone-xl:top-auto phone-xl:bottom-[calc(var(--edge-height)+1rem)] phone-xl:-left-[10vw] phone-xl:block phone-xl:w-[42vw] phone-md:top-auto phone-md:bottom-[calc(var(--edge-height)+1rem)] phone-md:-left-[10vw] phone-md:block phone-md:w-[42vw] tablet:top-auto tablet:bottom-[calc(var(--edge-height)+1rem)] tablet:-left-[8vw] tablet:block tablet:w-[30vw] lg:block"
   />
   <Flora line="flower" class="absolute top-[6%] left-[87.5vw] -z-10 hidden w-[17.8vw] lg:block" />
   <Flora line="flower" class="absolute top-[30%] left-[88.5vw] -z-10 hidden w-[12.8vw] lg:block" />
@@ -63,26 +74,33 @@ const IMAGE_PX = { width: 800, height: 343 };
       <h2 class="text-h2 text-violet">{copy.headline}</h2>
       <p class="mt-4 max-w-none text-lead text-graphite">{copy.lead}</p>
     </div>
-    {/* `role="list"` because Safari drops the list role from a list styled
-        as a grid. The ordered list already tells a screen reader the
-        number, so the drawn one is hidden from it. */}
-    <ol
-      role="list"
+    {/* Below `lg` a carousel of one step (spec 05e); from `lg` the steps in the
+        Panel's subgrid, as before. The Panel is the carousel's own wrapper, so
+        the dots sit inside it. `trackAs="ol"` carries `role="list"` because
+        Safari drops the list role from a list styled as a grid; the ordered
+        list already tells a screen reader the number, so the drawn one is
+        hidden from it. */}
+    <Carousel
+      label="Pasos de la sesión"
+      trackAs="ol"
       data-panel
-      class="col-span-12 grid grid-cols-subgrid gap-y-12 rounded border border-cream/70 bg-panel py-10 md:py-12"
+      class="rounded border border-cream/70 bg-panel py-10 md:py-12 lg:grid lg:grid-cols-subgrid"
+      trackClass="lg:col-span-12 lg:grid lg:grid-cols-subgrid lg:gap-y-12"
     >
       {
         copy.steps.map((step, index) => (
-          <li class:list={[span, 'flex flex-col items-center px-6 text-center']}>
+          <li class:list={[span, 'flex snap-start flex-col items-center px-6 text-center md:px-[20%] lg:px-6']}>
             {/* One 7:3 slot per step: the owner's picture cropped to it, or a
                 Violeta block until there is one, so every title starts level
                 (CON-03). */}
             {step.image ? (
               <img
-                src={imageUrl(step.image).width(IMAGE_PX.width).height(IMAGE_PX.height).fit('crop').url()}
+                src={images[index]!.src}
+                srcset={images[index]!.srcset}
+                sizes={IMAGE_SIZES}
                 alt={step.image.alt?.trim() ?? ''}
-                width={IMAGE_PX.width}
-                height={IMAGE_PX.height}
+                width={images[index]!.width}
+                height={images[index]!.height}
                 loading="lazy"
                 decoding="async"
                 class="aspect-[7/3] w-full object-cover"
@@ -100,6 +118,6 @@ const IMAGE_PX = { width: 800, height: 343 };
           </li>
         ))
       }
-    </ol>
+    </Carousel>
   </Grid>
 </Section>

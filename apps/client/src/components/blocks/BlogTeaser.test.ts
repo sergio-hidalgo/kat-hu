@@ -49,7 +49,20 @@ describe('BlogTeaser', () => {
     vi.mocked(getLatestPosts).mockResolvedValueOnce([post(1), post(2), post(3)]);
 
     const heading = (await render()).match(/<div class="([^"]*)">\s*<h2/)?.[1];
-    expect(heading).toBe('col-span-12');
+    expect(heading).toBe('col-span-12 text-center lg:text-left');
+  });
+
+  it('puts the three drops in a carousel below lg and three across from lg (spec 05e)', async () => {
+    vi.mocked(getLatestPosts).mockResolvedValueOnce([post(1), post(2), post(3)]);
+
+    const html = await render();
+
+    expect(html).toContain('data-carousel');
+    expect(html).toContain('aria-label="Últimos drops"');
+    // A set of like things: a list.
+    expect(html).toMatch(/<ul role="list" data-track/);
+    expect(html.match(/<li class="snap-start lg:col-span-4">/g)).toHaveLength(3);
+    expect(html).toContain('lg:grid-cols-12');
   });
 
   it('renders nothing with no posts', async () => {

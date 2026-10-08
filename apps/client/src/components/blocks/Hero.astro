@@ -26,9 +26,11 @@
  * than a portrait to crop (owner, 2026-09-11/12; colour since 05c): shown whole,
  * with no rounding, pinned to the band's bottom-right edge on the dark side of
  * the gradient. A direct child of the band, outside the grid, so its size is a
- * share of the screen — 80% on a phone, 60% from `md`. Below `lg` it follows
+ * share of the screen — 80% on a phone, 60% from `md` (never wider than 45svh). Below `lg` it follows
  * the words and `mt-auto` drops it to the bottom, so the band grows instead of
- * letting the two overlap. From `lg` it is taken out of the flow and sized by
+ * letting the two overlap. Below `lg` the words and the picture are centred
+ * (spec 05e): the picture stands on the band's foot, which the next band's
+ * botanical edge covers, so the edge's bottom is the bottom of the screen. From `lg` it is taken out of the flow and sized by
  * the band's **height** (owner, 2026-09-27): about 88% of it — her head level
  * with the headline — which at the picture's 1.79:1 is the band's height
  * × 1.58, capped at 62% of the width so a wide, short screen never pushes it
@@ -66,6 +68,16 @@ const screenMinH = announcement.enabled ? CHROME_SCREEN_MIN_H : BAND_SCREEN_MIN_
 const pictureWidth = announcement.enabled
   ? 'lg:w-[min(62%,calc((100svh_-_8rem)*1.58))]'
   : 'lg:w-[min(62%,calc((100svh_-_5.5rem)*1.58))]';
+/* Portrait phones from 430px (an iPhone Pro Max, a Pixel Pro) and portrait
+   tablets have height to spare, so Laura grows — up to twice the size, 160% of
+   the screen on a phone and 120% on a tablet — centred and cropped by the band
+   on both sides, out of the flow and standing on the foot. How big is the
+   height left under the words: the screen minus the chrome, the words (about
+   31rem on a phone, 28rem on a tablet, from their pixels at 440 and 768 wide)
+   and a rem of margin, at the picture's 1.79:1 — so her hair never reaches the
+   last line, which is Ink on dark hair. Never below the old 80%. */
+const bigScreen =
+  'max-lg:portrait:min-[430px]:absolute max-lg:portrait:min-[430px]:bottom-0 max-lg:portrait:min-[430px]:left-1/2 max-lg:portrait:min-[430px]:-translate-x-1/2 max-lg:portrait:min-[430px]:max-w-none max-md:portrait:min-[430px]:w-[max(80%,min(160%,calc((100svh_-_39rem)*1.79)))] md:max-lg:portrait:w-[max(80%,min(120%,calc((100svh_-_36.5rem)*1.79)))]';
 const howItWorks = isVisible(flags, 'block', 'how-it-works');
 
 /** Guide §04's own example of the micro line: italic, under the actions. */
@@ -89,21 +101,21 @@ const MICRO = 'Todo online · Tus peludos no se mueven de casa';
       owner's choice) at 50% opacity. */}
   <Flora
     line="leaf"
-    class="absolute top-1/2 -right-16 -z-10 hidden w-67 -translate-y-1/2 text-violet opacity-30 lg:block"
+    class="absolute top-1/2 -right-[12vw] -z-10 w-[48vw] -translate-y-1/2 text-violet opacity-30 md:-right-[9vw] md:w-[37vw] lg:-right-16 lg:w-67"
   />
-  <Grid class="relative z-10 pt-12 pb-8 md:pt-16 lg:pt-20 lg:pb-0 xl:pt-24">
-    <div class="relative col-span-12 lg:col-span-6">
+  <Grid class="relative z-10 pt-6 pb-2 max-md:portrait:min-[430px]:pt-10 md:max-lg:landscape:pt-10 md:pb-4 md:max-lg:portrait:pt-16 lg:pt-20 lg:pb-0 xl:pt-24">
+    <div class="relative col-span-12 text-center md:col-span-10 md:col-start-2 lg:col-span-6 lg:col-start-auto lg:text-left">
       <h1 class="text-display text-violet">{copy.headline}</h1>
-      <p class="mt-6 text-lead text-ink">{copy.lead}</p>
-      <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2">
-        <Button href="/reservar">Reserva tu sesión</Button>
+      <p class="mt-4 text-lead text-ink max-lg:max-w-none md:mt-6">{copy.lead}</p>
+      <div class="mt-6 flex flex-col items-center gap-x-6 gap-y-3 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start md:mt-8">
+        <Button href="/reservar" class="w-full sm:w-auto">Reserva tu sesión</Button>
         {howItWorks && (
           <a href="#como-funciona" data-scroll-center class={TEXT_LINK_ON_HERO}>
             ¿Cómo funciona?
           </a>
         )}
       </div>
-      <p class="mt-6 text-sm text-ink italic">{MICRO}</p>
+      <p class="mt-4 text-sm text-ink italic max-lg:max-w-none md:mt-6">{MICRO}</p>
       {/* Behind the title (`-z-10` inside the words' own layer, so every word
           paints over it), at 35% opacity, with the top quarter of the flower
           past the band's top, clipped, so it seems to slip under the header
@@ -115,20 +127,25 @@ const MICRO = 'Todo online · Tus peludos no se mueven de casa';
           40% of the daisy's width, which sits past the screen edge. */}
       <Flora
         line="daisy"
-        class="absolute -top-33 -left-[calc(4vw+3.75rem)] -z-10 hidden w-36 text-warning opacity-35 lg:block xl:-top-42 xl:-left-[calc(4vw+5rem)] xl:w-48"
+        class="absolute -top-[calc(1.5rem+9.6vw)] -left-[9vw] -z-10 w-[26vw] text-warning opacity-35 phone-md:-top-[calc(1.5rem+25.85vw)] phone-md:-left-[22vw] phone-md:w-[52vw] phone-xl:-top-[calc(2.5rem+25.85vw)] phone-xl:-left-[22vw] phone-xl:w-[52vw] md:max-lg:landscape:-top-[calc(2.5rem+7.4vw)] tablet:-top-[calc(4rem+19.9vw)] tablet:-left-[20vw] tablet:w-[40vw] md:max-lg:landscape:w-[20vw] lg:-top-33 lg:-left-[calc(4vw+3.75rem)] lg:w-36 xl:-top-42 xl:-left-[calc(4vw+5rem)] xl:w-48"
       />
     </div>
   </Grid>
 
+  {/* `widths` has a 580: what the common phone needs (a 330px picture at 1.75×).
+      Without it the browser took the 640px file, 7 KB heavier, on the largest
+      contentful paint's critical path. */}
   <Image
     src={together}
     alt="Laura, la florapeuta de kathu, sonríe abrazada a su gato naranja"
-    widths={[480, 768, 1024, 1404]}
-    sizes="(min-width: 1024px) 62vw, (min-width: 760px) 60vw, 80vw"
+    widths={[400, 480, 580, 640, 768, 1024, 1404]}
+    quality={72}
+    sizes="(min-width: 1024px) 62vw, (min-width: 760px) 120vw, (min-width: 430px) 160vw, 80vw"
     loading="eager"
     fetchpriority="high"
     class:list={[
-      'mt-auto h-auto w-4/5 self-end rounded-none md:w-3/5 lg:absolute lg:right-0 lg:bottom-0',
+      'mt-auto h-auto w-4/5 self-center rounded-none md:max-lg:landscape:w-[min(60%,45svh)] lg:absolute lg:right-0 lg:bottom-0',
+      bigScreen,
       pictureWidth,
     ]}
   />

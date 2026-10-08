@@ -59,5 +59,12 @@ const SHADOW =
   {/* One pixel past the bottom: a mask's last row is anti-aliased, and on
       the edge's own last row it let the band behind show through as a
       hairline. The extra row falls outside the wrapper and is clipped. */}
-  <div class="absolute inset-x-0 top-0 -bottom-px bg-current" style={style}></div>
+  <div
+    class="absolute inset-x-0 top-0 -bottom-px bg-current"
+    style={style}
+    data-mask-defer
+    data-edge-mask={variant === 'footer' ? '' : undefined}
+    data-edge-plants={variant === 'footer' ? undefined : ''}
+  >
+  </div>
 </div>

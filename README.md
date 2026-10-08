@@ -220,6 +220,7 @@ Run from the repo root:
 | `pnpm build`                     | Build every app                         |
 | `pnpm check`                     | Type-check every app                    |
 | `pnpm test`                      | Run every app's tests                   |
+| `pnpm perf`                      | Build, then the Lighthouse performance gate (blocking) |
 | `pnpm --filter client favicons`  | Regenerate the tab and app icons        |
 | `pnpm --filter <app> <script>`   | Run a script in one app                 |
 | `pnpm --filter <app> add <pkg>`  | Add a dependency to one app             |
@@ -228,6 +229,87 @@ Run from the repo root:
 
 `pnpm dev` also starts `@kat-hu/contracts` in watch mode, so editing a
 shared schema rebuilds it and both apps pick it up without a restart.
+
+## Performance
+
+`pnpm perf` builds the site and audits `/`, `/drops` and the first drop with **Lighthouse**,
+phone first (its mid-range phone on throttled 4G), three runs each, judging the
+**median**. It audits the production build served by `scripts/perf-server.mjs`
+— the built Node server behind a compressing front, the way a real host serves
+it, since the Node adapter itself sends text uncompressed — never the dev
+server. It exits non-zero when a budget is missed, and **a spec that renders
+anything may not close with it red**. `pnpm perf:run` skips the build;
+`PERF_RUNS=1` is a quick look, `PERF_PAGES=/drops` narrows the pages, and the
+script warns when the machine is busy (load above its core count): a lab
+number drifts by seconds then — `/drops` read LCP 1.6 s at rest and 2.6 s at
+load 19 — so re-run quiet before trusting a red; the last report of each page is in
+`.lighthouseci/` (untracked).
+
+The budgets live in `scripts/perf.mjs`, one line each, and move only by the
+owner's decision:
+
+| KPI | Budget | Why |
+| :-- | :----- | :-- |
+| Performance score | ≥ 0.90 | the spec criterion (05d, 05e) |
+| LCP (largest contentful paint) | ≤ 2.5 s | Core Web Vital; here it is the hero photograph, or a drop's banner |
+| CLS (layout shift) | ≤ 0.1 | Core Web Vital |
+| TBT (blocking time, stands in for INP in the lab) | ≤ 200 ms | Core Web Vital proxy |
+| FCP / Speed Index | ≤ 1.8 s / ≤ 3.4 s | first paint on a phone |
+| Transfer | ≤ 1.6 MB | what a 4G phone downloads |
+| Accessibility score | ≥ 0.95 | the spec criterion |
+| *warn only:* server response, unused JS, wasted image bytes | 600 ms, 60 KB, 20 KB | printed, not blocking |
+
+Measured on 2026-10-08 (compressed, phone): `/` scores 1.00 (LCP 1.79 s, FCP
+1.1 s, 307 KB), `/drops` 1.00 (LCP 1.62 s, 385 KB). The line drawings are
+svgo-minified (about 45% smaller, pixel-identical) and wait for the page to load
+and to come near the screen before their mask is requested (`lib/flora-boot.ts`),
+so they no longer queue behind the hero photograph. The footer's closing edge
+(the animals) waits the same way: its two files are fetched only when the foot
+of the page comes within 600px. So do the edges between bands, except the first one on a page
+(the landing's under the hero, the drops' under the banner), which is on the first
+screen and always shown; they share one file with it, so this saves paint work,
+not bytes. The fonts were already preloaded (`BaseLayout.astro`: the two upright
+faces, 64 KB, requested with the stylesheet and not discovered from it). The pressed lilac, a
+1.2-megapixel photograph shown at about 190px, is offered in finer widths at
+quality 60 with a `sizes` at 70% of its drawn width (soft decoration): a phone
+takes a 23 KB file instead of 78 KB, and the landing's wasted image bytes are 13
+KB, inside the 20 KB budget (landing 239 KB in all). The `/drops` and blog-teaser
+cards' Sanity pictures are now a `srcset` (`imageSet` in `lib/sanity.ts`: the
+same 16:9 crop at 320, 480, 640 and 800px) with a `sizes` for each block's
+columns, so a 1024px laptop takes a 320px file and a 1440px one 480px, where
+every screen took 800px — and `/drops`' wasted image bytes went from 44 KB to 0. The other Sanity pictures follow
+the same rule: a session's card (13:6) and a step's picture (7:3), each at
+320–800px with the card's real width in `sizes`; the therapist's photo (4:5, the
+Studio's or the brand portrait) at seven widths up to 960px with the column
+widths of every screen; and a drop's own photograph at six widths up to 1600px,
+the page's LCP, now `fetchpriority="high"`. `pnpm perf` also audits the first
+drop the index links to (`PERF_PAGES` set audits only what it names): 0.99,
+LCP 2.0 s, 163 KB, 18 KB of wasted image bytes.
+
+Two more changes closed the list. The landing's last 0.01: its LCP is the hero photograph, and the score falls
+below 1.00 when LCP passes about 1.85 s (2.0 s reads 0.99, 1.7 s reads 1.00).
+Offering the photograph at 580px (what a 330px picture needs at 1.75×) took 7 KB
+and about 300 ms off it. Inlining the stylesheet (`inlineStylesheets: 'always'`)
+made it worse, 2.0 s to 2.1 s, because the page then grows by 11 KB before the
+image is asked for; and dropping the font preloads gained nothing and cost FCP
+1.0 s to 1.5 s. Both were reverted.
+
+The `/drops` script was 87 KB because it
+imported three constants from `@kat-hu/contracts`, whose barrel pulls in Zod
+for the booking schemas; `"sideEffects": false` on the package lets the bundler
+drop the modules nobody uses, and the script is 6 KB. And the server now caches
+what it reads on every request — Sanity (30 s fresh, `lib/sanity-cache.ts`) and
+the like totals (10 s, `lib/likes-cache.ts`) — so a warm `/drops` answers in
+about 5 ms where it took 90 ms (200–830 ms before): the gate reads 30–55 ms
+server response on all three pages, and 1.5 s LCP on `/drops`. The LCP images are the
+hero photograph (39 KB at 640px, quality 72) and the drops banner, which a phone
+takes as a 900px crop of the photograph, `banner_drops_sm.jpg` (23 KB, from
+`pnpm --filter client banner-mobile`) instead of all 1584px (72 KB). Served *without*
+compression the same build scores 0.86 and 0.84, LCP 4.1 s — so the host (or a
+proxy in front of the Node server) **must compress text responses** (Brotli or
+gzip), and spec 13 owns it. `pnpm check:compression <url>` tells whether a
+host does, and `PERF_BASE=<url> pnpm perf:run` runs this gate against a
+deployed site instead of the local build.
 
 ## Tests
 
@@ -318,6 +400,18 @@ order. A hidden block leaves nothing behind — no empty section, no gap.
 | `testimonials` | Testimonials — a row of three, a carousel from four; hidden with none | yes           |
 | `blog-teaser`  | The three newest drops                                               | no (spec 08)  |
 | `shop-teaser`  | Nothing yet — spec 11 adds three products                            | no (spec 11)  |
+
+**Phones and tablets (below 1024px, spec 05e).** The landing is centred — headings,
+leads, the hero's words and Laura, the therapist's text — and the rows of
+parallel cards (*Sesiones*, *Cómo funciona*'s steps, the testimonials, the
+blog teaser) become a carousel of **one card at a time**, with 44px dots, swipe
+and the arrow keys, so the page stays short; from 1024px they are the rows they
+always were. Only the testimonials advance on their own (every 20 s, never
+under reduced motion); the rest move only by hand. In the therapist band the
+photo sits on top, with the words below. The hero ends on the bottom edge of
+the screen, with the botanical border standing on it. One shared
+`components/ui/Carousel.astro` does it; a page that holds one imports
+`lib/carousel-boot` from a `<script>` outside the bands.
 
 **The words live in Sanity** — the *Portada* document for each block's
 heading, and the *Sesión*, *Paso* and *Testimonio* documents for what repeats,
@@ -479,8 +573,12 @@ defaults. A blank optional field is left off the card, never filled in.
 
 The site renders on demand — `output: 'server'` with the standalone Node
 adapter — so publishing in the Studio is all it takes. A new post is live on
-the next page load, within the Sanity CDN's short cache and always under a
-minute. There is no build hook, no webhook and no deploy in that loop.
+the next page load once two short caches have turned over: the Sanity CDN's
+and the server's own (`lib/sanity-cache.ts`: fresh 30 s, then served once while
+it refreshes, never older than 2 min). In practice that is about a minute, and
+a minute and a half at the very worst. There is no build hook, no webhook and
+no deploy in that loop. The server's cache is per process and is off in
+development, so `astro dev` shows an edit at once.
 
 The cost is that every page is rendered per request, which is the trade this
 site wants: visibility flags (spec 10) and sessions (spec 09) have to be

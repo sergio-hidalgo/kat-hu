@@ -55,6 +55,7 @@ const columns = [
   {
     heading: 'Contacto',
     place: 'col-span-12 sm:col-span-4 lg:col-span-2 lg:col-start-11',
+    contact: true,
     links: [{ href: 'mailto:hola@kat-hu.com', label: 'hola@kat-hu.com' }],
   },
 ];
@@ -86,11 +87,15 @@ const year = new Date().getFullYear();
     </div>
 
     {
-      columns.map(({ heading, place, links }) => (
-        <nav
-          class:list={['text-center lg:text-left', place]}
-          aria-labelledby={`footer-${heading.toLowerCase()}`}
-        >
+      columns.map(({ heading, place, links, contact }) => {
+        // Navegación and Legal are navigation; Contacto is where to reach us, so
+        // not a `nav` but a section whose link sits in an `address`.
+        const Column = contact ? 'section' : 'nav';
+        return (
+          <Column
+            class:list={['text-center lg:text-left', place]}
+            aria-labelledby={`footer-${heading.toLowerCase()}`}
+          >
           {/* Guide §07: column titles in Urbanist 700, Crema. */}
           <h2
             id={`footer-${heading.toLowerCase()}`}
@@ -106,20 +111,40 @@ const year = new Date().getFullYear();
               `lg` and ranges left at `lg`. It costs 10.4px a link, which is
               41.6px of footer from `sm` up and 83.2px on a phone, where all
               three navs stack — accepted by the owner on 2026-09-09. */}
-          <ul class="mt-3 list-none p-0">
-            {links.map(({ href, label }) => (
-              <li>
-                <a
-                  href={href}
-                  class="inline-flex min-h-11 items-center font-body text-sm text-lavender no-underline transition-colors duration-fast hover:text-cream hover:underline"
-                >
-                  {label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      ))
+          {
+            contact ? (
+              <address class="mt-3 not-italic">
+                <ul class="list-none p-0">
+                  {links.map(({ href, label }) => (
+                    <li>
+                      <a
+                        href={href}
+                        class="inline-flex min-h-11 items-center font-body text-sm text-lavender no-underline transition-colors duration-fast hover:text-cream hover:underline"
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </address>
+            ) : (
+              <ul class="mt-3 list-none p-0">
+                {links.map(({ href, label }) => (
+                  <li>
+                    <a
+                      href={href}
+                      class="inline-flex min-h-11 items-center font-body text-sm text-lavender no-underline transition-colors duration-fast hover:text-cream hover:underline"
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </Column>
+        );
+      })
     }
 
     {/* The legal line, in Lavanda (5.18:1 at 14px). Centred, unlike the

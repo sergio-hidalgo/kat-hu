@@ -67,6 +67,34 @@ export function imageUrl(source: SanityImage) {
   return builder.image(source).auto('format').fit('max');
 }
 
+/**
+ * A responsive set of one cropped Sanity image: the same crop (`width` over
+ * `height`, honouring the owner's hotspot) at several widths, as the `src` /
+ * `srcset` pair an `<img>` takes. The CDN resizes per request, so offering more
+ * widths costs nothing at rest; what it saves is the phone that was handed an
+ * 800px file for a 360px slot. `src` is the largest, for a browser that reads
+ * no `srcset`; `width` and `height` are its intrinsic size, which reserve the
+ * space (no layout shift). With no `ratio` the picture keeps its own shape (no
+ * crop, no `height`), as on a drop's page.
+ */
+export function imageSet(
+  source: SanityImage,
+  { widths, ratio }: { widths: readonly number[]; ratio?: number },
+) {
+  const sorted = [...widths].sort((a, b) => a - b);
+  const url = (width: number) => {
+    const sized = imageUrl(source).width(width);
+    return (ratio ? sized.height(Math.round(width / ratio)).fit('crop') : sized).url();
+  };
+  const largest = sorted[sorted.length - 1];
+  return {
+    src: url(largest),
+    srcset: sorted.map((width) => `${url(width)} ${width}w`).join(', '),
+    width: largest,
+    height: ratio ? Math.round(largest / ratio) : undefined,
+  };
+}
+
 /** Render a Portable Text body to an HTML string for `set:html`. */
 export function portableTextToHtml(blocks: PortableTextNode[] = []): string {
   return toHTML(blocks, {

@@ -6,10 +6,15 @@
  */
 const SPAN = 'col-span-12 md:col-span-6 lg:col-span-4';
 
+/**
+ * Two or more cards are slides of a carousel below `lg` (spec 05e), so there
+ * the spans mean nothing and only `lg`'s apply, in the carousel's own 12-column
+ * track. One card is no carousel and keeps the page grid's spans.
+ */
 export function testimonialPlace(count: number, index: number): string {
   if (count === 1) return `${SPAN} md:col-start-4 lg:col-start-5`;
-  if (count === 2) return `${SPAN} ${index === 0 ? 'lg:col-start-3' : 'lg:col-start-7'}`;
-  return SPAN;
+  if (count === 2) return `lg:col-span-4 ${index === 0 ? 'lg:col-start-3' : 'lg:col-start-7'}`;
+  return 'lg:col-span-4';
 }
 
 /**

@@ -1,4 +1,4 @@
-import { sanityClient } from '../lib/sanity';
+import { cachedFetch } from '../lib/sanity-cache';
 import { mergeCopy } from './landing';
 
 /**
@@ -32,7 +32,7 @@ export async function getDropsPageCopy(): Promise<DropsPageCopy> {
   let raw: unknown = null;
 
   try {
-    raw = await sanityClient.fetch(QUERY, { type: DOC_TYPE, id: DOC_ID });
+    raw = await cachedFetch(QUERY, { type: DOC_TYPE, id: DOC_ID });
   } catch (error) {
     console.warn('[drops] could not read the page copy, using the defaults:', error);
   }

@@ -83,4 +83,8 @@ describe('RHYTHM', () => {
     expect(rules).toContain(`[&>section:last-child:not([data-block=hero])]:${room}`);
     expect(rules.filter((r) => r.endsWith(room))).toHaveLength(3);
   });
+
+  it('leaves the height of the edges to `--edge-height`, which `theme.css` raises on portrait phones and tablets', () => {
+    expect(rules.some((rule) => rule.includes('data-edge]]:') && /:h-/.test(rule))).toBe(false);
+  });
 });

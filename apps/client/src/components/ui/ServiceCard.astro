@@ -32,7 +32,7 @@ interface Props {
   actionLabel: string;
   preferred?: boolean;
   /** The owner's image, already cropped to the slot; `alt` is `""` when it is decoration. */
-  image?: { src: string; alt: string };
+  image?: { src: string; alt: string; srcset?: string; sizes?: string };
   class?: string;
 }
 
@@ -67,6 +67,8 @@ const SLOT = 'aspect-[13/6] w-full';
     image ? (
       <img
         src={image.src}
+        srcset={image.srcset}
+        sizes={image.sizes}
         alt={image.alt}
         width={520}
         height={240}

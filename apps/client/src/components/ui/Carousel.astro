@@ -1,0 +1,98 @@
+---
+/**
+ * A row of parallel cards that becomes a carousel on a small screen (spec 05e):
+ * the scroll-snap track, the dots under it and the script that drives them,
+ * written once for every block that has one.
+ *
+ * **One DOM, CSS decides.** Below `lg` (phones and portrait tablets) the track
+ * is a row of slides, one card visible at a time, so the landing stays short.
+ * From `lg` the track is the block's own grid: the block passes that layout in
+ * `trackClass` (`lg:grid-cols-12` with its cards' `lg:col-span-*`, or a
+ * subgrid), and the dots are hidden. `scrollFrom="always"` keeps the scroll
+ * track on a desktop too, with the cards' share of it in `trackClass`
+ * (the testimonials, once they outgrow a row).
+ *
+ * The gap is one of the grid's 23 units (`100%/23`), so a card is the same
+ * share of the track here as it is of the page grid (I-001). The vertical
+ * padding and its negative margin keep the cards' shadow from being clipped.
+ *
+ * Slides move by swipe, the dots and the arrow keys; they move on their own
+ * only with `autoplay`, which only the testimonials set. Each card is a direct
+ * child of the slot.
+ *
+ * It brings no script of its own: the page imports `lib/carousel-boot` once,
+ * outside the bands (see the note there). Without it the track is still a row
+ * to swipe.
+ */
+interface Props {
+  /** The region's name, in Spanish: *Testimonios*. */
+  label: string;
+  /** Slide on a timer (testimonials only). */
+  autoplay?: boolean;
+  /** `below-lg` (default): a scroll track on phones and tablets, the block's grid from `lg`. */
+  scrollFrom?: 'below-lg' | 'always';
+  /** The track's layout from `lg` (or its card width, with `scrollFrom="always"`). */
+  trackClass?: string;
+  /** The wrapper's: its columns, and a surface if it has one (how-it-works' panel). */
+  class?: string;
+  /** `ol` when the cards are a numbered sequence and `ul` when they are a set of
+   * like things (sessions, drops); either way each card is an `li`. */
+  trackAs?: 'div' | 'ol' | 'ul';
+  [key: string]: unknown;
+}
+
+const {
+  label,
+  autoplay = false,
+  scrollFrom = 'below-lg',
+  trackClass,
+  trackAs: Track = 'div',
+  class: className,
+  ...rest
+} = Astro.props;
+
+const SCROLL: Record<NonNullable<Props['scrollFrom']>, string> = {
+  'below-lg':
+    'max-lg:grid max-lg:snap-x max-lg:snap-mandatory max-lg:auto-cols-[100%] max-lg:grid-flow-col max-lg:gap-x-[calc(100%/23)] max-lg:overflow-x-auto max-lg:overscroll-x-contain',
+  always:
+    'grid snap-x snap-mandatory auto-cols-[100%] grid-flow-col gap-x-[calc(100%/23)] overflow-x-auto overscroll-x-contain',
+};
+---
+
+<section
+  data-carousel
+  data-autoplay={autoplay ? '' : undefined}
+  aria-roledescription="carousel"
+  aria-label={label}
+  class:list={['col-span-12', className]}
+  {...rest}
+>
+  <Track
+    role={Track === 'ol' || Track === 'ul' ? 'list' : undefined}
+    data-track
+    tabindex="0"
+    aria-label={`${label}, desliza para ver más`}
+    class:list={[
+      'relative -my-3 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+      SCROLL[scrollFrom],
+      trackClass,
+    ]}
+  >
+    <slot />
+  </Track>
+  <div
+    data-dots
+    role="group"
+    aria-label="Elegir tarjeta"
+    class:list={['mt-4 flex justify-center', scrollFrom === 'below-lg' && 'lg:hidden']}
+    hidden
+  />
+  {/* 44px to touch (INT-01), the drawn dot 12px at its centre. */}
+  <template data-dot>
+    <button type="button" class="group flex size-11 cursor-pointer items-center justify-center rounded-full">
+      <span
+        class="size-3 rounded-full bg-stone transition-colors duration-base group-aria-[current=true]:bg-violet"
+      ></span>
+    </button>
+  </template>
+</section>

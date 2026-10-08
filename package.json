@@ -16,6 +16,13 @@
     "check": "pnpm -r check",
     "preview": "pnpm --filter client preview",
     "start:server": "pnpm --filter server start",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "perf": "pnpm build && node scripts/perf.mjs",
+    "perf:run": "node scripts/perf.mjs",
+    "check:compression": "node scripts/check-compression.mjs"
+  },
+  "devDependencies": {
+    "chrome-launcher": "^1.2.2",
+    "lighthouse": "^13.5.0"
   }
 }

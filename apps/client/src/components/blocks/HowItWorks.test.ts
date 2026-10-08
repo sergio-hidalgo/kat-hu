@@ -21,11 +21,11 @@ async function render(copy: LandingCopy['how-it-works'] = defaults) {
 
 describe('stepSpan', () => {
   it.each([
-    [1, 'col-span-12'],
-    [2, 'col-span-12 md:col-span-6'],
-    [3, 'col-span-12 md:col-span-4'],
-    [4, 'col-span-12 md:col-span-6 lg:col-span-3'],
-    [6, 'col-span-12 md:col-span-6 lg:col-span-3'],
+    [1, 'lg:col-span-12'],
+    [2, 'lg:col-span-6'],
+    [3, 'lg:col-span-4'],
+    [4, 'lg:col-span-3'],
+    [6, 'lg:col-span-3'],
   ])('gives %i steps %s each, so a row of steps fills the grid', (count, span) => {
     expect(stepSpan(count)).toBe(span);
   });
@@ -47,7 +47,10 @@ describe('HowItWorks', () => {
 
     expect(html).toContain('<ol role="list"');
     expect(html.match(/<li\b/g)).toHaveLength(count);
-    expect(html.split(`<li class="${stepSpan(count)} flex flex-col items-center px-6 text-center"`).length - 1).toBe(count);
+    expect(
+      html.split(`<li class="${stepSpan(count)} flex snap-start flex-col items-center px-6 text-center md:px-[20%] lg:px-6"`)
+        .length - 1,
+    ).toBe(count);
     expect(positions.every((position) => position > -1)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
     expect(numerals).toEqual(Array.from({ length: count }, (_, index) => index + 1));
@@ -55,13 +58,13 @@ describe('HowItWorks', () => {
 
   it('holds the steps in one Panel, a subgrid of the page grid (guide §07, I-001)', async () => {
     const html = await render();
-    const panel = html.match(/<ol role="list" data-panel class="([^"]*)"/)?.[1].split(' ') ?? [];
+    const panel = html.match(/<section[^>]*class="([^"]*)"[^>]*data-panel/)?.[1].split(' ') ?? [];
 
     expect(panel).toEqual(
       expect.arrayContaining([
         'col-span-12',
-        'grid',
-        'grid-cols-subgrid',
+        'lg:grid',
+        'lg:grid-cols-subgrid',
         'bg-panel',
         'rounded',
         'border',
@@ -70,6 +73,16 @@ describe('HowItWorks', () => {
     );
     // Not a second grid: no column count of its own.
     expect(panel.some((c) => /^grid-cols-\d/.test(c))).toBe(false);
+  });
+
+  it('puts the steps in a carousel below lg, never on a timer (spec 05e)', async () => {
+    const html = await render({ ...defaults, steps: steps(3) });
+
+    expect(html).toContain('data-carousel');
+    expect(html).toContain('aria-label="Pasos de la sesión"');
+    expect(html).not.toContain('data-autoplay');
+    // The numbered list is the track itself.
+    expect(html).toMatch(/<ol role="list" data-track/);
   });
 
   it('holds a Violeta placeholder over each step that has no picture yet, one shape per step', async () => {
@@ -104,6 +117,10 @@ describe('HowItWorks', () => {
     expect(src).toMatch(/^https:\/\/cdn\.sanity\.io\/images\//);
     expect(params.get('w')).toBe('800');
     expect(params.get('h')).toBe('343');
+    const set = (img.match(/srcset="([^"]*)"/)?.[1] ?? '').split(', ').map((entry) => entry.split(' ')[1]);
+    expect(set).toEqual(['320w', '480w', '640w', '800w']);
+    // Two steps across from lg: half of the Panel less the step's padding.
+    expect(img).toContain('sizes="(min-width: 1024px) calc(92vw / 2 - 48px), (min-width: 760px) 55vw, calc(92vw - 48px)"');
     expect(img).toContain('alt="Una videollamada"');
     expect(img).toMatch(/class="[^"]*\baspect-\[7\/3\][^"]*\bobject-cover\b/);
     expect(html.match(/data-placeholder/g)).toHaveLength(1);
@@ -124,7 +141,8 @@ describe('HowItWorks', () => {
   });
 
   it('has no action of its own — it explains; the hero and the closing block book', async () => {
-    expect(await render()).not.toMatch(/<a\b|<button\b/);
+    // The carousel's dots are a `<template>`, cloned by script: not an action of the band.
+    expect((await render()).replace(/<template[\s\S]*?<\/template>/g, '')).not.toMatch(/<a\b|<button\b/);
   });
 
   it('puts its heading on a row of its own, so no card climbs up beside it', async () => {
