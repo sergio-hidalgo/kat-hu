@@ -119,7 +119,9 @@ describe('Flora', () => {
     expect(html).toContain('aria-hidden="true"');
     expect(html).toContain('text-wisteria');
     expect(html).toMatch(/class="[^"]*\bbg-current\b/);
-    expect(html).toMatch(/[^-]mask: url\("[^"]*flora-line-leaf[^"]*\.svg"\) center \/ contain no-repeat;/);
+    // Held back in a custom property: nothing is fetched until `flora-boot` switches the drawing on.
+    expect(html).toMatch(/--flora-mask: url\("[^"]*flora-line-leaf[^"]*\.svg"\) center \/ contain no-repeat;/);
+    expect(html).not.toMatch(/[^-]mask: url/);
     expect(html).toContain('aspect-ratio: 560 / 700;');
     // Not an <svg><use>: that would be fetched even while hidden on a phone.
     expect(html).not.toContain('<use');
@@ -149,7 +151,11 @@ describe('SectionEdge', () => {
     // pixel down into its own, so no hairline can open between them.
     expect(html).toContain('bottom-[calc(100%-1px)] h-[calc(var(--edge-height)+1px)]');
     expect(html).toContain('text-lavender');
-    expect(html).toMatch(/[^-]mask: linear-gradient\(black, black\) center bottom \/ 100% 6% no-repeat, url\("[^"]*edge-plants[^"]*\.svg"\) center bottom \/ auto 100% repeat-x;/);
+    // Held in a custom property until the edge is near the screen (`lib/flora-boot.ts`), except the page's first.
+    expect(html).toMatch(/--edge-mask: linear-gradient\(black, black\) center bottom \/ 100% 6% no-repeat, url\("[^"]*edge-plants[^"]*\.svg"\) center bottom \/ auto 100% repeat-x;/);
+    expect(html).not.toMatch(/[^-]mask: /);
+    expect(html).toContain('data-mask-defer');
+    expect(html).toContain('data-edge-plants');
   });
 
   it('casts a faint, crisp Ink shadow upwards — from the wrapper, where the mask cannot cut it off', async () => {
@@ -170,7 +176,10 @@ describe('SectionEdge', () => {
     expect(html).toContain('data-edge="footer"');
     expect(html).toContain('bottom-[calc(100%-1px)]');
     expect(html).toContain('text-violet');
-    expect(html).toMatch(/mask-image: linear-gradient\(black, black\), url\("[^"]*edge-footer[^"]*"\), linear-gradient[^;]*, url\("[^"]*edge-plants[^"]*"\)/);
+    // The images wait in a custom property until `flora-boot` switches the edge on.
+    expect(html).toMatch(/--edge-mask-image: linear-gradient\(black, black\), url\("[^"]*edge-footer[^"]*"\), linear-gradient[^;]*, url\("[^"]*edge-plants[^"]*"\)/);
+    expect(html).not.toMatch(/[^-]mask-image:/);
+    expect(html).toContain('data-mask-defer');
     expect(html).toContain('mask-composite: add, add, intersect;');
   });
 
@@ -178,8 +187,10 @@ describe('SectionEdge', () => {
     const half = (FOOTER_ASPECT / 2).toFixed(3);
 
     expect(sidesOnly(FOOTER_ASPECT)).toBe(
-      `linear-gradient(to right, black calc(50% - ${half} * var(--edge-height)), transparent calc(50% - ${half} * var(--edge-height)), transparent calc(50% + ${half} * var(--edge-height)), black calc(50% + ${half} * var(--edge-height)))`,
+      `linear-gradient(to right, black calc(50% + var(--edge-shift, 0px) - ${half} * var(--edge-height)), transparent calc(50% + var(--edge-shift, 0px) - ${half} * var(--edge-height)), transparent calc(50% + var(--edge-shift, 0px) + ${half} * var(--edge-height)), black calc(50% + var(--edge-shift, 0px) + ${half} * var(--edge-height)))`,
     );
+    // The strip itself moves with the cut, and by nothing unless a screen sets `--edge-shift`.
+    expect(footerMaskStyle('/f.svg', '/p.svg')).toContain('center bottom, calc(50% + var(--edge-shift, 0px)) bottom, 0 0, center bottom');
     expect(footerMaskStyle('/f.svg', '/p.svg')).toContain('-webkit-mask-composite: source-over, source-over, source-in;');
   });
 
@@ -192,7 +203,7 @@ describe('SectionEdge', () => {
   it('lays a band’s plants over a solid ground strip so no seam shows — edges only, never a flower', () => {
     const value = `${GROUND_LAYER}, url("/p.svg") ${PLANTS_LAYER}`;
 
-    expect(plantsMaskStyle('/p.svg')).toBe(`-webkit-mask: ${value}; mask: ${value};`);
+    expect(plantsMaskStyle('/p.svg')).toBe(`--edge-mask: ${value};`);
     expect(maskStyle([['/f.svg', PLANTS_LAYER]])).not.toContain('linear-gradient');
   });
 });

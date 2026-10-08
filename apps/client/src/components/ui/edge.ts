@@ -27,14 +27,22 @@ export const FOOTER_LAYER = 'center bottom / auto 100% no-repeat';
 export const FOOTER_ASPECT = 2164 / 255;
 
 /**
+ * How far the animal strip sits off the centre. Nothing on a wide screen; a
+ * narrow one crops the strip, and the three animals are not in its middle (the
+ * rabbit is), so `theme.css` moves it left there (owner, 2026-10-06) for the
+ * three to look centred.
+ */
+const SHIFT = 'var(--edge-shift, 0px)';
+
+/**
  * A mask that is opaque where the plants may show — the two sides — and clear
  * over the animal strip, which has its own plants; without it the two
  * drawings' foliage would pile up in the middle. (`black` only means opaque: a
  * mask reads alpha, never colour.)
  */
 export function sidesOnly(aspect: number): string {
-  const left = `calc(50% - ${(aspect / 2).toFixed(3)} * var(--edge-height))`;
-  const right = `calc(50% + ${(aspect / 2).toFixed(3)} * var(--edge-height))`;
+  const left = `calc(50% + ${SHIFT} - ${(aspect / 2).toFixed(3)} * var(--edge-height))`;
+  const right = `calc(50% + ${SHIFT} + ${(aspect / 2).toFixed(3)} * var(--edge-height))`;
   return `linear-gradient(to right, black ${left}, transparent ${left}, transparent ${right}, black ${right})`;
 }
 
@@ -52,10 +60,15 @@ export function maskStyle(layers: Array<[url: string, layer: string]>): string {
   return `-webkit-mask: ${value}; mask: ${value};`;
 }
 
-/** A band's edge: the plants, repeated, over the ground strip. */
+/**
+ * A band's edge: the plants, repeated, over the ground strip.
+ *
+ * The mask waits in a custom property: a `url()` is only fetched when a property
+ * uses it, and `lib/flora-boot.ts` (and, for the first edge on a page, a rule in
+ * `theme.css`) turns it into a `mask` when the edge is near the screen.
+ */
 export function plantsMaskStyle(plants: string): string {
-  const value = `${GROUND_LAYER}, url("${plants}") ${PLANTS_LAYER}`;
-  return `-webkit-mask: ${value}; mask: ${value};`;
+  return `--edge-mask: ${GROUND_LAYER}, url("${plants}") ${PLANTS_LAYER};`;
 }
 
 /**
@@ -63,15 +76,19 @@ export function plantsMaskStyle(plants: string): string {
  * sides, the ground strip under both. Layers composite from the bottom up —
  * the plants, cut to the sides (`intersect`), then the animals and the ground
  * added on top (`add`).
+ *
+ * The images are *deferred*: this edge is the last thing on the page, so its
+ * files wait for the page to load and for the edge to come near the screen.
  */
 export function footerMaskStyle(footer: string, plants: string): string {
   const image = `linear-gradient(black, black), url("${footer}"), ${sidesOnly(FOOTER_ASPECT)}, url("${plants}")`;
-  const position = 'center bottom, center bottom, 0 0, center bottom';
+  const position = `center bottom, calc(50% + ${SHIFT}) bottom, 0 0, center bottom`;
   const size = '100% 6%, auto 100%, 100% 100%, auto 100%';
   const repeat = 'no-repeat, no-repeat, no-repeat, repeat-x';
   return [
-    `-webkit-mask-image: ${image}`,
-    `mask-image: ${image}`,
+    // Held back in a custom property so the two files are not requested until
+    // `lib/flora-boot.ts` switches the edge on (the rule is in `theme.css`).
+    `--edge-mask-image: ${image}`,
     `-webkit-mask-position: ${position}`,
     `mask-position: ${position}`,
     `-webkit-mask-size: ${size}`,

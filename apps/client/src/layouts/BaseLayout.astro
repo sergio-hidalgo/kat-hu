@@ -105,5 +105,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
     <BackToTop />
 
     {import.meta.env.DEV && <GridOverlay />}
+
+    {/* After everything, so it sits in no band (see `lib/carousel-boot.ts`). */}
+    <script>
+      import '../lib/flora-boot';
+    </script>
   </body>
 </html>
