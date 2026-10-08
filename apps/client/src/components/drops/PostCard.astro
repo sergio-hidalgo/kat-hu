@@ -2,15 +2,21 @@
 import { Heart } from '@lucide/astro';
 import { DROP_TYPE_LABELS } from '@kat-hu/contracts';
 import { formatDate, type Post } from '../../data/posts';
-import { imageUrl } from '../../lib/sanity';
+import { imageSet } from '../../lib/sanity';
 import Card from '../ui/Card.astro';
 import Chip from '../ui/Chip.astro';
 
 type Props = Pick<Post, 'id' | 'slug' | 'title' | 'excerpt' | 'date' | 'mainImage' | 'dropType'> & {
   likes: number;
+  /** How wide the card's picture is drawn, for the browser to pick a file. */
+  sizes?: string;
 };
 
-const { id, slug, title, excerpt, date, mainImage, dropType, likes } = Astro.props;
+/* /drops: one column under `md` (92vw of the screen: the grid's 23 of 25
+   units), two to `lg` (11 units, 44vw) and three from it (7 units, 28vw). */
+const DROPS_SIZES = '(min-width: 1024px) 28vw, (min-width: 760px) 44vw, 92vw';
+
+const { id, slug, title, excerpt, date, mainImage, dropType, likes, sizes = DROPS_SIZES } = Astro.props;
 
 const href = `/drops/${slug}/`;
 
@@ -21,8 +27,7 @@ const href = `/drops/${slug}/`;
  * it is — and one ratio is also what lets a masonry of varying-height cards
  * read as one set, the height coming from the text rather than the picture.
  */
-const width = 800;
-const height = 450;
+const image = mainImage && imageSet(mainImage, { widths: [320, 480, 640, 800], ratio: 16 / 9 });
 ---
 
 <Card
@@ -38,12 +43,14 @@ const height = 450;
     mainImage ? (
       <a href={href} class="relative block leading-none">
         <img
-          src={imageUrl(mainImage).width(width).height(height).fit('crop').url()}
+          src={image!.src}
+          srcset={image!.srcset}
+          {sizes}
           alt={mainImage.alt ?? ''}
           loading="lazy"
           decoding="async"
-          width={width}
-          height={height}
+          width={image!.width}
+          height={image!.height}
           class="block h-auto w-full rounded-none"
         />
         {/* Bottom-right on a Crema scrim, so it stays legible on any photo. */}

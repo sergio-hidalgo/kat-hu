@@ -9,6 +9,11 @@
  * Decoration: `alt=""` and `aria-hidden`. No rounding (the base layer rounds
  * every image; a cut-out must keep its edges) and no shadow. The caller gives
  * the width and the placement.
+ *
+ * It is a 1.2-megapixel photograph shown at 170–290px, so the file offered must
+ * be the nearest finer width to what is drawn (`sizes`, which the caller sets
+ * from its own width classes) and compressed for a small print: quality 60 (the cut-out edges, not the colour, are most of its bytes).
+ * With the old 240/480/720 a 194px lilac took the 480px file, 78 KB.
  */
 import { Image } from 'astro:assets';
 import lilac from '../../assets/brand/pressed-lilac.png';
@@ -31,7 +36,8 @@ const { name, sizes = '(min-width: 1024px) 240px, 160px', class: className } = A
   alt=""
   aria-hidden="true"
   data-flora={`pressed-${name}`}
-  widths={[240, 480, 720]}
+  widths={[180, 240, 320, 400, 480, 600]}
+  quality={60}
   {sizes}
   loading="lazy"
   decoding="async"

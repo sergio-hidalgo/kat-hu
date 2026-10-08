@@ -14,7 +14,8 @@
     "check": "astro check",
     "favicons": "node scripts/favicons.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "banner-mobile": "node scripts/banner-mobile.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.5",
