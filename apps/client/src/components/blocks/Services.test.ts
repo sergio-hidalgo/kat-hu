@@ -21,7 +21,7 @@ async function render(copy: LandingCopy['services'] = defaults) {
   return container.renderToString(Services, { props: { copy } });
 }
 
-const CARD_CELL = 'class="col-span-12 md:col-span-6 lg:col-span-4"';
+const CARD_CELL = '<li class="snap-start lg:col-span-4">';
 
 describe('Services', () => {
   it('renders its headline and one card per default session, each booking that session', async () => {
@@ -32,6 +32,18 @@ describe('Services', () => {
       expect(html).toContain(item.title);
       expect(html).toContain(`href="/reservar?servicio=${item.id}"`);
     }
+  });
+
+  it('puts the sessions in a carousel below lg and three across from lg (spec 05e)', async () => {
+    const html = await render();
+
+    expect(html).toContain('data-carousel');
+    expect(html).toContain('aria-label="Sesiones"');
+    expect(html).not.toContain('data-autoplay');
+    // A set of sessions: a list.
+    expect(html).toMatch(/<ul role="list" data-track/);
+    expect(html).toContain('lg:grid-cols-12');
+    expect(html).toContain('max-lg:overflow-x-auto');
   });
 
   it.each([1, 3, 5])('renders %i sessions as that many cards, each on the same columns', async (count) => {
@@ -117,6 +129,10 @@ describe('Services', () => {
     // Twice the slot's width for dense screens, at the slot's 13:6.
     expect(params.get('w')).toBe('800');
     expect(params.get('h')).toBe('369');
+    // And offered in four widths, the same crop each, so a laptop is not handed 800px for 285.
+    const set = (img.match(/srcset="([^"]*)"/)?.[1] ?? '').split(', ').map((entry) => entry.split(' ')[1]);
+    expect(set).toEqual(['320w', '480w', '640w', '800w']);
+    expect(img).toContain('sizes="(min-width: 1024px) calc(28vw - 48px), calc(92vw - 48px)"');
     expect(img).toContain('alt="Lavanda en acuarela"');
     expect(html.match(/data-placeholder/g)).toHaveLength(1);
   });

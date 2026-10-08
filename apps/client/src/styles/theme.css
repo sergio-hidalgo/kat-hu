@@ -43,6 +43,40 @@
   font-display: swap;
 }
 
+/* Large portrait phones (an iPhone Pro Max, a Pixel Pro — 430px up to the
+   tablet breakpoint): room for a bolder landscape (owner, 2026-10-06). One
+   `phone-xl:` variant to place things for them, and the botanical edges 50%
+   taller everywhere — the token is the one place every band, the footer's
+   reserved room and the edge's own mask read it from. */
+@custom-variant phone-xl (@media (min-width: 430px) and (max-width: 47.4999rem) and (orientation: portrait));
+
+/* The regular portrait phones just under it (an iPhone 16 at 393, a 16 Pro at
+   402, a Pixel at 412). The same drawings as `phone-xl:`, sized in `vw` so they
+   are the same share of a narrower screen. The botanical edges are as tall as
+   on `phone-xl:` (owner, 2026-10-06; they had stayed as they were until then):
+   the media query below covers both. */
+@custom-variant phone-md (@media (min-width: 380px) and (max-width: 429.98px) and (orientation: portrait));
+
+/* A portrait tablet (an iPad mini at 768, up to the desktop breakpoint): the
+   same drawings again, in `vw` of a wider screen and from its own cut-outs
+   (owner, 2026-10-07). */
+@custom-variant tablet (@media (min-width: 47.5rem) and (max-width: 63.9999rem) and (orientation: portrait));
+
+/* The portrait phones alone (380px up to the tablet breakpoint). */
+@custom-variant phone (@media (min-width: 380px) and (max-width: 47.4999rem) and (orientation: portrait));
+
+/* Every portrait phone from 380px and every portrait tablet at once, for what
+   they share (the drops page's background drawings, owner, 2026-10-07). */
+@custom-variant handheld (@media (min-width: 380px) and (max-width: 63.9999rem) and (orientation: portrait));
+
+@media (min-width: 380px) and (max-width: 63.9999rem) and (orientation: portrait) {
+  :root {
+    --edge-height: clamp(72px, 10.5vw, 150px);
+    /* The footer's strip is cropped here, and its three animals sit right of its middle. */
+    --edge-shift: calc(var(--edge-height) * -0.42);
+  }
+}
+
 @theme {
   /* Only the design system's colours exist: Tailwind's palette is switched
      off, so a retired or default name (`violet-700`, `white`) generates
@@ -255,7 +289,7 @@
 /* --------------------------------------------------------------------------
    Logo lockup (guide §02) — SVG mark + real lowercase text, sized off one
    font-size: the mark is 1.4em, the gap 0.22em, the word Urbanist 800.
-   *kat* and the mark in Violeta, *hu* in Glicina. The inverted version, for
+   *kat* and the mark in Violeta, *hu* a Violeta–Glicina mix. The inverted version, for
    the Violeta footer, turns *kat* and the mark Crema and keeps *hu* Glicina
    (3.38:1 — valid for a logo only).
    -------------------------------------------------------------------------- */
@@ -287,8 +321,14 @@
     color: var(--color-violet);
   }
 
+  /* *hu* on Crema: Glicina alone is 2.15:1, under the 3:1 that large text
+     needs (the word is 36px at weight 800, so it is large). 35% Violeta and
+     65% Glicina is 3.15:1 — about as light as it can go and still pass — and
+     2.3:1 against *kat*, so the two read as two tones (owner, 2026-10-07). It
+     is not meant for text below 18.66px bold: the logo is never that small on
+     Crema. */
   .kathu-logo__word > span {
-    color: var(--color-wisteria);
+    color: color-mix(in srgb, var(--color-violet) 35%, var(--color-wisteria));
   }
 
   .kathu-logo--light,
@@ -308,4 +348,40 @@
     color: var(--text-on-violet);
     padding-block: 4rem 2.5rem;
   }
+}
+
+/* Decorative masks that wait (`ui/Flora.astro`, the footer edge in
+   `ui/SectionEdge.astro`, `lib/flora-boot.ts`): the mask is in a custom
+   property, which fetches nothing; it becomes a `mask` — and the file is
+   requested — when the element is switched on, after load and near the screen.
+   Until then it is hidden, so its `bg-current` fill shows no solid box.
+   Unlayered, so no utility can beat it. */
+[data-mask-defer]:not([data-mask-on]) {
+  visibility: hidden;
+}
+
+[data-flora][data-mask-on] {
+  -webkit-mask: var(--flora-mask);
+  mask: var(--flora-mask);
+}
+
+[data-edge-plants][data-mask-on] {
+  -webkit-mask: var(--edge-mask);
+  mask: var(--edge-mask);
+}
+
+/* The first edge of a page is on its first screen — the one under the landing's
+   hero, the one under the drops banner — so it is not held back: it is part of
+   the picture and shares its file with every other edge. Declared after the
+   hiding rule above, at the same specificity, so it wins. */
+[data-block='hero'] + * [data-edge-plants],
+main > :first-child + * [data-edge-plants] {
+  visibility: visible;
+  -webkit-mask: var(--edge-mask);
+  mask: var(--edge-mask);
+}
+
+[data-edge-mask][data-mask-on] {
+  -webkit-mask-image: var(--edge-mask-image);
+  mask-image: var(--edge-mask-image);
 }

@@ -19,6 +19,7 @@ import Section from '../layout/Section.astro';
 import Grid from '../layout/Grid.astro';
 import Flora from '../ui/Flora.astro';
 import PressedFlower from '../ui/PressedFlower.astro';
+import Carousel from '../ui/Carousel.astro';
 import Testimonial from '../ui/Testimonial.astro';
 import type { LandingCopy } from '../../data/landing';
 import { getTestimonials } from '../../data/testimonials';
@@ -38,7 +39,7 @@ const carousel = items.length > CAROUSEL_FROM;
     <Section data-block="testimonials" edge class="isolate overflow-x-clip">
       <Flora
         line="sprig"
-        class="absolute bottom-16 -left-28 -z-10 hidden w-[421.875px] -rotate-3 -scale-x-100 text-warning opacity-35 lg:block"
+        class="absolute bottom-16 -left-28 -z-10 hidden w-[421.875px] -rotate-3 -scale-x-100 text-warning opacity-35 phone-xl:left-auto phone-xl:-right-[16vw] phone-xl:block phone-xl:w-[64vw] phone-xl:rotate-3 phone-xl:scale-x-100 phone-md:left-auto phone-md:-right-[16vw] phone-md:block phone-md:w-[64vw] phone-md:rotate-3 phone-md:scale-x-100 tablet:left-auto tablet:-right-[10vw] tablet:block tablet:w-[40vw] tablet:rotate-3 tablet:scale-x-100 lg:block"
       />
       <PressedFlower
         name="yellow"
@@ -51,64 +52,36 @@ const carousel = items.length > CAROUSEL_FROM;
           {copy.lead && <p class="mt-4 max-w-none text-lead text-graphite">{copy.lead}</p>}
         </div>
         {
-          carousel ? (
-            <div
-              data-carousel
-              role="region"
-              aria-roledescription="carousel"
-              aria-label="Testimonios"
-              class="col-span-12"
+          items.length > 1 ? (
+            /* Below `lg` always a carousel of one (owner, 2026-10-04); from `lg`
+               the row it was — or, past `CAROUSEL_FROM`, the carousel of three. */
+            <Carousel
+              label="Testimonios"
+              autoplay
+              scrollFrom={carousel ? 'always' : 'below-lg'}
+              trackClass={
+                carousel
+                  ? 'lg:auto-cols-[calc(100%*7/23)]'
+                  : 'lg:grid lg:grid-cols-12 lg:gap-x-[calc(100%/23)]'
+              }
             >
-              {/* A track as wide as the 12 columns, its cards a share of it: the
-                  gap is one of the grid's 23 units, so a card is 7 (three
-                  across), 11 (two) or 23 (one) of them — the same spans the
-                  static row uses. The vertical padding and its negative margin
-                  keep the cards' shadow from being clipped. */}
-              <div
-                data-track
-                tabindex="0"
-                aria-label="Testimonios, desliza para ver más"
-                class="relative -my-3 grid snap-x snap-mandatory auto-cols-[100%] grid-flow-col gap-x-[calc(100%/23)] overflow-x-auto overscroll-x-contain py-3 [scrollbar-width:none] md:auto-cols-[calc(100%*11/23)] lg:auto-cols-[calc(100%*7/23)] [&::-webkit-scrollbar]:hidden"
-              >
-                {items.map((item) => (
-                  <Testimonial name={item.name} cat={item.cat} class="snap-start">
-                    {item.quote}
-                  </Testimonial>
-                ))}
-              </div>
-              <div data-dots class="mt-6 flex justify-center gap-1" hidden />
-              <template data-dot>
-                <button
-                  type="button"
-                  class="group flex size-8 cursor-pointer items-center justify-center rounded-full"
+              {items.map((item, index) => (
+                <Testimonial
+                  name={item.name}
+                  cat={item.cat}
+                  class:list={['snap-start', !carousel && testimonialPlace(items.length, index)]}
                 >
-                  <span class="size-3 rounded-full bg-stone transition-colors duration-base group-aria-[current=true]:bg-violet" />
-                </button>
-              </template>
-            </div>
+                  {item.quote}
+                </Testimonial>
+              ))}
+            </Carousel>
           ) : (
-            items.map((item, index) => (
-              <Testimonial
-                name={item.name}
-                cat={item.cat}
-                class={testimonialPlace(items.length, index)}
-              >
-                {item.quote}
-              </Testimonial>
-            ))
+            <Testimonial name={items[0].name} cat={items[0].cat} class={testimonialPlace(1, 0)}>
+              {items[0].quote}
+            </Testimonial>
           )
         }
       </Grid>
-
-      {/* Inside the band, and only when there is one: a script written outside
-          is emitted in place in `astro dev`, between two bands (see Hero.astro). */}
-      <script>
-        import { initCarousel } from '../../lib/testimonials-carousel';
-
-        for (const root of document.querySelectorAll<HTMLElement>('[data-block=testimonials] [data-carousel]')) {
-          initCarousel(root);
-        }
-      </script>
     </Section>
   )
 }

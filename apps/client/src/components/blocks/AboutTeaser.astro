@@ -5,6 +5,9 @@
  * the text and the link (its words and its destination, a path on this site)
  * are the owner's to edit; each falls back to the code's default.
  *
+ * Below `lg` (spec 05e) it is one centred column: the photo on top, the words
+ * centred beneath it.
+ *
  * The photo is a 4:5 crop in the guide's section-photo treatment — 8px radius
  * and the small shadow (guide §06). The owner can set one in the Studio
  * (`aboutTeaser.image`); until then it is Laura's portrait from the brand
@@ -33,7 +36,7 @@ import Flora from '../ui/Flora.astro';
 import PressedFlower from '../ui/PressedFlower.astro';
 import { TEXT_LINK } from '../ui/link';
 import type { LandingCopy } from '../../data/landing';
-import { imageUrl } from '../../lib/sanity';
+import { imageSet } from '../../lib/sanity';
 import portrait from '../../assets/brand/laura-portrait.png';
 
 interface Props {
@@ -45,21 +48,35 @@ const { image } = copy;
 
 const width = 640;
 const height = 800;
-const photoClass = 'block h-auto w-full shadow-sm md:w-[calc(100%*25/28)]';
+/* The photo's width as the layout draws it: 10 of 12 columns (19 of the grid's
+   25 units, 76vw) on a phone from 380px, 8 (60vw) on a portrait tablet, 6 (44vw)
+   on a landscape one and 25/28 of 4 from `lg` (25vw); 8 columns (60vw) on the
+   narrowest phones. */
+const PHOTO_SIZES =
+  '(min-width: 1024px) 25vw, (min-width: 760px) and (orientation: portrait) 60vw, (min-width: 760px) 44vw, (min-width: 380px) and (orientation: portrait) 76vw, 60vw';
+/** Fine enough that a phone's 548px need (313px at 1.75×) is met by the 560 file, not the 640. */
+const PHOTO_WIDTHS = [320, 400, 480, 560, 640, 800, 960] as const;
+/** The owner's photo in the same 4:5 crop at the widths the stand-in is offered in. */
+const photo = image && imageSet(image, { widths: PHOTO_WIDTHS, ratio: width / height });
+const photoClass = 'block h-auto w-full shadow-sm lg:w-[calc(100%*25/28)]';
 ---
 
 <Section data-block="about-teaser" edge class="z-10 overflow-x-clip">
-  <Flora line="flower" class="absolute top-0 -right-32 -z-10 hidden w-64 xl:block" />
+  <Flora line="flower" class="absolute top-0 -right-32 -z-10 hidden w-64 phone-xl:top-auto phone-xl:bottom-28 phone-xl:-right-[32vw] phone-xl:block phone-xl:w-[76vw] phone-md:top-auto phone-md:bottom-[25.5vw] phone-md:-right-[32vw] phone-md:block phone-md:w-[76vw] tablet:top-auto tablet:bottom-[14vw] tablet:-right-[14vw] tablet:block tablet:w-[50vw] xl:block" />
   <Flora line="leaf" class="absolute bottom-0 -right-16 -z-10 hidden w-48 xl:block" />
   <Grid class="items-center gap-y-16">
-    <div class="relative col-span-9 sm:col-span-6 md:col-span-4">
+    {/* Below `lg` one centred column, the picture on top: 8 of 12 columns on a
+        phone, 6 on a tablet. From `lg`, the picture on the left. */}
+    <div class="relative col-span-8 col-start-3 phone-xl:col-span-10 phone-xl:col-start-2 phone-md:col-span-10 phone-md:col-start-2 tablet:col-span-8 tablet:col-start-3 md:max-lg:landscape:col-span-6 md:max-lg:landscape:col-start-4 lg:col-span-4 lg:col-start-1">
       {
         image ? (
           <img
-            src={imageUrl(image).width(width).height(height).fit('crop').url()}
+            src={photo!.src}
+            srcset={photo!.srcset}
+            sizes={PHOTO_SIZES}
             alt={image.alt ?? ''}
-            {width}
-            {height}
+            width={photo!.width}
+            height={photo!.height}
             loading="lazy"
             decoding="async"
             class={photoClass}
@@ -71,22 +88,26 @@ const photoClass = 'block h-auto w-full shadow-sm md:w-[calc(100%*25/28)]';
             {width}
             {height}
             fit="cover"
-            widths={[320, 480, 640, 960]}
-            sizes="(min-width: 760px) 25vw, (min-width: 480px) 44vw, 68vw"
+            widths={[...PHOTO_WIDTHS]}
+            sizes={PHOTO_SIZES}
             loading="lazy"
             class={photoClass}
           />
         )
       }
+      {/* `sizes` is 70% of the width each class draws it at (264, 288, 208, 47vw
+          and 168px): a pressed flower is soft decoration, and at 3× density the
+          full width asked for a 600–720px file of 93–127 KB, a third of it the
+          cut-out's edge. At 70% a phone takes 400px, 49 KB. */}
       <PressedFlower
         name="lilac"
-        sizes="(min-width: 760px) 264px, 168px"
-        class="absolute -bottom-6 -left-24 z-10 w-42 rotate-72 -scale-x-100 opacity-90 md:-bottom-24 md:-left-32 md:w-66"
+        sizes="(min-width: 1024px) 185px, (min-width: 760px) and (orientation: portrait) 202px, (min-width: 760px) 146px, (min-width: 430px) and (orientation: portrait) 146px, (min-width: 380px) and (orientation: portrait) 33vw, 118px"
+        class="absolute -bottom-6 -left-10 z-10 w-42 phone-xl:-bottom-12 phone-xl:-left-[12vw] phone-xl:w-52 phone-md:-bottom-[11vw] phone-md:-left-[12vw] phone-md:w-[47vw] tablet:-bottom-16 tablet:-left-[20vw] tablet:w-72 rotate-72 -scale-x-100 opacity-90 md:max-lg:landscape:-bottom-12 md:max-lg:landscape:-left-20 md:max-lg:landscape:w-52 lg:-bottom-24 lg:-left-32 lg:w-66"
       />
     </div>
-    <div class="col-span-12 md:col-span-7 md:col-start-5">
+    <div class="col-span-12 text-center md:col-span-8 md:col-start-3 lg:col-span-7 lg:col-start-5 lg:text-left">
       <h2 class="text-h2 text-violet">{copy.headline}</h2>
-      <p class="mt-4 text-lead text-graphite">{copy.paragraph}</p>
+      <p class="mt-4 text-lead text-graphite max-lg:max-w-none">{copy.paragraph}</p>
       <a href={copy.linkHref} class:list={[TEXT_LINK, 'mt-4']}>{copy.linkLabel}</a>
     </div>
   </Grid>

@@ -36,13 +36,31 @@ describe('AboutTeaser', () => {
     expect(img).toContain('shadow-sm');
   });
 
-  it('sizes the photo at 6¼ grid units from md — four columns, 25/28 filled — and keeps the words on seven', async () => {
+  it('sizes the photo at 6¼ grid units from lg — four columns, 25/28 filled — and keeps the words on seven', async () => {
     const html = await render({ copy });
     const img = html.match(/<img[^>]*alt="Laura, la florapeuta[^"]*"[^>]*>/)?.[0] ?? '';
 
-    expect(html).toContain('<div class="relative col-span-9 sm:col-span-6 md:col-span-4">');
-    expect(img).toContain('md:w-[calc(100%*25/28)]');
-    expect(html).toContain('<div class="col-span-12 md:col-span-7 md:col-start-5">');
+    expect(html).toContain(
+      '<div class="relative col-span-8 col-start-3 phone-xl:col-span-10 phone-xl:col-start-2 phone-md:col-span-10 phone-md:col-start-2 tablet:col-span-8 tablet:col-start-3 md:max-lg:landscape:col-span-6 md:max-lg:landscape:col-start-4 lg:col-span-4 lg:col-start-1">',
+    );
+    expect(img).toContain('lg:w-[calc(100%*25/28)]');
+    expect(html).toContain(
+      '<div class="col-span-12 text-center md:col-span-8 md:col-start-3 lg:col-span-7 lg:col-start-5 lg:text-left">',
+    );
+  });
+
+  it('stacks below lg (spec 05e): the picture on top, centred, the words centred beneath it', async () => {
+    const html = await render({ copy });
+    const photo = html.indexOf('alt="Laura, la florapeuta');
+    const words = html.indexOf(copy.headline);
+
+    expect(photo).toBeGreaterThan(-1);
+    expect(words).toBeGreaterThan(photo);
+    // The photo's cell starts at column 3 (phone) or 4 (tablet) of 12 and spans 8 or 6: centred.
+    expect(html).toContain('col-span-8 col-start-3');
+    expect(html).toContain('md:max-lg:landscape:col-span-6 md:max-lg:landscape:col-start-4');
+    expect(html).toContain('tablet:col-span-8 tablet:col-start-3');
+    expect(html).toMatch(/<p class="mt-4 text-lead text-graphite max-lg:max-w-none">/);
   });
 
   it('takes the link’s words and destination from the copy — the Studio’s «Terapeuta»', async () => {
@@ -56,7 +74,11 @@ describe('AboutTeaser', () => {
     const img = html.match(/<img[^>]*src="https:\/\/cdn\.sanity\.io[^>]*>/)?.[0] ?? '';
 
     expect(img).toContain(`alt="${image.alt}"`);
-    expect(img).toContain('width="640" height="800"');
+    // The 4:5 crop at four widths, the largest (960×1200) its intrinsic size, so a phone is not handed 960px for 300.
+    expect(img).toContain('width="960" height="1200"');
+    const set = (img.match(/srcset="([^"]*)"/)?.[1] ?? '').split(', ').map((entry) => entry.split(' ')[1]);
+    expect(set).toEqual(['320w', '400w', '480w', '560w', '640w', '800w', '960w']);
+    expect(img).toContain('sizes="(min-width: 1024px) 25vw,');
     expect(img).not.toContain('alt="Laura, la florapeuta');
   });
 
@@ -90,12 +112,30 @@ describe('AboutTeaser', () => {
 
     // 25% smaller than 224/352px, and 60° further clockwise than its 12°.
     expect(tokens).toEqual(
-      expect.arrayContaining(['-scale-x-100', 'rotate-72', 'opacity-90', 'z-10', 'w-42', 'md:w-66']),
+      expect.arrayContaining(['-scale-x-100', 'rotate-72', 'opacity-90', 'z-10', 'w-42', 'md:max-lg:landscape:w-52', 'tablet:w-72', 'lg:w-66']),
     );
     // Left of the photo, hanging below its corner.
-    expect(tokens).toEqual(expect.arrayContaining(['-left-24', 'md:-left-32', '-bottom-6', 'md:-bottom-24']));
-    // Lower from md only: on a phone the heading sits right under the photo.
+    expect(tokens).toEqual(expect.arrayContaining(['-left-10', 'lg:-left-32', '-bottom-6', 'lg:-bottom-24']));
+    // Lower from lg only (and kept on screen below it): on a phone the heading sits right under the photo.
     // After the photo in the markup, so it paints over it.
     expect(html.indexOf('data-flora="pressed-lilac"')).toBeGreaterThan(html.indexOf('alt="Laura, la florapeuta'));
+  });
+});
+
+describe('AboutTeaser on a large portrait phone (owner, 2026-10-06)', () => {
+  it('has a photo 25% wider and its lilac against the screen edge, with the margin flower near the end of the words', async () => {
+    const html = await render({ copy });
+    const lilac = html.match(/<img[^>]*data-flora="pressed-lilac"[^>]*>/)?.[0] ?? '';
+    const flower = html.match(/<div[^>]*data-flora="line-flower"[^>]*>/)?.[0] ?? '';
+    const leaf = html.match(/<div[^>]*data-flora="line-leaf"[^>]*>/)?.[0] ?? '';
+
+    // 10 of 12 columns against 8: 19 of the grid's 25 units against 15.
+    expect(html).toContain('phone-xl:col-span-10 phone-xl:col-start-2');
+    expect(lilac).toContain('phone-xl:-left-[12vw]');
+    expect(flower).toContain('phone-xl:block');
+    expect(flower).toContain('phone-xl:bottom-28');
+    expect(flower).toContain('phone-xl:w-[76vw]');
+    // The leaf never shows below `xl`.
+    expect(leaf).not.toContain('phone-xl');
   });
 });

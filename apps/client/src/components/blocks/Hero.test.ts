@@ -72,11 +72,22 @@ describe('Hero', () => {
   it('keeps the words in the light half: a Violeta headline, the smaller words in Ink', async () => {
     const html = await render();
 
-    expect(html).toMatch(/<div class="relative col-span-12 lg:col-span-6">\s*<h1/);
-    expect(html).toMatch(/<p class="mt-6 text-lead text-ink">/);
+    expect(html).toMatch(/<div class="relative col-span-12 [^"]*lg:col-span-6[^"]*">\s*<h1/);
+    expect(html).toMatch(/<p class="mt-4 text-lead text-ink max-lg:max-w-none md:mt-6">/);
     // On the owner's diagonal gradient Pizarra falls to 3.05:1, so the micro
     // line is Ink at every size.
-    expect(html).toMatch(/text-sm text-ink italic">Todo online · Tus peludos no se mueven de casa</);
+    expect(html).toMatch(/text-sm text-ink italic max-lg:max-w-none md:mt-6">Todo online · Tus peludos no se mueven de casa</);
+  });
+
+  it('centres the words, the actions and Laura below lg (spec 05e)', async () => {
+    const html = await render();
+    const img = html.match(/<img[^>]*alt="Laura, la florapeuta[^"]*"[^>]*>/)?.[0] ?? '';
+
+    expect(html).toMatch(/<div class="relative col-span-12 text-center[^"]*lg:text-left">\s*<h1/);
+    expect(html).toMatch(/flex flex-col items-center[^"]*sm:justify-center[^"]*lg:justify-start/);
+    // The primary action is full width on a phone (PAT-09).
+    expect(html).toMatch(/<a[^>]*href="\/reservar"[^>]*class="[^"]*\bw-full sm:w-auto/);
+    expect(img).toContain('self-center');
   });
 
   it('pins Laura and her cat to the bottom-right edge, whole and large, with no margin', async () => {
@@ -86,15 +97,29 @@ describe('Hero', () => {
 
     // Part of the composition, not a portrait: never cropped (owner, 2026-09-11).
     expect(img).toMatch(/\bwidth="1404" height="783"/);
-    expect(classes).toEqual(expect.arrayContaining(['h-auto', 'rounded-none', 'mt-auto', 'self-end']));
+    expect(classes).toEqual(expect.arrayContaining(['h-auto', 'rounded-none', 'mt-auto', 'self-center']));
     expect(classes).toEqual(expect.arrayContaining(['lg:absolute', 'lg:right-0', 'lg:bottom-0']));
-    expect(classes).toEqual(expect.arrayContaining(['w-4/5', 'md:w-3/5']));
+    expect(classes).toEqual(expect.arrayContaining(['w-4/5', 'md:max-lg:landscape:w-[min(60%,45svh)]']));
+    // Portrait phones from 430px and portrait tablets: bigger, centred, out of the flow, by the height left.
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        'max-lg:portrait:min-[430px]:absolute',
+        'max-lg:portrait:min-[430px]:left-1/2',
+        'max-lg:portrait:min-[430px]:-translate-x-1/2',
+        'max-lg:portrait:min-[430px]:max-w-none',
+        'max-md:portrait:min-[430px]:w-[max(80%,min(160%,calc((100svh_-_39rem)*1.79)))]',
+        'md:max-lg:portrait:w-[max(80%,min(120%,calc((100svh_-_36.5rem)*1.79)))]',
+      ]),
+    );
     expect(img).not.toMatch(/object-cover|aspect-|rounded-full|col-span|\b-?m[rb]-|\bp[rb]?-/);
     expect(img).toContain('fetchpriority="high"');
+    // The LCP element: recompressed and offered in finer widths, so a phone takes the 640px file, not the 768px one.
+    expect(img).toContain('q=72');
+    expect(img).toMatch(/w=640[^"]*\s640w/);
     expect(html.indexOf(img)).toBeGreaterThan(html.indexOf('Reserva tu sesión'));
   });
 
-  it('lays a faint Violeta leaf on the right like the Terapeuta band’s, and a faint amber daisy behind the title, from lg', async () => {
+  it('lays a faint Violeta leaf on the right like the Terapeuta band’s, and a faint amber daisy behind the title', async () => {
     const html = await render();
     const tokens = (name: string) =>
       html.match(new RegExp(`<div[^>]*data-flora="line-${name}"[^>]*class="([^"]*)"`))?.[1].split(' ') ??
@@ -105,23 +130,38 @@ describe('Hero', () => {
     // Glicina vanished on the gradient's Glicina end.
     // 40% larger than the Terapeuta leaf's w-48: w-67 (268px).
     expect(tokens('leaf')).toEqual(
-      expect.arrayContaining(['-right-16', 'w-67', 'top-1/2', '-translate-y-1/2', 'text-violet', 'opacity-30', '-z-10', 'hidden', 'lg:block']),
+      expect.arrayContaining(['lg:-right-16', 'lg:w-67', 'top-1/2', '-translate-y-1/2', 'text-violet', 'opacity-30', '-z-10']),
     );
     expect(tokens('leaf')).not.toContain('text-wisteria');
+    // Both show on phones and tablets too (owner, 2026-10-06), in vw, and never hidden.
+    expect(tokens('leaf')).toEqual(expect.arrayContaining(['top-1/2', '-right-[12vw]', 'w-[48vw]', 'md:w-[37vw]']));
+    expect(tokens('leaf')).not.toContain('hidden');
+    expect(tokens('daisy')).toEqual(expect.arrayContaining(['-top-[calc(1.5rem+9.6vw)]', '-left-[9vw]', 'w-[26vw]', 'md:max-lg:landscape:w-[20vw]']));
+    expect(tokens('daisy')).not.toContain('hidden');
+    // A Pro Max (440px): the same, from a lower start (the words sit 16px lower there).
+    expect(tokens('daisy')).toEqual(
+      expect.arrayContaining(['phone-xl:w-[52vw]', 'phone-xl:-left-[22vw]', 'phone-xl:-top-[calc(2.5rem+25.85vw)]']),
+    );
+    // An iPad mini (768px portrait): twice the size, past the left edge.
+    expect(tokens('daisy')).toEqual(
+      expect.arrayContaining(['tablet:w-[40vw]', 'tablet:-left-[20vw]', 'tablet:-top-[calc(4rem+19.9vw)]']),
+    );
+    // An iPhone 16 (393px): twice the size, its centre where it was (owner, 2026-10-06).
+    expect(tokens('daisy')).toEqual(
+      expect.arrayContaining(['phone-md:w-[52vw]', 'phone-md:-left-[22vw]', 'phone-md:-top-[calc(1.5rem+25.85vw)]']),
+    );
     // Behind the words, reaching up past the band's top (clipped under the header), about 40% past the screen edge.
     expect(tokens('daisy')).toEqual(
       expect.arrayContaining([
-        '-top-33',
+        'lg:-top-33',
         'xl:-top-42',
         '-z-10',
-        '-left-[calc(4vw+3.75rem)]',
-        'w-36',
+        'lg:-left-[calc(4vw+3.75rem)]',
+        'lg:w-36',
         'xl:-left-[calc(4vw+5rem)]',
         'xl:w-48',
         'text-warning',
         'opacity-35',
-        'hidden',
-        'lg:block',
       ]),
     );
   });

@@ -14,6 +14,7 @@ import Section from '../../components/layout/Section.astro';
 import Grid from '../../components/layout/Grid.astro';
 import Button from '../../components/ui/Button.astro';
 import Card from '../../components/ui/Card.astro';
+import Carousel from '../../components/ui/Carousel.astro';
 import Chip from '../../components/ui/Chip.astro';
 import Field from '../../components/ui/Field.astro';
 import { fieldControlClass } from '../../components/ui/field';
@@ -411,6 +412,26 @@ const bands = [
     </Grid>
   </Section>
 
+  <Section padding="sm">
+    <Grid class="gap-y-8">
+      <h2 class="col-span-12 text-h2">Carrusel</h2>
+      <p class="col-span-12 max-w-none text-sm text-graphite">
+        Bajo <code>lg</code>, una tarjeta a la vez, con puntos de 44px, flechas del teclado y deslizamiento; desde
+        <code>lg</code>, las tarjetas en fila. Sin avance automático (solo los testimonios lo llevan).
+      </p>
+      <Carousel label="Ejemplo" trackClass="lg:grid lg:grid-cols-12 lg:gap-x-[calc(100%/23)]">
+        {
+          ['Una', 'Dos', 'Tres'].map((name) => (
+            <Card class="snap-start lg:col-span-4">
+              <h3 class="text-h3 text-ink">Tarjeta {name}</h3>
+              <p class="mt-1 text-sm text-slate">Un deslizamiento la cambia por la siguiente.</p>
+            </Card>
+          ))
+        }
+      </Carousel>
+    </Grid>
+  </Section>
+
   <Section padding="sm" surface="lavender">
     <Grid class="gap-y-4">
       <div class="col-span-12 md:col-span-7">
@@ -429,4 +450,7 @@ const bands = [
       </div>
     </Grid>
   </Section>
+  <script>
+    import '../../lib/carousel-boot';
+  </script>
 </BaseLayout>

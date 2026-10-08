@@ -51,12 +51,18 @@ describe('landing page', () => {
     expect(rendered(await render())).toEqual(expected);
   });
 
+  it('puts nothing between two bands, so the rhythm’s sibling selectors hold (spec 05e)', async () => {
+    const wrapper = main(await render());
+
+    expect(wrapper).not.toMatch(/<\/section>\s*<(script|link|style)\b/);
+  });
+
   it('removes a hidden block without leaving a section, a gap or a comment', async () => {
     const html = await render({ ...defaultFlags(), 'block:services': false });
 
     expect(rendered(html)).not.toContain('services');
     expect(html).not.toContain('Sesiones que se adaptan a tu casa');
-    expect(main(html).match(/<section\b/g)).toHaveLength(rendered(html).length);
+    expect(main(html).match(/<section\b[^>]*data-block=/g)).toHaveLength(rendered(html).length);
     expect(main(html)).not.toContain('<!--');
   });
 
@@ -65,7 +71,7 @@ describe('landing page', () => {
 
     const html = await render({ ...defaultFlags(), 'block:shop-teaser': true });
     // On, but spec 11 has not given it products: still nothing, still no gap.
-    expect(main(html).match(/<section\b/g)).toHaveLength(rendered(html).length);
+    expect(main(html).match(/<section\b[^>]*data-block=/g)).toHaveLength(rendered(html).length);
   });
 
   it('drops the testimonials block, and only it, when there are none', async () => {

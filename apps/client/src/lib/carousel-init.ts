@@ -29,8 +29,13 @@ export function initCarousel(root: HTMLElement): void {
   const cards = Array.from(track.children) as HTMLElement[];
   const autoplay = root.hasAttribute('data-autoplay');
   cards.forEach((card, index) => {
-    card.setAttribute('role', 'group');
-    card.setAttribute('aria-roledescription', 'slide');
+    // Only a plain `div` takes the group role. A list item keeps its own (an
+    // `ol`'s children must be `li`s, and the list already says "n de M"), and a
+    // `figure` may not have one (Lighthouse's aria-allowed-role).
+    if (card.tagName === 'DIV') {
+      card.setAttribute('role', 'group');
+      card.setAttribute('aria-roledescription', 'slide');
+    }
     card.setAttribute('aria-label', `${index + 1} de ${cards.length}`);
   });
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
