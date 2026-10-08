@@ -1,5 +1,6 @@
 import type { BlockId } from '@kat-hu/contracts';
-import { sanityClient, type SanityImage } from '../lib/sanity';
+import type { SanityImage } from '../lib/sanity';
+import { cachedFetch } from '../lib/sanity-cache';
 
 /**
  * The words on the landing (spec 05), so the owner changes copy without a
@@ -296,7 +297,7 @@ export async function getLandingCopy(): Promise<LandingCopy> {
   let raw: LandingQueryResult | null = null;
 
   try {
-    raw = await sanityClient.fetch<LandingQueryResult | null>(LANDING_QUERY, {
+    raw = await cachedFetch<LandingQueryResult | null>(LANDING_QUERY, {
       landingType: DOC_TYPE,
       landingId: DOC_ID,
       serviceType: SERVICE_TYPE,

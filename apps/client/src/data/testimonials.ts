@@ -1,4 +1,4 @@
-import { sanityClient } from '../lib/sanity';
+import { cachedFetch } from '../lib/sanity-cache';
 
 /**
  * Testimonials for the landing (spec 05, guide §7.8). The document type is a
@@ -30,7 +30,7 @@ const QUERY = /* groq */ `
 
 export async function getTestimonials(): Promise<TestimonialItem[]> {
   try {
-    const rows = await sanityClient.fetch<Array<Partial<TestimonialItem>>>(QUERY, { type: DOC_TYPE });
+    const rows = await cachedFetch<Array<Partial<TestimonialItem>>>(QUERY, { type: DOC_TYPE });
 
     return (rows ?? [])
       .filter((row) => row.id && row.quote?.trim() && row.name?.trim())

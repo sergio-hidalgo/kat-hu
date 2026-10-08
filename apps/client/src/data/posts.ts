@@ -1,9 +1,6 @@
 import { DEFAULT_DROP_TYPE, isDropType, type DropType } from '@kat-hu/contracts';
-import {
-  sanityClient,
-  type PortableTextNode,
-  type SanityImage,
-} from '../lib/sanity';
+import type { PortableTextNode, SanityImage } from '../lib/sanity';
+import { cachedFetch } from '../lib/sanity-cache';
 
 /**
  * The document type this site reads from Sanity. Change it here only —
@@ -86,18 +83,18 @@ function normalise(raw: Post): Post {
 
 /** Every published post, newest first. */
 export async function getAllPosts(): Promise<Post[]> {
-  const posts = await sanityClient.fetch<Post[]>(LIST_QUERY, { type: DOC_TYPE });
+  const posts = await cachedFetch<Post[]>(LIST_QUERY, { type: DOC_TYPE });
   return posts.map(normalise);
 }
 
 /** The newest few published posts, for the landing — not the whole list. */
 export async function getLatestPosts(): Promise<Post[]> {
-  const posts = await sanityClient.fetch<Post[]>(LATEST_QUERY, { type: DOC_TYPE });
+  const posts = await cachedFetch<Post[]>(LATEST_QUERY, { type: DOC_TYPE });
   return (posts ?? []).map(normalise);
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const post = await sanityClient.fetch<Post | null>(DETAIL_QUERY, {
+  const post = await cachedFetch<Post | null>(DETAIL_QUERY, {
     type: DOC_TYPE,
     slug,
   });
